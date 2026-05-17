@@ -90,6 +90,71 @@ describe("extension services", () => {
     expect(observedStates).toEqual(["active", "inactive"]);
   });
 
+  it("clears transform metadata when switching active Markdown documents", () => {
+    const documentStateService = new DocumentStateService();
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# First",
+      uri: "file:///first.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        css: ".first {}",
+        diagnostics: [],
+        frontmatter: {
+          theme: "basic",
+        },
+        html: "<h1>First</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        transformedAt: 100,
+      },
+    );
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+
+    const state = documentStateService.getState();
+    expect(state).toMatchObject({
+      currentThemeFiles: [],
+      diagnostics: [],
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Second",
+      status: "active",
+      uri: "file:///second.md",
+    });
+    expect(state.css).toBeUndefined();
+    expect(state.frontmatter).toBeUndefined();
+    expect(state.lastTransformedAt).toBeUndefined();
+    expect(state.resolvedThemeId).toBeUndefined();
+  });
+
+  it("gives each document state listener its own snapshot", () => {
+    const documentStateService = new DocumentStateService();
+    let secondListenerGeneratedHtml: string | undefined;
+
+    documentStateService.subscribe((state) => {
+      state.generatedHtml = "changed by first listener";
+    });
+    documentStateService.subscribe((state) => {
+      secondListenerGeneratedHtml = state.generatedHtml;
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    expect(secondListenerGeneratedHtml).toBe("");
+  });
+
   it("creates active document snapshots from text documents", () => {
     expect(
       createActiveDocumentSnapshot({
@@ -192,6 +257,44 @@ describe("extension services", () => {
       message: "Theme warning",
       source: "theme",
     });
+  });
+
+  it("ignores transform results for a stale active document uri", () => {
+    const documentStateService = new DocumentStateService();
+    const observedHtml: string[] = [];
+    documentStateService.subscribe((state) => {
+      observedHtml.push(state.generatedHtml);
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# First",
+      uri: "file:///first.md",
+    });
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+
+    const state = documentStateService.applyTransformResult(
+      {
+        diagnostics: [],
+        html: "<h1>First</h1>",
+        resolvedThemeId: "default",
+      },
+      {
+        expectedUri: "file:///first.md",
+      },
+    );
+
+    expect(state).toMatchObject({
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+    expect(observedHtml).toEqual(["", ""]);
   });
 
   it("passes transform requests to the loaded WASM module", async () => {

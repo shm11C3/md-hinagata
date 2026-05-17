@@ -43,6 +43,7 @@ export interface DocumentState {
 
 export interface ApplyTransformOptions {
   diagnostics?: readonly DiagnosticMessage[];
+  expectedUri?: string;
   themeFiles?: readonly ThemeFileReference[];
   transformedAt?: number;
 }
@@ -73,11 +74,15 @@ export class DocumentStateService {
 
     this.#state = {
       ...this.#state,
+      css: undefined,
       currentThemeFiles: [],
       diagnostics: [],
+      frontmatter: undefined,
       generatedHtml: "",
       isStale: true,
+      lastTransformedAt: undefined,
       markdown: document.markdown,
+      resolvedThemeId: undefined,
       status: "active",
       uri: document.uri,
     };
@@ -103,6 +108,14 @@ export class DocumentStateService {
     result: TransformResponse,
     options: ApplyTransformOptions = {},
   ): DocumentState {
+    if (
+      options.expectedUri !== undefined &&
+      (this.#state.status !== "active" ||
+        this.#state.uri !== options.expectedUri)
+    ) {
+      return this.getState();
+    }
+
     const frontmatterTheme = result.frontmatter?.theme;
     const currentTheme =
       frontmatterTheme !== undefined && frontmatterTheme.length > 0
@@ -177,9 +190,8 @@ export class DocumentStateService {
   }
 
   private notify(): void {
-    const snapshot = this.getState();
     for (const listener of this.#listeners) {
-      listener(snapshot);
+      listener(this.getState());
     }
   }
 }
