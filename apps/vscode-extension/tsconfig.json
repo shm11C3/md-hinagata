@@ -17,5 +17,11 @@
     "types": ["node", "vscode", "vitest/globals"],
     "verbatimModuleSyntax": true
   },
-  "include": ["src/**/*.ts", "media/**/*.ts", "*.config.ts", "*.test.ts"]
+  "include": [
+    "src/**/*.ts",
+    "media/**/*.ts",
+    "test/**/*.ts",
+    "*.config.ts",
+    "*.test.ts"
+  ]
 }

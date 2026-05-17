@@ -122,3 +122,13 @@ To test only the VS Code extension:
 ```bash
 pnpm --filter md-hinagata-vscode-extension run test
 ```
+
+To run the VS Code Extension Host E2E smoke test:
+
+```bash
+pnpm run test:e2e
+```
+
+This builds the WASM bridge, builds the extension bundle, launches VS Code
+against `examples/basic`, opens `article.md`, verifies the contributed commands,
+and runs the Preview and Copy HTML commands without packaging a VSIX.
