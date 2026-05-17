@@ -152,6 +152,21 @@ function updateFrontmatterLines(
   }
 
   const blockEnd = findTopLevelBlockEnd(nextLines, hinagataIndex);
+  const inlineHinagataValue = readInlineKeyValue(
+    nextLines[hinagataIndex] ?? "",
+    "hinagata",
+  );
+  if (
+    inlineHinagataValue !== undefined &&
+    inlineHinagataValue.length > 0 &&
+    !inlineHinagataValue.trimStart().startsWith("#")
+  ) {
+    return {
+      ok: false,
+      reason: "Existing hinagata frontmatter must use block mapping syntax.",
+    };
+  }
+
   const childIndent = inferDirectChildIndent(
     nextLines,
     hinagataIndex,
@@ -286,6 +301,13 @@ function findDirectNestedKeyIndex(
   }
 
   return undefined;
+}
+
+function readInlineKeyValue(line: string, key: string): string | undefined {
+  const match = line.match(
+    new RegExp(`^\\s*${escapeRegExp(key)}\\s*:\\s*(.*)$`),
+  );
+  return match?.[1];
 }
 
 function inferDirectChildIndent(

@@ -82,6 +82,18 @@ describe("updateFrontmatterTheme", () => {
     });
   });
 
+  it("rejects inline hinagata mappings before editing", () => {
+    expect(
+      updateFrontmatterTheme({
+        source: "---\nhinagata: { output: fragment }\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Existing hinagata frontmatter must use block mapping syntax.",
+    });
+  });
+
   it("rejects broken nested flow frontmatter before editing", () => {
     expect(
       updateFrontmatterTheme({
