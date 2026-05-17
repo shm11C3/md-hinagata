@@ -383,6 +383,16 @@ pnpm run build:wasm
 
 生成された WASM files は `apps/vscode-extension/wasm/` に出力され、commit しません。
 
+VS Code Extension Host の E2E smoke test を実行します。
+
+```bash
+pnpm run test:e2e
+```
+
+このコマンドは local extension を読み込んだ VS Code を起動し、`examples/basic`
+を開き、contributed commands を確認し、`article.md` に対して Preview と Copy
+Generated HTML を実行します。Linux CI では `xvfb` 経由で実行します。
+
 ### Extension Development Host
 
 VS Code で repository root を開き、F5 を押すか Run and Debug から `Run md-hinagata Extension` を選びます。

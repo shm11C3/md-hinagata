@@ -53,11 +53,14 @@
     "check": "tsc --noEmit",
     "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
     "lint": "pnpm --workspace-root exec biome check apps/vscode-extension",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "pnpm run build && pnpm run test:e2e:build && node --experimental-strip-types ./test/e2e/run.ts",
+    "test:e2e:build": "node --experimental-strip-types ./test/e2e/esbuild.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.19.19",
     "@types/vscode": "^1.120.0",
+    "@vscode/test-electron": "^2.5.2",
     "esbuild": "^0.28.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"
