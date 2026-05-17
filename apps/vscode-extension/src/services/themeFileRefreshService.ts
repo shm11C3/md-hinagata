@@ -9,11 +9,13 @@ export interface ThemeFileDocumentSnapshot {
 }
 
 export type ThemeFileRefreshCallback = () => void | Promise<void>;
+export type ThemeFileRefreshErrorHandler = (error: unknown) => void;
 
 export class ThemeFileRefreshService {
   public constructor(
     private readonly documentStateService: DocumentStateService,
     private readonly refreshActiveDocument: ThemeFileRefreshCallback,
+    private readonly handleRefreshError: ThemeFileRefreshErrorHandler = () => {},
   ) {}
 
   public refreshIfCurrentThemeFile(
@@ -32,7 +34,16 @@ export class ThemeFileRefreshService {
       return false;
     }
 
-    void this.refreshActiveDocument();
+    try {
+      const refresh = this.refreshActiveDocument();
+      if (refresh !== undefined) {
+        void refresh.catch((error: unknown) => {
+          this.handleRefreshError(error);
+        });
+      }
+    } catch (error) {
+      this.handleRefreshError(error);
+    }
     return true;
   }
 }

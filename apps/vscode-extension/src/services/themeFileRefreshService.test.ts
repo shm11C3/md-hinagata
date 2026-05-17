@@ -94,6 +94,35 @@ describe("ThemeFileRefreshService", () => {
 
     expect(refreshCount).toBe(0);
   });
+
+  it("handles rejected refresh promises", async () => {
+    const documentStateService = createDocumentStateWithThemeFiles([
+      {
+        kind: "stylesheet",
+        label: "styles.css",
+        path: "/themes/basic/styles.css",
+      },
+    ]);
+    const refreshError = new Error("refresh failed");
+    const handledErrors: unknown[] = [];
+    const refreshService = new ThemeFileRefreshService(
+      documentStateService,
+      () => Promise.reject(refreshError),
+      (error) => {
+        handledErrors.push(error);
+      },
+    );
+
+    expect(
+      refreshService.refreshIfCurrentThemeFile({
+        uri: { fsPath: "/themes/basic/styles.css" },
+      }),
+    ).toBe(true);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(handledErrors).toEqual([refreshError]);
+  });
 });
 
 function createDocumentStateWithThemeFiles(
