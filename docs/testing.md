@@ -1,6 +1,5 @@
 # md-hinagata Testing Policy
 
-> Status: Draft  
 > Target: `0.x.x` development  
 > Related documents: `docs/requirements.ja.md`, `docs/design.ja.md`, `docs/tasks.ja.md`
 

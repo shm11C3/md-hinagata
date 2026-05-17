@@ -1,6 +1,5 @@
 # md-hinagata Development Workflow
 
-> Status: Draft  
 > Target: AI coding agents and maintainers  
 > Related documents: `AGENTS.md`, `docs/requirements.ja.md`, `docs/design.ja.md`, `docs/testing.md`
 

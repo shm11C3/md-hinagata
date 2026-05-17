@@ -1,6 +1,5 @@
 # md-hinagata 設計ドキュメント
 
-> Status: Draft for `0.x.x` development  
 > Initial target: `0.1.0` MVP  
 > Related document: `docs/requirements.ja.md`
 
