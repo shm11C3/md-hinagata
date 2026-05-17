@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+pub const UNKNOWN_THEME: &str = "unknown-theme";
+pub const INVALID_FRONTMATTER: &str = "invalid-frontmatter";
+pub const MISSING_TEMPLATE: &str = "missing-template";
+pub const TEMPLATE_RENDER_ERROR: &str = "template-render-error";
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DiagnosticSeverity {
@@ -59,5 +64,14 @@ impl Diagnostic {
 
     pub fn warning(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self::new(DiagnosticSeverity::Warning, code, message)
+    }
+
+    pub fn error(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self::new(DiagnosticSeverity::Error, code, message)
+    }
+
+    pub fn with_source(mut self, source: DiagnosticSource) -> Self {
+        self.source = Some(source);
+        self
     }
 }

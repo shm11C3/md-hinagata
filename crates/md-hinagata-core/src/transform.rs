@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Diagnostic, ParsedFrontmatter, Result, ThemePackage};
+use crate::{
+    frontmatter::parse_frontmatter, markdown::parse_markdown, renderer::render_blocks,
+    theme::resolve_theme, Diagnostic, ParsedFrontmatter, Result, ThemePackage,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,30 +39,30 @@ pub struct TransformResponse {
 }
 
 pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
-    let resolved_theme_id = request
-        .default_theme_id
-        .as_ref()
-        .filter(|default_theme_id| {
-            request
-                .themes
-                .iter()
-                .any(|theme| theme.id == **default_theme_id)
-        })
-        .cloned()
-        .or_else(|| request.themes.first().map(|theme| theme.id.clone()))
-        .unwrap_or_default();
+    let mut diagnostics = Vec::new();
+    let parsed_markdown = parse_frontmatter(&request.markdown);
+    diagnostics.extend(parsed_markdown.diagnostics);
 
-    let css = request
-        .themes
-        .iter()
-        .find(|theme| theme.id == resolved_theme_id)
-        .and_then(|theme| theme.css.clone());
+    let theme = resolve_theme(
+        &request.themes,
+        parsed_markdown
+            .frontmatter
+            .as_ref()
+            .and_then(|frontmatter| frontmatter.theme.as_deref()),
+        request.default_theme_id.as_deref(),
+        &mut diagnostics,
+    );
+    let resolved_theme_id = theme.map(|theme| theme.id.clone()).unwrap_or_default();
+    let blocks = parse_markdown(&parsed_markdown.markdown);
+    let html = render_blocks(&blocks, theme, &mut diagnostics);
+
+    let css = theme.and_then(|theme| theme.css.clone());
 
     Ok(TransformResponse {
-        html: String::new(),
+        html,
         css,
         resolved_theme_id,
-        frontmatter: None,
-        diagnostics: Vec::new(),
+        frontmatter: parsed_markdown.frontmatter,
+        diagnostics,
     })
 }
