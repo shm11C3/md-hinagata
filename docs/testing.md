@@ -1,6 +1,5 @@
 # md-hinagata Testing Policy
 
-> Status: Draft  
 > Target: `0.x.x` development  
 > Related documents: `docs/requirements.ja.md`, `docs/design.ja.md`, `docs/tasks.ja.md`
 
@@ -40,7 +39,10 @@ Snapshot input and expected output fixtures belong under `examples/`.
 ```txt
 examples/basic/article.md
 examples/basic/expected.html
+examples/basic/.md-hinagata/themes/basic/
 ```
+
+Treat `examples/basic` as a functional fixture, not only sample content. Keep `article.md`, `expected.html`, and the basic theme files aligned when transform behavior changes.
 
 ### 2.2 TypeScript / VS Code Extension
 
@@ -84,6 +86,7 @@ If future tests need to launch the VS Code host, keep those separate from coloca
 - Workspace theme resolution.
 - Copy Generated HTML behavior.
 - Webview HTML safety boundaries.
+- Preview rendering with generated HTML and theme CSS when preview behavior is involved.
 
 ### 3.3 Manual QA
 
@@ -95,6 +98,8 @@ Before the `0.1.0` release, verify:
 - Changing `hinagata.theme` in frontmatter switches the theme.
 - Unknown themes produce a warning.
 - Copy Generated HTML copies the expected HTML.
+
+When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `article.md` should show generated content rather than the placeholder.
 
 ## 4. Commands
 

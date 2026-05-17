@@ -1,6 +1,5 @@
 # md-hinagata 要件定義
 
-> Status: Draft for `0.x.x` development  
 > Initial target: `0.1.0` MVP
 
 md-hinagata は、VS Code 上で Markdown を編集し、frontmatter で指定したテーマテンプレートを使って、構造を制御した HTML fragment を生成するための開発環境である。

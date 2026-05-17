@@ -1,6 +1,5 @@
 # md-hinagata タスク一覧
 
-> Status: Draft  
 > Target: `0.x.x` development  
 > Initial milestone: `0.1.0` MVP  
 > Related documents: `docs/requirements.ja.md`, `docs/design.ja.md`
