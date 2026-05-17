@@ -240,6 +240,7 @@ describe("extension services", () => {
       },
       {
         message: "missing-template: Template p is missing.",
+        severity: "warning",
         source: "transform",
       },
     ]);

@@ -10,6 +10,7 @@ import type { WorkspaceTrustService } from "../services/workspaceTrustService.js
 import { getActiveMarkdownDocument } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
+import { openThemeFile } from "./openThemeFileCommand.js";
 import { selectTheme } from "./selectThemeCommand.js";
 
 export interface CommandDependencies {
@@ -48,6 +49,24 @@ export function registerCommands(
         dependencies.documentStateService,
       );
     }),
+    vscode.commands.registerCommand(
+      COMMAND_IDS.openThemeFile,
+      (filePath: unknown) =>
+        openThemeFile(
+          dependencies.documentStateService,
+          {
+            open: async (targetPath) => {
+              const document = await vscode.workspace.openTextDocument(
+                vscode.Uri.file(targetPath),
+              );
+              await vscode.window.showTextDocument(document, {
+                preview: false,
+              });
+            },
+          },
+          filePath,
+        ),
+    ),
     vscode.commands.registerCommand(
       COMMAND_IDS.selectTheme,
       (themeId: unknown) => {

@@ -8,6 +8,7 @@ import {
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
 import { openPreview } from "./openPreviewCommand.js";
+import { openThemeFile } from "./openThemeFileCommand.js";
 import { selectTheme } from "./selectThemeCommand.js";
 
 const themeResolver = {
@@ -19,6 +20,7 @@ describe("extension commands", () => {
   it("defines stable command ids", () => {
     expect(COMMAND_IDS).toEqual({
       copyGeneratedHtml: "md-hinagata.copyGeneratedHtml",
+      openThemeFile: "md-hinagata.openThemeFile",
       openPreview: "md-hinagata.openPreview",
       selectTheme: "md-hinagata.selectTheme",
     });
@@ -90,6 +92,96 @@ describe("extension commands", () => {
     );
 
     expect(writes).toEqual(["<h1>Hello</h1>"]);
+  });
+
+  it("opens only files from the current resolved theme", async () => {
+    const documentStateService = new DocumentStateService();
+    const openedPaths: string[] = [];
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        diagnostics: [],
+        html: "<h1>Title</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        themeFiles: [
+          {
+            kind: "manifest",
+            label: "theme.json",
+            path: "/theme/basic/theme.json",
+          },
+        ],
+      },
+    );
+
+    await expect(
+      openThemeFile(
+        documentStateService,
+        {
+          open: (filePath) => {
+            openedPaths.push(filePath);
+          },
+        },
+        "/theme/basic/theme.json",
+      ),
+    ).resolves.toBe(true);
+    await expect(
+      openThemeFile(
+        documentStateService,
+        {
+          open: (filePath) => {
+            openedPaths.push(filePath);
+          },
+        },
+        "/theme/other/theme.json",
+      ),
+    ).resolves.toBe(false);
+
+    expect(openedPaths).toEqual(["/theme/basic/theme.json"]);
+  });
+
+  it("returns false when opening a current theme file fails", async () => {
+    const documentStateService = new DocumentStateService();
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        diagnostics: [],
+        html: "<h1>Title</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        themeFiles: [
+          {
+            kind: "manifest",
+            label: "theme.json",
+            path: "/theme/basic/theme.json",
+          },
+        ],
+      },
+    );
+
+    await expect(
+      openThemeFile(
+        documentStateService,
+        {
+          open: () => {
+            throw new Error("Failed to open file.");
+          },
+        },
+        "/theme/basic/theme.json",
+      ),
+    ).resolves.toBe(false);
   });
 
   it("updates the selected theme when a theme id is provided", () => {

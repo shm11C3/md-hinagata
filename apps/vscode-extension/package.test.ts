@@ -49,7 +49,7 @@ describe("extension manifest", () => {
     expect(manifest.activationEvents).toBeUndefined();
   });
 
-  it("contributes the command ids registered by the extension", () => {
+  it("contributes the public command ids", () => {
     const contributedCommands = manifest.contributes.commands.map(
       ({ command }) => command,
     );
