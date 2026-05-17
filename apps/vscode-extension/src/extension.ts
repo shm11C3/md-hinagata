@@ -27,7 +27,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   const documentStateService = new DocumentStateService();
   const diagnosticsService = new DiagnosticsService();
-  const themeResolver = new ThemeResolver(context.extensionUri);
+  const themeResolver = new ThemeResolver(context.extensionUri, {
+    workspaceFolders: () => vscode.workspace.workspaceFolders,
+  });
   const transformService = new TransformService(
     createWasmModuleLoader(context.extensionUri),
   );
