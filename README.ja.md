@@ -389,18 +389,15 @@ VS Code で repository root を開き、F5 を押すか Run and Debug から `Ru
 
 launch configuration は `apps/vscode-extension` を Extension Development Host として起動し、起動前に `md-hinagata: build extension` task を実行します。VSIX package は不要です。
 
-preview で Rust/WASM transform path を確認する場合は、clone 後と Rust/WASM 変更後に以下を実行します。
-
-```bash
-pnpm run build:wasm
-```
+同梱 example で Rust/WASM transform path を確認する場合は、Run and Debug から `Run md-hinagata Extension (Basic Example)` を選びます。この構成は `examples/basic` を Extension Development Host の workspace として開き、`article.md` を開き、起動前に `md-hinagata: prepare basic example` task を実行するため、workspace theme の `.md-hinagata/themes/basic` を利用できます。
 
 Extension Development Host では以下を確認します。
 
-1. `examples/basic/article.md` などの Markdown file を開く。
+1. basic example launch configuration を使っている場合は `article.md` が active になっていることを確認する。
 2. `md-hinagata` Activity Bar container と Theme Manager view が表示される。
 3. Command Palette から `md-hinagata: Open Preview` を実行する。
-4. `md-hinagata: Copy Generated HTML` と `md-hinagata: Select Theme` が Command Palette に表示される。
+4. generated fragment を `expected.html` と比較する。
+5. `md-hinagata: Copy Generated HTML` と `md-hinagata: Select Theme` が Command Palette に表示される。
 
 ## Rust coreの役割
 

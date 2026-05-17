@@ -386,18 +386,15 @@ Open the repository root in VS Code, then press F5 or choose `Run md-hinagata Ex
 
 The launch configuration starts an Extension Development Host from `apps/vscode-extension` and runs the `md-hinagata: build extension` task before launch. This builds the extension bundle without packaging a VSIX.
 
-To exercise the Rust/WASM transform path in the preview, run this once after cloning and again after Rust/WASM changes:
-
-```bash
-pnpm run build:wasm
-```
+To exercise the Rust/WASM transform path with the bundled example, choose `Run md-hinagata Extension (Basic Example)` from Run and Debug. This opens `examples/basic` as the Extension Development Host workspace, opens `article.md`, and runs the `md-hinagata: prepare basic example` task before launch, so the workspace theme at `.md-hinagata/themes/basic` is available.
 
 In the Extension Development Host:
 
-1. Open a Markdown file, such as `examples/basic/article.md`.
+1. Confirm `article.md` is active when using the basic example launch configuration.
 2. Confirm the `md-hinagata` Activity Bar container and Theme Manager view are visible.
 3. Run `md-hinagata: Open Preview` from the Command Palette.
-4. Confirm `md-hinagata: Copy Generated HTML` and `md-hinagata: Select Theme` appear in the Command Palette.
+4. Compare the generated fragment with `expected.html`.
+5. Confirm `md-hinagata: Copy Generated HTML` and `md-hinagata: Select Theme` appear in the Command Palette.
 
 ## Rust core
 

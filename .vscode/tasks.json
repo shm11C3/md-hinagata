@@ -27,6 +27,13 @@
       "problemMatcher": []
     },
     {
+      "label": "md-hinagata: prepare basic example",
+      "dependsOrder": "sequence",
+      "dependsOn": ["md-hinagata: build wasm", "md-hinagata: build extension"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
       "label": "md-hinagata: check",
       "type": "shell",
       "command": "pnpm",
