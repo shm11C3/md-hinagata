@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import type { PreviewPanel } from "../panels/previewPanel.js";
 import type { DocumentStateService } from "../services/documentStateService.js";
+import type { ThemeResolver } from "../services/themeResolver.js";
+import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
 import { openPreview } from "./openPreviewCommand.js";
@@ -9,6 +11,8 @@ import { selectTheme } from "./selectThemeCommand.js";
 export interface CommandDependencies {
   documentStateService: DocumentStateService;
   previewPanel: PreviewPanel;
+  themeResolver: ThemeResolver;
+  workspaceTrustService: WorkspaceTrustService;
 }
 
 export function registerCommands(
@@ -28,7 +32,12 @@ export function registerCommands(
     vscode.commands.registerCommand(
       COMMAND_IDS.selectTheme,
       (themeId: unknown) =>
-        selectTheme(dependencies.documentStateService, themeId),
+        selectTheme(
+          dependencies.documentStateService,
+          dependencies.workspaceTrustService,
+          dependencies.themeResolver,
+          themeId,
+        ),
     ),
   );
 }

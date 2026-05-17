@@ -15,10 +15,10 @@ import {
 export function activate(context: vscode.ExtensionContext): void {
   const documentStateService = new DocumentStateService();
   const diagnosticsService = new DiagnosticsService();
-  const themeResolver = new ThemeResolver(context.extensionUri.toString());
+  const themeResolver = new ThemeResolver(context.extensionUri);
   const transformService = new TransformService();
   const workspaceTrustService = new WorkspaceTrustService(
-    vscode.workspace.isTrusted,
+    () => vscode.workspace.isTrusted,
   );
   const previewPanel = new PreviewPanel(documentStateService, transformService);
   const themeEditorViewProvider = new ThemeEditorViewProvider(
@@ -30,6 +30,8 @@ export function activate(context: vscode.ExtensionContext): void {
   registerCommands(context, {
     documentStateService,
     previewPanel,
+    themeResolver,
+    workspaceTrustService,
   });
 
   context.subscriptions.push(

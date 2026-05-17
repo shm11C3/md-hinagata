@@ -11,7 +11,7 @@ interface ExtensionManifest {
     commands: Array<{
       command: string;
     }>;
-    views: Record<string, Array<{ icon: string; id: string }>>;
+    views: Record<string, Array<{ icon: string; id: string; name: string }>>;
   };
   engines: {
     vscode: string;
