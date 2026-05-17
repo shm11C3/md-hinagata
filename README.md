@@ -329,6 +329,25 @@ md-hinagata/
     frontmatter.schema.json
 ```
 
+## Development setup
+
+Prerequisites:
+
+- Node.js with `pnpm` 10.x.
+- Rust toolchain with Cargo.
+
+Install JavaScript workspace dependencies:
+
+```bash
+pnpm install
+```
+
+Check the Rust workspace:
+
+```bash
+cargo check --workspace
+```
+
 ## Rust core
 
 The Rust core is not used because VS Code editing needs Rust. VS Code already handles editing well.

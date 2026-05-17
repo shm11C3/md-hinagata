@@ -1,0 +1,15 @@
+{
+  "$schema": "https://md-hinagata.dev/schemas/theme-0.1.schema.json",
+  "schemaVersion": "0.1",
+  "id": "basic",
+  "name": "Basic Example",
+  "version": "0.1.0",
+  "entryCss": "styles.css",
+  "templates": {
+    "h1": "templates/h1.hbs",
+    "h2": "templates/h2.hbs",
+    "h3": "templates/h3.hbs",
+    "p": "templates/p.hbs",
+    "codeblock": "templates/codeblock.hbs"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "md-hinagata-vscode-extension",
+  "displayName": "md-hinagata",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VS Code extension for md-hinagata.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {}
+}

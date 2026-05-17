@@ -1,0 +1,14 @@
+[package]
+name = "md-hinagata-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "md_hinagata_wasm"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+md-hinagata-core = { path = "../md-hinagata-core" }

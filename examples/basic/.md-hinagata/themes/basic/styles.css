@@ -1,0 +1,45 @@
+.basic-document {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+  color: #202124;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+
+.basic-heading {
+  margin: 1.4em 0 0.5em;
+  color: #111827;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.basic-heading--h1 {
+  font-size: 2rem;
+}
+
+.basic-heading--h2 {
+  font-size: 1.45rem;
+}
+
+.basic-heading--h3 {
+  font-size: 1.2rem;
+}
+
+.basic-paragraph {
+  margin: 0 0 1em;
+}
+
+.basic-codeblock {
+  overflow-x: auto;
+  margin: 1em 0;
+  padding: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f8fafc;
+}
+
+.basic-codeblock code {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92rem;
+}
