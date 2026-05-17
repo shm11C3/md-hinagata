@@ -278,7 +278,7 @@ Acceptance criteria:
 apps/vscode-extension/
   package.json
   tsconfig.json
-  esbuild.config.mjs
+  esbuild.config.ts
   src/
     extension.ts
 ```

@@ -264,7 +264,7 @@ md-hinagata/
     vscode-extension/
       package.json
       tsconfig.json
-      esbuild.config.mjs
+      esbuild.config.ts
       src/
         extension.ts
         commands/
@@ -336,7 +336,7 @@ md-hinagata/
 
 必要なもの:
 
-- Node.js と `pnpm` 10.x。
+- Node.js 22 または 24 と `pnpm` 10.x。
 - Cargo を含む Rust toolchain。
 
 JavaScript workspace の依存関係をインストールします。
@@ -349,6 +349,21 @@ Rust workspace を確認します。
 
 ```bash
 cargo check --workspace
+```
+
+現在の workspace checks を実行します。
+
+```bash
+pnpm run check
+pnpm run format
+pnpm run lint
+pnpm run test
+```
+
+VS Code extension bundle をビルドします。
+
+```bash
+pnpm run build
 ```
 
 ## Rust coreの役割

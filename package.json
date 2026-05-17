@@ -6,7 +6,10 @@
   "license": "MIT OR Apache-2.0",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "check": "cargo check --workspace",
-    "test": "cargo test --workspace"
+    "build": "pnpm --filter md-hinagata-vscode-extension run build",
+    "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
+    "format": "pnpm --filter md-hinagata-vscode-extension run format",
+    "lint": "pnpm --filter md-hinagata-vscode-extension run lint",
+    "test": "pnpm --filter md-hinagata-vscode-extension run test && cargo test --workspace"
   }
 }

@@ -7,9 +7,59 @@
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.120.0"
   },
   "main": "./dist/extension.js",
-  "activationEvents": [],
-  "contributes": {}
+  "contributes": {
+    "commands": [
+      {
+        "command": "md-hinagata.openPreview",
+        "title": "Open Preview",
+        "category": "md-hinagata"
+      },
+      {
+        "command": "md-hinagata.copyGeneratedHtml",
+        "title": "Copy Generated HTML",
+        "category": "md-hinagata"
+      },
+      {
+        "command": "md-hinagata.selectTheme",
+        "title": "Select Theme",
+        "category": "md-hinagata"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mdHinagata",
+          "title": "md-hinagata",
+          "icon": "resources/md-hinagata.svg"
+        }
+      ]
+    },
+    "views": {
+      "mdHinagata": [
+        {
+          "id": "mdHinagata.themeManager",
+          "name": "Theme Manager",
+          "icon": "resources/md-hinagata.svg"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node --experimental-strip-types ./esbuild.config.ts",
+    "check": "tsc --noEmit",
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^22.19.19",
+    "@types/vscode": "^1.120.0",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.6"
+  }
 }
