@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { DiagnosticMessage } from "./diagnosticsService.js";
 import { DiagnosticsService } from "./diagnosticsService.js";
 import {
+  createActiveDocumentSnapshot,
+  DocumentStateService,
+} from "./documentStateService.js";
+import {
   TransformService,
   type WasmTransformModuleLoader,
 } from "./transformService.js";
@@ -48,6 +52,249 @@ describe("extension services", () => {
 
     isTrusted = true;
     expect(workspaceTrustService.isTrusted).toBe(true);
+  });
+
+  it("tracks active Markdown document state and inactive documents", () => {
+    const documentStateService = new DocumentStateService();
+    const observedStates: string[] = [];
+    documentStateService.subscribe((state) => {
+      observedStates.push(state.status);
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    expect(documentStateService.getState()).toMatchObject({
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Title",
+      status: "active",
+      uri: "file:///article.md",
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "plaintext",
+      markdown: "not markdown",
+      uri: "file:///notes.txt",
+    });
+
+    expect(documentStateService.getState()).toMatchObject({
+      currentTheme: "default",
+      generatedHtml: "",
+      isStale: false,
+      status: "inactive",
+    });
+    expect(observedStates).toEqual(["active", "inactive"]);
+  });
+
+  it("clears transform metadata when switching active Markdown documents", () => {
+    const documentStateService = new DocumentStateService();
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# First",
+      uri: "file:///first.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        css: ".first {}",
+        diagnostics: [],
+        frontmatter: {
+          theme: "basic",
+        },
+        html: "<h1>First</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        transformedAt: 100,
+      },
+    );
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+
+    const state = documentStateService.getState();
+    expect(state).toMatchObject({
+      currentThemeFiles: [],
+      diagnostics: [],
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Second",
+      status: "active",
+      uri: "file:///second.md",
+    });
+    expect(state.css).toBeUndefined();
+    expect(state.frontmatter).toBeUndefined();
+    expect(state.lastTransformedAt).toBeUndefined();
+    expect(state.resolvedThemeId).toBeUndefined();
+  });
+
+  it("gives each document state listener its own snapshot", () => {
+    const documentStateService = new DocumentStateService();
+    let secondListenerGeneratedHtml: string | undefined;
+
+    documentStateService.subscribe((state) => {
+      state.generatedHtml = "changed by first listener";
+    });
+    documentStateService.subscribe((state) => {
+      secondListenerGeneratedHtml = state.generatedHtml;
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    expect(secondListenerGeneratedHtml).toBe("");
+  });
+
+  it("creates active document snapshots from text documents", () => {
+    expect(
+      createActiveDocumentSnapshot({
+        getText: () => "# Title",
+        languageId: "markdown",
+        uri: {
+          toString: () => "file:///article.md",
+        },
+      }),
+    ).toEqual({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+  });
+
+  it("applies transform results as defensive document state snapshots", () => {
+    const documentStateService = new DocumentStateService();
+    const diagnostics: DiagnosticMessage[] = [
+      {
+        message: "Theme warning",
+        source: "theme",
+      },
+    ];
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        css: ".article {}",
+        diagnostics: [
+          {
+            code: "missing-template",
+            message: "Template p is missing.",
+            severity: "warning",
+            source: "template",
+          },
+        ],
+        frontmatter: {
+          output: "fragment",
+          theme: "basic",
+        },
+        html: "<h1>Title</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        diagnostics,
+        themeFiles: [
+          {
+            kind: "template",
+            label: "h1.hbs",
+            path: "/theme/templates/h1.hbs",
+            templateKey: "h1",
+          },
+        ],
+        transformedAt: 100,
+      },
+    );
+    diagnostics[0] = {
+      message: "mutated",
+      source: "extension",
+    };
+
+    const state = documentStateService.getState();
+    expect(state).toMatchObject({
+      css: ".article {}",
+      currentTheme: "basic",
+      generatedHtml: "<h1>Title</h1>",
+      isStale: false,
+      lastTransformedAt: 100,
+      resolvedThemeId: "basic",
+    });
+    expect(state.diagnostics).toEqual([
+      {
+        message: "Theme warning",
+        source: "theme",
+      },
+      {
+        message: "missing-template: Template p is missing.",
+        source: "transform",
+      },
+    ]);
+    expect(state.currentThemeFiles).toEqual([
+      {
+        kind: "template",
+        label: "h1.hbs",
+        path: "/theme/templates/h1.hbs",
+        templateKey: "h1",
+      },
+    ]);
+
+    (state.diagnostics as DiagnosticMessage[])[0] = {
+      message: "changed by caller",
+      source: "extension",
+    };
+    expect(documentStateService.getState().diagnostics[0]).toEqual({
+      message: "Theme warning",
+      source: "theme",
+    });
+  });
+
+  it("ignores transform results for a stale active document uri", () => {
+    const documentStateService = new DocumentStateService();
+    const observedHtml: string[] = [];
+    documentStateService.subscribe((state) => {
+      observedHtml.push(state.generatedHtml);
+    });
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# First",
+      uri: "file:///first.md",
+    });
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+
+    const state = documentStateService.applyTransformResult(
+      {
+        diagnostics: [],
+        html: "<h1>First</h1>",
+        resolvedThemeId: "default",
+      },
+      {
+        expectedUri: "file:///first.md",
+      },
+    );
+
+    expect(state).toMatchObject({
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+    expect(observedHtml).toEqual(["", ""]);
   });
 
   it("passes transform requests to the loaded WASM module", async () => {

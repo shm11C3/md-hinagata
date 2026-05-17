@@ -7,7 +7,10 @@ import {
   PreviewPanel,
 } from "./panels/previewPanel.js";
 import { DiagnosticsService } from "./services/diagnosticsService.js";
-import { DocumentStateService } from "./services/documentStateService.js";
+import {
+  createActiveDocumentSnapshot,
+  DocumentStateService,
+} from "./services/documentStateService.js";
 import { ThemeResolver } from "./services/themeResolver.js";
 import {
   createWasmModuleLoader,
@@ -72,8 +75,12 @@ export function activate(context: vscode.ExtensionContext): void {
     themeResolver,
     workspaceTrustService,
   });
+  updateActiveEditorState(documentStateService, vscode.window.activeTextEditor);
 
   context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      updateActiveEditorState(documentStateService, editor);
+    }),
     vscode.window.registerWebviewViewProvider(
       THEME_MANAGER_VIEW_ID,
       themeEditorViewProvider,
@@ -88,3 +95,17 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
+
+function updateActiveEditorState(
+  documentStateService: DocumentStateService,
+  editor: vscode.TextEditor | undefined,
+): void {
+  if (editor === undefined) {
+    documentStateService.setInactive();
+    return;
+  }
+
+  documentStateService.setActiveDocument(
+    createActiveDocumentSnapshot(editor.document),
+  );
+}
