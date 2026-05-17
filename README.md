@@ -261,7 +261,7 @@ md-hinagata/
     vscode-extension/
       package.json
       tsconfig.json
-      esbuild.config.mjs
+      esbuild.config.ts
       src/
         extension.ts
         commands/
@@ -333,7 +333,7 @@ md-hinagata/
 
 Prerequisites:
 
-- Node.js with `pnpm` 10.x.
+- Node.js 22 or 24 with `pnpm` 10.x.
 - Rust toolchain with Cargo.
 
 Install JavaScript workspace dependencies:
@@ -346,6 +346,21 @@ Check the Rust workspace:
 
 ```bash
 cargo check --workspace
+```
+
+Run the current workspace checks:
+
+```bash
+pnpm run check
+pnpm run format
+pnpm run lint
+pnpm run test
+```
+
+Build the VS Code extension bundle:
+
+```bash
+pnpm run build
 ```
 
 ## Rust core
