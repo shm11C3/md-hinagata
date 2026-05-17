@@ -6,11 +6,9 @@ import {
   PREVIEW_PANEL_VIEW_TYPE,
   PreviewPanel,
 } from "./panels/previewPanel.js";
+import { updateActiveEditorState } from "./services/activeEditorState.js";
 import { DiagnosticsService } from "./services/diagnosticsService.js";
-import {
-  createActiveDocumentSnapshot,
-  DocumentStateService,
-} from "./services/documentStateService.js";
+import { DocumentStateService } from "./services/documentStateService.js";
 import { DocumentTransformService } from "./services/documentTransformService.js";
 import { ThemeResolver } from "./services/themeResolver.js";
 import {
@@ -121,20 +119,6 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {}
-
-function updateActiveEditorState(
-  documentStateService: DocumentStateService,
-  editor: vscode.TextEditor | undefined,
-): void {
-  if (editor === undefined) {
-    documentStateService.setInactive();
-    return;
-  }
-
-  documentStateService.setActiveDocument(
-    createActiveDocumentSnapshot(editor.document),
-  );
-}
 
 function isActiveMarkdownDocumentChange(
   documentStateService: DocumentStateService,
