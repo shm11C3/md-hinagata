@@ -8,11 +8,11 @@ pub mod theme;
 pub mod transform;
 
 pub use diagnostics::{
-    Diagnostic, DiagnosticRange, DiagnosticSeverity, DiagnosticSource, MISSING_TEMPLATE,
-    TEMPLATE_RENDER_ERROR, UNKNOWN_THEME,
+    Diagnostic, DiagnosticRange, DiagnosticSeverity, DiagnosticSource, INVALID_FRONTMATTER,
+    MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR, UNKNOWN_THEME,
 };
 pub use error::{CoreError, Result};
-pub use frontmatter::ParsedFrontmatter;
+pub use frontmatter::{parse_frontmatter, ParsedFrontmatter, ParsedMarkdown};
 pub use markdown::MarkdownBlock;
 pub use theme::{ThemeManifest, ThemePackage, ThemeSource};
 pub use transform::{transform, TransformOptions, TransformRequest, TransformResponse};

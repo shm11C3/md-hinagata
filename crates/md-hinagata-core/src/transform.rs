@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    markdown::parse_markdown, renderer::render_blocks, theme::resolve_theme, Diagnostic,
-    ParsedFrontmatter, Result, ThemePackage,
+    frontmatter::parse_frontmatter, markdown::parse_markdown, renderer::render_blocks,
+    theme::resolve_theme, Diagnostic, ParsedFrontmatter, Result, ThemePackage,
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,14 +40,20 @@ pub struct TransformResponse {
 
 pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     let mut diagnostics = Vec::new();
+    let parsed_markdown = parse_frontmatter(&request.markdown);
+    diagnostics.extend(parsed_markdown.diagnostics);
+
     let theme = resolve_theme(
         &request.themes,
-        None,
+        parsed_markdown
+            .frontmatter
+            .as_ref()
+            .and_then(|frontmatter| frontmatter.theme.as_deref()),
         request.default_theme_id.as_deref(),
         &mut diagnostics,
     );
     let resolved_theme_id = theme.map(|theme| theme.id.clone()).unwrap_or_default();
-    let blocks = parse_markdown(&request.markdown);
+    let blocks = parse_markdown(&parsed_markdown.markdown);
     let html = render_blocks(&blocks, theme, &mut diagnostics);
 
     let css = theme.and_then(|theme| theme.css.clone());
@@ -56,7 +62,7 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
         html,
         css,
         resolved_theme_id,
-        frontmatter: None,
+        frontmatter: parsed_markdown.frontmatter,
         diagnostics,
     })
 }

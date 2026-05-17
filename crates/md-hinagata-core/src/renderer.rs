@@ -12,6 +12,7 @@ pub fn render_blocks(
     blocks
         .iter()
         .map(|block| render_block(block, theme, diagnostics))
+        .map(|html| html.trim_end().to_owned())
         .collect::<Vec<_>>()
         .join("\n")
 }
