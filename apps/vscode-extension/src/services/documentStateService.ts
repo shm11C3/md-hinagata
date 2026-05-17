@@ -245,6 +245,7 @@ function transformDiagnosticToMessage(
       diagnostic.code === undefined
         ? diagnostic.message
         : `${diagnostic.code}: ${diagnostic.message}`,
+    severity: diagnostic.severity,
     source: diagnostic.source === "theme" ? "theme" : "transform",
   };
 }

@@ -1,5 +1,8 @@
+export type DiagnosticMessageSeverity = "error" | "warning" | "info";
+
 export interface DiagnosticMessage {
   message: string;
+  severity?: DiagnosticMessageSeverity;
   source: "extension" | "theme" | "transform";
 }
 
