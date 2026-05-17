@@ -56,6 +56,18 @@ describe("updateFrontmatterTheme", () => {
     });
   });
 
+  it("rejects block-style non-mapping hinagata frontmatter", () => {
+    expect(
+      updateFrontmatterTheme({
+        source: "---\nhinagata:\n  - theme: dark\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Existing hinagata frontmatter must be a mapping.",
+    });
+  });
+
   it("adds a hinagata block to existing frontmatter", () => {
     expect(
       updateFrontmatterTheme({
@@ -79,6 +91,20 @@ describe("updateFrontmatterTheme", () => {
       ok: true,
       source:
         "---\r\ntitle: Article\r\n\r\nhinagata:\r\n  theme: basic\r\n---\r\n# Title\r\n",
+    });
+  });
+
+  it("does not close frontmatter on indented block scalar delimiters", () => {
+    expect(
+      updateFrontmatterTheme({
+        source:
+          "---\ndescription: |\n  ---\nhinagata:\n  theme: old\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: true,
+      source:
+        "---\ndescription: |\n  ---\nhinagata:\n  theme: basic\n---\n# Title\n",
     });
   });
 

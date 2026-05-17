@@ -77,7 +77,7 @@ function readFrontmatter(source: string): FrontmatterReadResult {
   }
 
   for (let index = 1; index < lines.length; index += 1) {
-    if (lines[index]?.trim() === "---") {
+    if (/^---\s*$/.test(lines[index] ?? "")) {
       return {
         closeLine: index,
         kind: "existing",
@@ -155,6 +155,20 @@ function updateFrontmatterLines(
     hinagataIndex,
     blockEnd,
   );
+  if (
+    hasNonMappingDirectChildren(
+      nextLines,
+      hinagataIndex + 1,
+      blockEnd,
+      childIndent,
+    )
+  ) {
+    return {
+      ok: false,
+      reason: "Existing hinagata frontmatter must be a mapping.",
+    };
+  }
+
   const themeIndex = findDirectNestedKeyIndex(
     nextLines,
     "theme",
@@ -297,6 +311,36 @@ function inferDirectChildIndent(
   }
 
   return `${parentIndent}  `;
+}
+
+function hasNonMappingDirectChildren(
+  lines: readonly string[],
+  startIndex: number,
+  endIndex: number,
+  childIndent: string,
+): boolean {
+  for (let index = startIndex; index < endIndex; index += 1) {
+    const line = lines[index];
+    if (line === undefined || line.trim().length === 0) {
+      continue;
+    }
+
+    const indent = line.match(/^(\s*)/)?.[1] ?? "";
+    if (indent !== childIndent) {
+      continue;
+    }
+
+    const value = line.slice(childIndent.length);
+    if (value.trimStart().startsWith("#")) {
+      continue;
+    }
+
+    if (value.match(/^[A-Za-z0-9_-]+\s*:/) === null) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function stripInlineComment(value: string): string {
