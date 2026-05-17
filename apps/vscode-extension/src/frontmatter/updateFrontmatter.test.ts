@@ -56,6 +56,20 @@ describe("updateFrontmatterTheme", () => {
     });
   });
 
+  it("ignores comments when inferring hinagata child indentation", () => {
+    expect(
+      updateFrontmatterTheme({
+        source:
+          "---\nhinagata:\n    # Theme settings\n  output: fragment\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: true,
+      source:
+        "---\nhinagata:\n  theme: basic\n    # Theme settings\n  output: fragment\n---\n# Title\n",
+    });
+  });
+
   it("rejects block-style non-mapping hinagata frontmatter", () => {
     expect(
       updateFrontmatterTheme({
@@ -65,6 +79,18 @@ describe("updateFrontmatterTheme", () => {
     ).toEqual({
       ok: false,
       reason: "Existing hinagata frontmatter must be a mapping.",
+    });
+  });
+
+  it("rejects broken nested flow frontmatter before editing", () => {
+    expect(
+      updateFrontmatterTheme({
+        source: "---\nmeta:\n  tags: [a\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "Frontmatter could not be parsed safely.",
     });
   });
 

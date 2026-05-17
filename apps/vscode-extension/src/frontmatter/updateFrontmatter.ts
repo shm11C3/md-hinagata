@@ -205,6 +205,10 @@ function validateEditableFrontmatter(
     }
 
     if (/^\s/.test(line)) {
+      const nestedValue = stripInlineComment(line).trim();
+      if (hasUnbalancedFlowCollection(nestedValue)) {
+        return "Frontmatter could not be parsed safely.";
+      }
       continue;
     }
 
@@ -300,7 +304,11 @@ function inferDirectChildIndent(
   const parentIndent = lines[parentIndex]?.match(/^(\s*)/)?.[1] ?? "";
   for (let index = parentIndex + 1; index < blockEnd; index += 1) {
     const line = lines[index];
-    if (line === undefined || line.trim().length === 0) {
+    if (
+      line === undefined ||
+      line.trim().length === 0 ||
+      line.trimStart().startsWith("#")
+    ) {
       continue;
     }
 
