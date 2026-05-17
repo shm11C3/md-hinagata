@@ -61,13 +61,20 @@ describe("ThemeResolver", () => {
     ]);
   });
 
-  it("loads the repository bundled default theme during local development", async () => {
-    const extensionRoot = path.resolve(
+  it("loads the repository bundled default theme when injected for local development", async () => {
+    const extensionPackageRoot = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),
       "..",
       "..",
     );
-    const resolver = new ThemeResolver({ fsPath: extensionRoot });
+    const resolver = new ThemeResolver(
+      { fsPath: extensionPackageRoot },
+      {
+        bundledThemeRoots: [
+          path.resolve(extensionPackageRoot, "..", "..", "themes"),
+        ],
+      },
+    );
 
     const result = await resolver.resolveTheme("default", {
       isWorkspaceTrusted: false,
@@ -77,6 +84,31 @@ describe("ThemeResolver", () => {
     expect(result.theme?.source).toBe("bundled");
     expect(result.theme?.themePackage.id).toBe("default");
     expect(result.theme?.themePackage.templates.h1).toContain("<h1");
+  });
+
+  it("rejects path-like theme ids before reading theme files", async () => {
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      {
+        readTextFile: async () => {
+          throw new Error("theme files should not be read");
+        },
+      },
+    );
+
+    await expect(
+      resolver.resolveTheme("../default", { isWorkspaceTrusted: true }),
+    ).resolves.toEqual({
+      diagnostics: [
+        {
+          message: "Invalid theme id '../default'.",
+          source: "theme",
+        },
+      ],
+    });
+    expect(
+      resolver.canSelectTheme("../default", { isWorkspaceTrusted: true }),
+    ).toBe(false);
   });
 
   it("reports missing bundled template files", async () => {

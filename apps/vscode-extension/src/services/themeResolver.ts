@@ -97,7 +97,10 @@ export class ThemeResolver {
     themeId: string,
     options: ThemeSelectionOptions,
   ): boolean {
-    return options.isWorkspaceTrusted || themeId === "default";
+    return (
+      isValidThemeId(themeId) &&
+      (options.isWorkspaceTrusted || themeId === "default")
+    );
   }
 
   public async resolveTheme(
@@ -105,6 +108,11 @@ export class ThemeResolver {
     options: ThemeResolutionOptions,
   ): Promise<ThemeResolution> {
     const diagnostics: DiagnosticMessage[] = [];
+    if (!isValidThemeId(themeId)) {
+      return {
+        diagnostics: [themeDiagnostic(`Invalid theme id '${themeId}'.`)],
+      };
+    }
 
     if (options.isWorkspaceTrusted) {
       for (const workspaceFolder of this.getWorkspaceFolders(options)) {
@@ -349,10 +357,7 @@ export class ThemeResolver {
 function getDefaultBundledThemeRoots(
   extensionUri: ThemeResolverUri,
 ): readonly string[] {
-  return [
-    path.join(extensionUri.fsPath, "themes"),
-    path.resolve(extensionUri.fsPath, "..", "..", "themes"),
-  ];
+  return [path.join(extensionUri.fsPath, "themes")];
 }
 
 async function readTextUtf8(filePath: string): Promise<string> {
@@ -522,6 +527,19 @@ function resolveThemeAssetPath(
   }
 
   return resolvedPath;
+}
+
+function isValidThemeId(themeId: string): boolean {
+  return (
+    themeId.length > 0 &&
+    themeId.trim() === themeId &&
+    themeId !== "." &&
+    themeId !== ".." &&
+    !path.isAbsolute(themeId) &&
+    !path.win32.isAbsolute(themeId) &&
+    !themeId.includes("/") &&
+    !themeId.includes("\\")
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
