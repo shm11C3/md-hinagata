@@ -1,8 +1,14 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { type BuildOptions, build, context } from "esbuild";
 
 const watch = process.argv.includes("--watch");
+const configDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 const options: BuildOptions = {
+  alias: {
+    yaml: path.join(configDirectory, "node_modules/yaml/browser/index.js"),
+  },
   bundle: true,
   entryPoints: ["src/extension.ts"],
   external: ["vscode"],

@@ -1,3 +1,5 @@
+import { parse as parseYaml } from "yaml";
+
 export interface FrontmatterUpdateRequest {
   readonly source: string;
   readonly themeId: string;
@@ -199,34 +201,24 @@ function updateFrontmatterLines(
 function validateEditableFrontmatter(
   lines: readonly string[],
 ): string | undefined {
-  for (const line of lines) {
-    if (line.trim().length === 0 || line.trimStart().startsWith("#")) {
-      continue;
-    }
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(lines.join("\n"));
+  } catch {
+    return "Frontmatter could not be parsed safely.";
+  }
 
-    if (/^\s/.test(line)) {
-      const nestedValue = stripInlineComment(line).trim();
-      if (hasUnbalancedFlowCollection(nestedValue)) {
-        return "Frontmatter could not be parsed safely.";
-      }
-      continue;
-    }
+  if (parsed === null) {
+    return undefined;
+  }
 
-    const keyMatch = line.match(/^([A-Za-z0-9_-]+)\s*:(.*)$/);
-    if (keyMatch === null) {
-      return "Frontmatter could not be parsed safely.";
-    }
+  if (!isRecord(parsed)) {
+    return "Frontmatter could not be parsed safely.";
+  }
 
-    const value = stripInlineComment(keyMatch[2] ?? "").trim();
-    if (keyMatch[1] === "hinagata") {
-      if (value.length > 0) {
-        return "Existing hinagata frontmatter must be a mapping.";
-      }
-    }
-
-    if (hasUnbalancedFlowCollection(value)) {
-      return "Frontmatter could not be parsed safely.";
-    }
+  const hinagata = parsed.hinagata;
+  if (hinagata !== undefined && hinagata !== null && !isRecord(hinagata)) {
+    return "Existing hinagata frontmatter must be a mapping.";
   }
 
   return undefined;
@@ -351,26 +343,14 @@ function hasNonMappingDirectChildren(
   return false;
 }
 
-function stripInlineComment(value: string): string {
-  const commentIndex = value.indexOf("#");
-  return commentIndex === -1 ? value : value.slice(0, commentIndex);
-}
-
-function hasUnbalancedFlowCollection(value: string): boolean {
-  return (
-    countOccurrences(value, "[") !== countOccurrences(value, "]") ||
-    countOccurrences(value, "{") !== countOccurrences(value, "}")
-  );
-}
-
-function countOccurrences(value: string, needle: string): number {
-  return value.split(needle).length - 1;
-}
-
 function formatYamlString(value: string): string {
   return /^[A-Za-z0-9._-]+$/.test(value) ? value : JSON.stringify(value);
 }
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

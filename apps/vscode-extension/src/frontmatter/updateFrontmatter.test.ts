@@ -134,6 +134,20 @@ describe("updateFrontmatterTheme", () => {
     });
   });
 
+  it("accepts valid block scalars with flow-looking text", () => {
+    expect(
+      updateFrontmatterTheme({
+        source:
+          "---\ndescription: |\n  function(x) {\n    return x\n  }\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: true,
+      source:
+        "---\ndescription: |\n  function(x) {\n    return x\n  }\n\nhinagata:\n  theme: basic\n---\n# Title\n",
+    });
+  });
+
   it("rejects frontmatter without a closing delimiter", () => {
     expect(
       updateFrontmatterTheme({
@@ -149,7 +163,7 @@ describe("updateFrontmatterTheme", () => {
   it("rejects unsupported hinagata frontmatter shapes", () => {
     expect(
       updateFrontmatterTheme({
-        source: "---\nhinagata: [\n---\n# Title\n",
+        source: "---\nhinagata: []\n---\n# Title\n",
         themeId: "basic",
       }),
     ).toEqual({
@@ -161,7 +175,7 @@ describe("updateFrontmatterTheme", () => {
   it("rejects clearly broken existing metadata", () => {
     expect(
       updateFrontmatterTheme({
-        source: "---\ntitle: [\n---\n# Title\n",
+        source: '---\ntitle: "unterminated\n---\n# Title\n',
         themeId: "basic",
       }),
     ).toEqual({

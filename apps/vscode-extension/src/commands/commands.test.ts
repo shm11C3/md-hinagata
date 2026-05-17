@@ -627,7 +627,7 @@ describe("extension commands", () => {
 
     expect(editableDocument.getText()).toBe("---\nhinagata: [\n---\n# Title\n");
     expect(messages).toEqual([
-      "warning:Could not update frontmatter: Existing hinagata frontmatter must be a mapping.",
+      "warning:Could not update frontmatter: Frontmatter could not be parsed safely.",
     ]);
   });
 });
