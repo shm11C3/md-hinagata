@@ -146,6 +146,44 @@ describe("extension commands", () => {
     expect(openedPaths).toEqual(["/theme/basic/theme.json"]);
   });
 
+  it("returns false when opening a current theme file fails", async () => {
+    const documentStateService = new DocumentStateService();
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult(
+      {
+        diagnostics: [],
+        html: "<h1>Title</h1>",
+        resolvedThemeId: "basic",
+      },
+      {
+        themeFiles: [
+          {
+            kind: "manifest",
+            label: "theme.json",
+            path: "/theme/basic/theme.json",
+          },
+        ],
+      },
+    );
+
+    await expect(
+      openThemeFile(
+        documentStateService,
+        {
+          open: () => {
+            throw new Error("Failed to open file.");
+          },
+        },
+        "/theme/basic/theme.json",
+      ),
+    ).resolves.toBe(false);
+  });
+
   it("updates the selected theme when a theme id is provided", () => {
     const documentStateService = new DocumentStateService();
     const workspaceTrustService = new WorkspaceTrustService(() => true);

@@ -21,6 +21,10 @@ export async function openThemeFile(
     return false;
   }
 
-  await fileOpener.open(filePath);
-  return true;
+  try {
+    await fileOpener.open(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
