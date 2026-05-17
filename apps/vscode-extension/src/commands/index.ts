@@ -44,10 +44,13 @@ export function registerCommands(
         return undefined;
       }
 
-      return copyGeneratedHtml(
-        vscode.env.clipboard,
-        dependencies.documentStateService,
-      );
+      return copyGeneratedHtml({
+        clipboard: vscode.env.clipboard,
+        documentStateService: dependencies.documentStateService,
+        notifier: vscode.window,
+        refreshActiveDocument: () =>
+          dependencies.documentTransformService.refreshActiveDocument(),
+      });
     }),
     vscode.commands.registerCommand(
       COMMAND_IDS.openThemeFile,
@@ -69,18 +72,46 @@ export function registerCommands(
     ),
     vscode.commands.registerCommand(
       COMMAND_IDS.selectTheme,
-      (themeId: unknown) => {
-        const document = getActiveMarkdownDocument(vscode.window);
+      async (themeId: unknown) => {
+        const document = getActiveMarkdownDocument(vscode.window) as
+          | vscode.TextDocument
+          | undefined;
         if (document === undefined) {
           return undefined;
         }
 
-        return selectTheme(
-          dependencies.documentStateService,
-          dependencies.workspaceTrustService,
-          dependencies.themeResolver,
+        return selectTheme({
+          document: {
+            getText: () => document.getText(),
+            replaceText: async (source) => {
+              const edit = new vscode.WorkspaceEdit();
+              edit.replace(
+                document.uri,
+                new vscode.Range(
+                  document.positionAt(0),
+                  document.positionAt(document.getText().length),
+                ),
+                source,
+              );
+              return vscode.workspace.applyEdit(edit);
+            },
+          },
+          documentStateService: dependencies.documentStateService,
+          notifier: vscode.window,
+          picker: {
+            showQuickPick: async (items, options) =>
+              vscode.window.showQuickPick(items, options),
+          },
+          refreshActiveDocument: () => {
+            dependencies.documentStateService.setActiveDocument(
+              createActiveDocumentSnapshot(document),
+            );
+            return dependencies.documentTransformService.refreshActiveDocument();
+          },
           themeId,
-        );
+          themeResolver: dependencies.themeResolver,
+          workspaceTrustService: dependencies.workspaceTrustService,
+        });
       },
     ),
   );

@@ -235,6 +235,88 @@ describe("ThemeResolver", () => {
     );
   });
 
+  it("lists selectable workspace themes before bundled themes", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: {
+        h1: "<h1>bundled {{text}}</h1>",
+      },
+    });
+    await writeTheme(path.join(bundledThemeRoot, "bundled-only"), {
+      templates: {
+        h1: "<h1>bundled only {{text}}</h1>",
+      },
+    });
+    await writeTheme(
+      path.join(workspaceRoot, ".md-hinagata", "themes", "default"),
+      {
+        templates: {
+          h1: "<h1>workspace {{text}}</h1>",
+        },
+      },
+    );
+    await writeTheme(
+      path.join(workspaceRoot, ".md-hinagata", "themes", "workspace-only"),
+      {
+        templates: {
+          h1: "<h1>workspace only {{text}}</h1>",
+        },
+      },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      {
+        workspaceFolders: [{ uri: { fsPath: workspaceRoot } }],
+      },
+    );
+
+    await expect(
+      resolver.listSelectableThemes({ isWorkspaceTrusted: true }),
+    ).resolves.toEqual([
+      {
+        id: "default",
+        source: "workspace",
+      },
+      {
+        id: "workspace-only",
+        source: "workspace",
+      },
+      {
+        id: "bundled-only",
+        source: "bundled",
+      },
+    ]);
+  });
+
+  it("lists only the bundled default theme in untrusted workspaces", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: {},
+    });
+    await writeTheme(path.join(bundledThemeRoot, "bundled-only"), {
+      templates: {},
+    });
+    await writeTheme(
+      path.join(workspaceRoot, ".md-hinagata", "themes", "workspace-only"),
+      {
+        templates: {},
+      },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      {
+        workspaceFolders: [{ uri: { fsPath: workspaceRoot } }],
+      },
+    );
+
+    await expect(
+      resolver.listSelectableThemes({ isWorkspaceTrusted: false }),
+    ).resolves.toEqual([
+      {
+        id: "default",
+        source: "bundled",
+      },
+    ]);
+  });
+
   it("reports a broken workspace theme and falls back to bundled themes", async () => {
     await writeTheme(path.join(bundledThemeRoot, "default"), {
       templates: {
