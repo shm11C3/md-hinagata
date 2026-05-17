@@ -13,6 +13,7 @@ describe("webview HTML utilities", () => {
     const html = createWebviewHtml({
       bodyHtml: "<p>Trusted fragment</p>",
       cspSource: "vscode-resource:",
+      inlineStyles: [".preview::after { content: '</style>'; }"],
       nonce: "testnonce",
       stylesheets: ["vscode-resource:/preview.css"],
       title: "<Theme Manager>",
@@ -24,6 +25,9 @@ describe("webview HTML utilities", () => {
     expect(html).toContain("<title>&lt;Theme Manager&gt;</title>");
     expect(html).toContain(
       '<link rel="stylesheet" href="vscode-resource:/preview.css">',
+    );
+    expect(html).toContain(
+      "<style nonce=\"testnonce\">.preview::after { content: '<\\/style>'; }</style>",
     );
     expect(html).toContain("<p>Trusted fragment</p>");
     expect(html).not.toContain("<title><Theme Manager></title>");

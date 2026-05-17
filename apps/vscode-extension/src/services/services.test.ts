@@ -6,7 +6,10 @@ import {
   createActiveDocumentSnapshot,
   DocumentStateService,
 } from "./documentStateService.js";
+import { DocumentTransformService } from "./documentTransformService.js";
 import {
+  type TransformRequest,
+  type TransformResponse,
   TransformService,
   type WasmTransformModuleLoader,
 } from "./transformService.js";
@@ -295,6 +298,170 @@ describe("extension services", () => {
       uri: "file:///second.md",
     });
     expect(observedHtml).toEqual(["", ""]);
+  });
+
+  it("refreshes active documents with resolved theme packages", async () => {
+    const documentStateService = new DocumentStateService();
+    const resolvedThemeFiles = [
+      {
+        kind: "stylesheet" as const,
+        label: "styles.css",
+        path: "/themes/workspace/styles.css",
+      },
+    ];
+    const resolvedThemes = {
+      default: {
+        diagnostics: [],
+        theme: {
+          files: [],
+          rootPath: "/themes/default",
+          source: "bundled" as const,
+          themePackage: {
+            css: ".default {}",
+            id: "default",
+            name: "Default",
+            templates: {},
+            version: "0.1.0",
+          },
+        },
+      },
+      workspace: {
+        diagnostics: [],
+        theme: {
+          files: resolvedThemeFiles,
+          rootPath: "/themes/workspace",
+          source: "workspace" as const,
+          themePackage: {
+            css: ".workspace {}",
+            id: "workspace",
+            name: "Workspace",
+            templates: {},
+            version: "0.1.0",
+          },
+        },
+      },
+    };
+    const resolvedThemeIds: string[] = [];
+    const transformRequests: TransformRequest[] = [];
+    const documentTransformService = new DocumentTransformService(
+      documentStateService,
+      {
+        resolveTheme: async (themeId) => {
+          resolvedThemeIds.push(themeId);
+          return resolvedThemes[themeId as keyof typeof resolvedThemes];
+        },
+      },
+      {
+        transform: async (request) => {
+          transformRequests.push(request);
+          return transformRequests.length === 1
+            ? {
+                diagnostics: [],
+                frontmatter: {
+                  theme: "workspace",
+                },
+                html: "<p>Default</p>",
+                resolvedThemeId: "default",
+              }
+            : {
+                css: ".workspace {}",
+                diagnostics: [],
+                frontmatter: {
+                  theme: "workspace",
+                },
+                html: "<p>Workspace</p>",
+                resolvedThemeId: "workspace",
+              };
+        },
+      },
+      new WorkspaceTrustService(() => true),
+    );
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  theme: workspace\n---\n# Title",
+      uri: "file:///article.md",
+    });
+
+    const state = await documentTransformService.refreshActiveDocument();
+
+    expect(resolvedThemeIds).toEqual(["default", "workspace"]);
+    expect(
+      transformRequests.map((request) =>
+        request.themes.map((theme) => theme.id),
+      ),
+    ).toEqual([["default"], ["workspace", "default"]]);
+    expect(state).toMatchObject({
+      css: ".workspace {}",
+      currentTheme: "workspace",
+      currentThemeFiles: resolvedThemeFiles,
+      generatedHtml: "<p>Workspace</p>",
+      isStale: false,
+      resolvedThemeId: "workspace",
+    });
+  });
+
+  it("does not apply a refresh result after the active document changes", async () => {
+    const documentStateService = new DocumentStateService();
+    let completeTransform: ((response: TransformResponse) => void) | undefined;
+    let markTransformStarted = (): void => {};
+    const transformStarted = new Promise<void>((resolve) => {
+      markTransformStarted = resolve;
+    });
+    const documentTransformService = new DocumentTransformService(
+      documentStateService,
+      {
+        resolveTheme: async () => ({
+          diagnostics: [],
+          theme: {
+            files: [],
+            rootPath: "/themes/default",
+            source: "bundled",
+            themePackage: {
+              id: "default",
+              name: "Default",
+              templates: {},
+              version: "0.1.0",
+            },
+          },
+        }),
+      },
+      {
+        transform: () =>
+          new Promise((resolve) => {
+            completeTransform = resolve;
+            markTransformStarted();
+          }),
+      },
+      new WorkspaceTrustService(() => true),
+    );
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# First",
+      uri: "file:///first.md",
+    });
+    const refresh = documentTransformService.refreshActiveDocument();
+    await transformStarted;
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
+    completeTransform?.({
+      diagnostics: [],
+      html: "<h1>First</h1>",
+      resolvedThemeId: "default",
+    });
+
+    const state = await refresh;
+
+    expect(state).toMatchObject({
+      generatedHtml: "",
+      isStale: true,
+      markdown: "# Second",
+      uri: "file:///second.md",
+    });
   });
 
   it("passes transform requests to the loaded WASM module", async () => {

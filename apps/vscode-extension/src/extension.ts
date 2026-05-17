@@ -11,12 +11,14 @@ import {
   createActiveDocumentSnapshot,
   DocumentStateService,
 } from "./services/documentStateService.js";
+import { DocumentTransformService } from "./services/documentTransformService.js";
 import { ThemeResolver } from "./services/themeResolver.js";
 import {
   createWasmModuleLoader,
   TransformService,
 } from "./services/transformService.js";
 import { WorkspaceTrustService } from "./services/workspaceTrustService.js";
+import { debounce } from "./utils/debounce.js";
 import {
   THEME_MANAGER_VIEW_ID,
   ThemeEditorViewProvider,
@@ -39,30 +41,32 @@ export function activate(context: vscode.ExtensionContext): void {
   const workspaceTrustService = new WorkspaceTrustService(
     () => vscode.workspace.isTrusted,
   );
-  const previewPanel = new PreviewPanel(
+  const documentTransformService = new DocumentTransformService(
     documentStateService,
+    themeResolver,
     transformService,
-    {
-      createPanel: () =>
-        vscode.window.createWebviewPanel(
-          PREVIEW_PANEL_VIEW_TYPE,
-          PREVIEW_PANEL_TITLE,
-          vscode.ViewColumn.Beside,
-          {
-            enableScripts: false,
-            localResourceRoots: [previewMediaRoot],
-            retainContextWhenHidden: true,
-          },
-        ),
-      resolveStylesheetUri: (webview) =>
-        webview
-          .asWebviewUri(vscode.Uri.joinPath(previewMediaRoot, "styles.css"))
-          .toString(),
-      revealPanel: (panel) => {
-        panel.reveal(vscode.ViewColumn.Beside);
-      },
-    },
+    workspaceTrustService,
   );
+  const previewPanel = new PreviewPanel(documentStateService, {
+    createPanel: () =>
+      vscode.window.createWebviewPanel(
+        PREVIEW_PANEL_VIEW_TYPE,
+        PREVIEW_PANEL_TITLE,
+        vscode.ViewColumn.Beside,
+        {
+          enableScripts: false,
+          localResourceRoots: [previewMediaRoot],
+          retainContextWhenHidden: true,
+        },
+      ),
+    resolveStylesheetUri: (webview) =>
+      webview
+        .asWebviewUri(vscode.Uri.joinPath(previewMediaRoot, "styles.css"))
+        .toString(),
+    revealPanel: (panel) => {
+      panel.reveal(vscode.ViewColumn.Beside);
+    },
+  });
   const themeEditorViewProvider = new ThemeEditorViewProvider(
     documentStateService,
     diagnosticsService,
@@ -71,15 +75,36 @@ export function activate(context: vscode.ExtensionContext): void {
 
   registerCommands(context, {
     documentStateService,
+    documentTransformService,
     previewPanel,
     themeResolver,
     workspaceTrustService,
   });
   updateActiveEditorState(documentStateService, vscode.window.activeTextEditor);
+  void documentTransformService.refreshActiveDocument();
+
+  const refreshActiveDocument = (): void => {
+    void documentTransformService.refreshActiveDocument();
+  };
+  const debouncedRefreshActiveDocument = debounce(refreshActiveDocument, 150);
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       updateActiveEditorState(documentStateService, editor);
+      refreshActiveDocument();
+    }),
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (
+        !isActiveMarkdownDocumentChange(documentStateService, event.document)
+      ) {
+        return;
+      }
+
+      documentStateService.updateMarkdown(
+        event.document.uri.toString(),
+        event.document.getText(),
+      );
+      debouncedRefreshActiveDocument();
     }),
     vscode.window.registerWebviewViewProvider(
       THEME_MANAGER_VIEW_ID,
@@ -91,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): void {
     transformService,
     workspaceTrustService,
     previewPanel,
+    themeEditorViewProvider,
   );
 }
 
@@ -108,4 +134,16 @@ function updateActiveEditorState(
   documentStateService.setActiveDocument(
     createActiveDocumentSnapshot(editor.document),
   );
+}
+
+function isActiveMarkdownDocumentChange(
+  documentStateService: DocumentStateService,
+  document: vscode.TextDocument,
+): boolean {
+  if (document.languageId !== "markdown") {
+    return false;
+  }
+
+  const state = documentStateService.getState();
+  return state.status === "active" && state.uri === document.uri.toString();
 }

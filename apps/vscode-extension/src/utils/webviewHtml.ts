@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 export interface WebviewHtmlOptions {
   bodyHtml: string;
   cspSource: string;
+  inlineStyles?: readonly string[];
   nonce?: string;
   stylesheets?: readonly string[];
   title: string;
@@ -25,6 +26,7 @@ export function createWebviewHtml(options: WebviewHtmlOptions): string {
     `<meta http-equiv="Content-Security-Policy" content="${csp};">`,
     `<title>${escapeHtml(options.title)}</title>`,
     ...createStylesheetLinks(options.stylesheets ?? []),
+    ...createInlineStyles(options.inlineStyles ?? [], nonce),
     "</head>",
     "<body>",
     options.bodyHtml,
@@ -33,10 +35,24 @@ export function createWebviewHtml(options: WebviewHtmlOptions): string {
   ].join("");
 }
 
+function createInlineStyles(
+  styles: readonly string[],
+  nonce: string,
+): string[] {
+  return styles.map(
+    (style) =>
+      `<style nonce="${escapeHtml(nonce)}">${escapeStyleText(style)}</style>`,
+  );
+}
+
 function createStylesheetLinks(stylesheets: readonly string[]): string[] {
   return stylesheets.map(
     (stylesheet) => `<link rel="stylesheet" href="${escapeHtml(stylesheet)}">`,
   );
+}
+
+function escapeStyleText(value: string): string {
+  return value.replace(/<\/style/gi, "<\\/style");
 }
 
 export function createNonce(): string {
