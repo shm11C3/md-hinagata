@@ -380,6 +380,25 @@ pnpm run build:wasm
 
 The generated WASM files are written to `apps/vscode-extension/wasm/` and are not committed.
 
+### Extension Development Host
+
+Open the repository root in VS Code, then press F5 or choose `Run md-hinagata Extension` from Run and Debug.
+
+The launch configuration starts an Extension Development Host from `apps/vscode-extension` and runs the `md-hinagata: build extension` task before launch. This builds the extension bundle without packaging a VSIX.
+
+To exercise the Rust/WASM transform path in the preview, run this once after cloning and again after Rust/WASM changes:
+
+```bash
+pnpm run build:wasm
+```
+
+In the Extension Development Host:
+
+1. Open a Markdown file, such as `examples/basic/article.md`.
+2. Confirm the `md-hinagata` Activity Bar container and Theme Manager view are visible.
+3. Run `md-hinagata: Open Preview` from the Command Palette.
+4. Confirm `md-hinagata: Copy Generated HTML` and `md-hinagata: Select Theme` appear in the Command Palette.
+
 ## Rust core
 
 The Rust core is not used because VS Code editing needs Rust. VS Code already handles editing well.
