@@ -5,7 +5,7 @@ import type { DocumentStateService } from "../services/documentStateService.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import { createWebviewHtml, escapeHtml } from "../utils/webviewHtml.js";
 
-export const THEME_MANAGER_VIEW_ID = "mdHinagata.themeManager";
+export const THEME_MANAGER_VIEW_ID = "md-hinagata.themeManager";
 
 export class ThemeEditorViewProvider implements vscode.WebviewViewProvider {
   public constructor(
