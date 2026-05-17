@@ -1,6 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { copyWasmToExtension } from "./copy-wasm-to-extension.mjs";

@@ -3,7 +3,9 @@
   margin: 0 auto;
   padding: 32px;
   color: #202124;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   line-height: 1.6;
 }
 

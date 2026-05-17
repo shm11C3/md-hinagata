@@ -6,7 +6,7 @@
     "useIgnoreFile": false
   },
   "files": {
-    "includes": ["**", "!!**/dist", "!!wasm"]
+    "includes": ["**", "!!**/dist", "!!**/wasm", "!!**/target"]
   },
   "formatter": {
     "enabled": true,
