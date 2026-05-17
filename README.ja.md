@@ -338,6 +338,7 @@ md-hinagata/
 
 - Node.js 22 または 24 と `pnpm` 10.x。
 - Cargo を含む Rust toolchain。
+- WASM bridge build 用の `wasm-bindgen` CLI `0.2.121`。
 
 JavaScript workspace の依存関係をインストールします。
 
@@ -349,6 +350,12 @@ Rust workspace を確認します。
 
 ```bash
 cargo check --workspace
+```
+
+extension 用の Rust bridge をビルドする場合は、WASM bridge CLI をインストールします。
+
+```bash
+cargo install wasm-bindgen-cli --version 0.2.121 --locked
 ```
 
 現在の workspace checks を実行します。
@@ -367,6 +374,14 @@ VS Code extension bundle をビルドします。
 ```bash
 pnpm run build
 ```
+
+WASM bridge をビルドして、生成 module を VS Code extension 側へコピーします。
+
+```bash
+pnpm run build:wasm
+```
+
+生成された WASM files は `apps/vscode-extension/wasm/` に出力され、commit しません。
 
 ## Rust coreの役割
 
