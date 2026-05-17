@@ -4,15 +4,21 @@ import type * as vscode from "vscode";
 import {
   PREVIEW_PANEL_TITLE,
   PreviewPanel,
+  type PreviewTransformService,
   type PreviewWebviewPanel,
 } from "../src/panels/previewPanel.js";
 import { DocumentStateService } from "../src/services/documentStateService.js";
-import { TransformService } from "../src/services/transformService.js";
 
 describe("PreviewPanel", () => {
-  it("creates a reusable webview panel with rendered placeholder HTML", () => {
+  it("creates a reusable webview panel with rendered placeholder HTML", async () => {
     const documentStateService = new DocumentStateService();
-    const transformService = new TransformService();
+    const transformService: PreviewTransformService = {
+      transform: async (markdown) => ({
+        diagnostics: [],
+        html: markdown,
+        resolvedThemeId: "default",
+      }),
+    };
     const panels: PreviewWebviewPanel[] = [];
     let revealCount = 0;
     let disposeCount = 0;
@@ -54,8 +60,8 @@ describe("PreviewPanel", () => {
       },
     );
 
-    previewPanel.show("");
-    previewPanel.show("");
+    await previewPanel.show("");
+    await previewPanel.show("");
 
     expect(panels).toHaveLength(1);
     expect(revealCount).toBe(2);

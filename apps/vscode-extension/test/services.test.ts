@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { DiagnosticMessage } from "../src/services/diagnosticsService.js";
 import { DiagnosticsService } from "../src/services/diagnosticsService.js";
+import {
+  TransformService,
+  type WasmTransformModuleLoader,
+} from "../src/services/transformService.js";
 import { WorkspaceTrustService } from "../src/services/workspaceTrustService.js";
 
 describe("extension services", () => {
@@ -44,5 +48,56 @@ describe("extension services", () => {
 
     isTrusted = true;
     expect(workspaceTrustService.isTrusted).toBe(true);
+  });
+
+  it("passes transform requests to the loaded WASM module", async () => {
+    let loadCount = 0;
+    const loadModule: WasmTransformModuleLoader = async () => {
+      loadCount += 1;
+      return {
+        transformMarkdownJson: (request) => ({
+          diagnostics: [],
+          html: `<p>${request.markdown}</p>`,
+          resolvedThemeId: request.defaultThemeId ?? "",
+        }),
+      };
+    };
+    const transformService = new TransformService(loadModule);
+
+    const response = await transformService.transform({
+      defaultThemeId: "default",
+      markdown: "Hello",
+      options: { allowRawHtml: false },
+      themes: [
+        {
+          id: "default",
+          name: "Default",
+          templates: {},
+          version: "0.1.0",
+        },
+      ],
+    });
+    await transformService.transform("Again");
+
+    expect(response.html).toBe("<p>Hello</p>");
+    expect(transformService.getLatestResult()?.html).toBe("<p>Again</p>");
+    expect(loadCount).toBe(1);
+  });
+
+  it("returns a transform diagnostic when WASM loading fails", async () => {
+    const transformService = new TransformService(async () => {
+      throw new Error("WASM artifact is missing");
+    });
+
+    const response = await transformService.transform("# Title");
+
+    expect(response.html).toBe("");
+    expect(response.diagnostics).toEqual([
+      {
+        message: "WASM artifact is missing",
+        severity: "error",
+        source: "transform",
+      },
+    ]);
   });
 });

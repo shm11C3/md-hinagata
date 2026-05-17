@@ -1,7 +1,7 @@
 import type * as vscode from "vscode";
 
 import type { DocumentStateService } from "../services/documentStateService.js";
-import type { TransformService } from "../services/transformService.js";
+import type { TransformResponse } from "../services/transformService.js";
 import { createWebviewHtml, escapeHtml } from "../utils/webviewHtml.js";
 
 export const PREVIEW_PANEL_VIEW_TYPE = "md-hinagata.preview";
@@ -26,12 +26,16 @@ export interface PreviewPanelHost {
   resolveStylesheetUri(webview: PreviewWebview): string;
 }
 
+export interface PreviewTransformService {
+  transform(markdown: string): Promise<TransformResponse>;
+}
+
 export class PreviewPanel {
   #panel: PreviewWebviewPanel | undefined;
 
   public constructor(
     private readonly documentStateService: DocumentStateService,
-    private readonly transformService: TransformService,
+    private readonly transformService: PreviewTransformService,
     private readonly host: PreviewPanelHost,
   ) {}
 
@@ -39,9 +43,9 @@ export class PreviewPanel {
     return this.#panel !== undefined;
   }
 
-  public show(markdown: string): void {
+  public async show(markdown: string): Promise<void> {
     const panel = this.getOrCreatePanel();
-    const result = this.transformService.transform(markdown);
+    const result = await this.transformService.transform(markdown);
     this.documentStateService.setGeneratedHtml(result.html);
     panel.webview.html = createWebviewHtml({
       bodyHtml: [
