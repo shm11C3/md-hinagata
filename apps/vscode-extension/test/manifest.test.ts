@@ -11,7 +11,13 @@ interface ExtensionManifest {
     commands: Array<{
       command: string;
     }>;
-    views: Record<string, Array<{ icon: string; id: string; name: string }>>;
+    views: Record<
+      string,
+      Array<{ icon: string; id: string; name: string; type: string }>
+    >;
+    viewsContainers: {
+      activitybar: Array<{ icon: string; id: string; title: string }>;
+    };
   };
   engines: {
     vscode: string;
@@ -54,11 +60,19 @@ describe("extension manifest", () => {
   });
 
   it("contributes the theme manager view", () => {
-    expect(manifest.contributes.views.mdHinagata).toEqual([
+    expect(manifest.contributes.viewsContainers.activitybar).toEqual([
+      {
+        icon: "resources/md-hinagata.svg",
+        id: "md-hinagata",
+        title: "md-hinagata",
+      },
+    ]);
+    expect(manifest.contributes.views["md-hinagata"]).toEqual([
       {
         icon: "resources/md-hinagata.svg",
         id: THEME_MANAGER_VIEW_ID,
         name: "Theme Manager",
+        type: "webview",
       },
     ]);
   });

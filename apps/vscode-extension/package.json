@@ -31,17 +31,18 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "mdHinagata",
+          "id": "md-hinagata",
           "title": "md-hinagata",
           "icon": "resources/md-hinagata.svg"
         }
       ]
     },
     "views": {
-      "mdHinagata": [
+      "md-hinagata": [
         {
-          "id": "mdHinagata.themeManager",
+          "id": "md-hinagata.themeManager",
           "name": "Theme Manager",
+          "type": "webview",
           "icon": "resources/md-hinagata.svg"
         }
       ]

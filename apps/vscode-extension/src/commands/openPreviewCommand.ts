@@ -1,9 +1,10 @@
 export interface PreviewPanelLike {
-  show(): void | Promise<void>;
+  show(markdown: string): void | Promise<void>;
 }
 
 export async function openPreview(
   previewPanel: PreviewPanelLike,
+  markdown: string,
 ): Promise<void> {
-  await previewPanel.show();
+  await previewPanel.show(markdown);
 }

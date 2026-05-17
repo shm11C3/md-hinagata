@@ -4,6 +4,7 @@ export interface WebviewHtmlOptions {
   bodyHtml: string;
   cspSource: string;
   nonce?: string;
+  stylesheets?: readonly string[];
   title: string;
 }
 
@@ -23,12 +24,19 @@ export function createWebviewHtml(options: WebviewHtmlOptions): string {
     '<meta charset="UTF-8">',
     `<meta http-equiv="Content-Security-Policy" content="${csp};">`,
     `<title>${escapeHtml(options.title)}</title>`,
+    ...createStylesheetLinks(options.stylesheets ?? []),
     "</head>",
     "<body>",
     options.bodyHtml,
     "</body>",
     "</html>",
   ].join("");
+}
+
+function createStylesheetLinks(stylesheets: readonly string[]): string[] {
+  return stylesheets.map(
+    (stylesheet) => `<link rel="stylesheet" href="${escapeHtml(stylesheet)}">`,
+  );
 }
 
 export function createNonce(): string {
