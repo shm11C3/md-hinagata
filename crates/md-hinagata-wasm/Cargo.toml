@@ -11,4 +11,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+console_error_panic_hook = "0.1.7"
 md-hinagata-core = { path = "../md-hinagata-core" }
+serde-wasm-bindgen = "0.6.5"
+wasm-bindgen = "0.2.121"
