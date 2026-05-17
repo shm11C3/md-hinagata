@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type * as vscode from "vscode";
 import { DocumentStateService } from "../services/documentStateService.js";
@@ -123,6 +125,49 @@ describe("PreviewPanel", () => {
     expect(panel.webview.html).toContain('<main class="mh-preview"></main>');
     expect(panel.webview.html).not.toContain("Preview will render here.");
   });
+
+  it("renders the basic example fragment and theme CSS in the preview webview", () => {
+    const documentStateService = new DocumentStateService();
+    const panel = createPreviewWebviewPanel();
+    const previewPanel = new PreviewPanel(documentStateService, {
+      createPanel: () => panel,
+      resolveStylesheetUri: (webview) =>
+        webview.asWebviewUri({} as vscode.Uri).toString(),
+      revealPanel: (targetPanel) => {
+        targetPanel.reveal();
+      },
+    });
+    const markdown = readBasicExampleFile("article.md");
+    const expectedHtml = readBasicExampleFile("expected.html").trimEnd();
+    const themeCss = readBasicExampleFile(
+      ".md-hinagata/themes/basic/styles.css",
+    );
+
+    previewPanel.show();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown,
+      uri: "file:///examples/basic/article.md",
+    });
+    documentStateService.applyTransformResult({
+      css: themeCss,
+      diagnostics: [],
+      frontmatter: {
+        output: "fragment",
+        theme: "basic",
+      },
+      html: expectedHtml,
+      resolvedThemeId: "basic",
+    });
+
+    expect(panel.webview.html).toContain('<main class="mh-preview">');
+    expect(panel.webview.html).toContain(expectedHtml);
+    expect(panel.webview.html).toContain(".basic-document");
+    expect(panel.webview.html).toContain(
+      'Content-Security-Policy" content="default-src',
+    );
+    expect(panel.webview.html).not.toContain("Preview will render here.");
+  });
 });
 
 function createPreviewWebviewPanel(): PreviewWebviewPanel {
@@ -139,4 +184,13 @@ function createPreviewWebviewPanel(): PreviewWebviewPanel {
       html: "",
     },
   };
+}
+
+function readBasicExampleFile(relativePath: string): string {
+  return readFileSync(
+    fileURLToPath(
+      new URL(`../../../../examples/basic/${relativePath}`, import.meta.url),
+    ),
+    "utf8",
+  );
 }
