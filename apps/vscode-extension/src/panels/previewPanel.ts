@@ -15,6 +15,7 @@ export interface PreviewWebview {
 
 export interface PreviewWebviewPanel {
   webview: PreviewWebview;
+  dispose(): void;
   onDidDispose(listener: () => void): vscode.Disposable;
   reveal(column?: vscode.ViewColumn): void;
 }
@@ -58,6 +59,7 @@ export class PreviewPanel {
   }
 
   public dispose(): void {
+    this.#panel?.dispose();
     this.#panel = undefined;
   }
 

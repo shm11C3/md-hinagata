@@ -15,6 +15,7 @@ describe("PreviewPanel", () => {
     const transformService = new TransformService();
     const panels: PreviewWebviewPanel[] = [];
     let revealCount = 0;
+    let disposeCount = 0;
     let disposeListener: (() => void) | undefined;
     const previewPanel = new PreviewPanel(
       documentStateService,
@@ -22,6 +23,10 @@ describe("PreviewPanel", () => {
       {
         createPanel: () => {
           const panel: PreviewWebviewPanel = {
+            dispose: () => {
+              disposeCount += 1;
+              disposeListener?.();
+            },
             onDidDispose: (listener) => {
               disposeListener = listener;
               return { dispose: () => {} };
@@ -65,7 +70,8 @@ describe("PreviewPanel", () => {
     );
 
     expect(previewPanel.isVisible).toBe(true);
-    disposeListener?.();
+    previewPanel.dispose();
+    expect(disposeCount).toBe(1);
     expect(previewPanel.isVisible).toBe(false);
   });
 });
