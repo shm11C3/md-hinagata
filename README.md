@@ -357,6 +357,8 @@ pnpm run lint
 pnpm run test
 ```
 
+`pnpm run format` formats both the VS Code extension and Rust workspace. `pnpm run lint` runs Biome for the extension, then verifies Rust formatting and Clippy warnings.
+
 Build the VS Code extension bundle:
 
 ```bash

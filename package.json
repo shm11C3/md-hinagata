@@ -8,8 +8,8 @@
   "scripts": {
     "build": "pnpm --filter md-hinagata-vscode-extension run build",
     "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
-    "format": "pnpm --filter md-hinagata-vscode-extension run format",
-    "lint": "pnpm --filter md-hinagata-vscode-extension run lint",
+    "format": "pnpm --filter md-hinagata-vscode-extension run format && cargo fmt --all",
+    "lint": "pnpm --filter md-hinagata-vscode-extension run lint && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
     "test": "pnpm --filter md-hinagata-vscode-extension run test && cargo test --workspace"
   }
 }
