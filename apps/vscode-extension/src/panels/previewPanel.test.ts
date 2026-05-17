@@ -95,6 +95,34 @@ describe("PreviewPanel", () => {
     expect(panel.webview.html).toContain("<h1>Title</h1>");
     expect(panel.webview.html).toContain(".article { color: red; }");
   });
+
+  it("renders an active empty transform result without the placeholder", () => {
+    const documentStateService = new DocumentStateService();
+    const panel = createPreviewWebviewPanel();
+    const previewPanel = new PreviewPanel(documentStateService, {
+      createPanel: () => panel,
+      resolveStylesheetUri: (webview) =>
+        webview.asWebviewUri({} as vscode.Uri).toString(),
+      revealPanel: (targetPanel) => {
+        targetPanel.reveal();
+      },
+    });
+
+    previewPanel.show();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [],
+      html: "",
+      resolvedThemeId: "default",
+    });
+
+    expect(panel.webview.html).toContain('<main class="mh-preview"></main>');
+    expect(panel.webview.html).not.toContain("Preview will render here.");
+  });
 });
 
 function createPreviewWebviewPanel(): PreviewWebviewPanel {

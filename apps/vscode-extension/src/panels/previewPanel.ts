@@ -77,7 +77,7 @@ export class PreviewPanel {
 
     const state = this.documentStateService.getState();
     const bodyHtml =
-      state.status === "active" && state.generatedHtml.length > 0
+      state.status === "active"
         ? state.generatedHtml
         : `<p>${escapeHtml("Preview will render here.")}</p>`;
     const inlineStyles =
