@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import type { Dirent } from "node:fs";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { DiagnosticMessage } from "./diagnosticsService.js";
@@ -40,6 +41,11 @@ export interface ThemeFileReference {
   label: string;
   path: string;
   templateKey?: string;
+}
+
+export interface SelectableTheme {
+  id: string;
+  source: ThemeSource;
 }
 
 export interface ResolvedTheme {
@@ -97,10 +103,39 @@ export class ThemeResolver {
     themeId: string,
     options: ThemeSelectionOptions,
   ): boolean {
-    return (
-      isValidThemeId(themeId) &&
-      (options.isWorkspaceTrusted || themeId === "default")
-    );
+    void options;
+    return isValidThemeId(themeId);
+  }
+
+  public async listSelectableThemes(
+    options: ThemeResolutionOptions,
+  ): Promise<SelectableTheme[]> {
+    const themes: SelectableTheme[] = [];
+    const seenThemeIds = new Set<string>();
+
+    if (options.isWorkspaceTrusted) {
+      for (const workspaceFolder of this.getWorkspaceFolders(options)) {
+        await this.collectThemeDirectories(
+          path.join(workspaceFolder.uri.fsPath, WORKSPACE_THEME_DIRECTORY),
+          "workspace",
+          themes,
+          seenThemeIds,
+          options,
+        );
+      }
+    }
+
+    for (const bundledThemeRoot of this.#bundledThemeRoots) {
+      await this.collectThemeDirectories(
+        bundledThemeRoot,
+        "bundled",
+        themes,
+        seenThemeIds,
+        options,
+      );
+    }
+
+    return themes;
   }
 
   public async resolveTheme(
@@ -182,6 +217,63 @@ export class ThemeResolver {
     }
 
     return this.#workspaceFolders ?? [];
+  }
+
+  private async collectThemeDirectories(
+    themeRoot: string,
+    source: ThemeSource,
+    themes: SelectableTheme[],
+    seenThemeIds: Set<string>,
+    options: ThemeSelectionOptions,
+  ): Promise<void> {
+    let entries: Dirent[];
+    try {
+      entries = await readdir(themeRoot, { withFileTypes: true });
+    } catch (error) {
+      if (isMissingFileError(error)) {
+        return;
+      }
+
+      return;
+    }
+
+    for (const entry of entries.sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )) {
+      if (
+        !entry.isDirectory() ||
+        seenThemeIds.has(entry.name) ||
+        !this.canSelectTheme(entry.name, options)
+      ) {
+        continue;
+      }
+
+      if (
+        !(await this.isSelectableThemeDirectory(themeRoot, source, entry.name))
+      ) {
+        continue;
+      }
+
+      themes.push({
+        id: entry.name,
+        source,
+      });
+      seenThemeIds.add(entry.name);
+    }
+  }
+
+  private async isSelectableThemeDirectory(
+    themeRoot: string,
+    source: ThemeSource,
+    themeId: string,
+  ): Promise<boolean> {
+    const result = await this.loadThemeFromRoot(
+      path.join(themeRoot, themeId),
+      source,
+      themeId,
+      false,
+    );
+    return result.theme !== undefined;
   }
 
   private async loadThemeFromRoot(
