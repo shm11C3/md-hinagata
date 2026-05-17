@@ -1,0 +1,10 @@
+[package]
+name = "md-hinagata-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "md_hinagata_core"
+path = "src/lib.rs"

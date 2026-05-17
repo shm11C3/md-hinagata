@@ -332,6 +332,25 @@ md-hinagata/
     frontmatter.schema.json
 ```
 
+## 開発セットアップ
+
+必要なもの:
+
+- Node.js と `pnpm` 10.x。
+- Cargo を含む Rust toolchain。
+
+JavaScript workspace の依存関係をインストールします。
+
+```bash
+pnpm install
+```
+
+Rust workspace を確認します。
+
+```bash
+cargo check --workspace
+```
+
 ## Rust coreの役割
 
 Rustを使う理由は、VS Codeの編集体験をRustで置き換えるためではありません。Markdown編集はVS Codeがすでに強いです。

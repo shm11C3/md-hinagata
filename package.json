@@ -1,0 +1,12 @@
+{
+  "name": "md-hinagata",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Themeable Markdown to HTML Studio for VS Code.",
+  "license": "MIT OR Apache-2.0",
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "check": "cargo check --workspace",
+    "test": "cargo test --workspace"
+  }
+}
