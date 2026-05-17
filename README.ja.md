@@ -360,6 +360,8 @@ pnpm run lint
 pnpm run test
 ```
 
+`pnpm run format` は VS Code extension と Rust workspace の両方を整形します。`pnpm run lint` は extension の Biome に続けて、Rust の formatting check と Clippy warnings を確認します。
+
 VS Code extension bundle をビルドします。
 
 ```bash
