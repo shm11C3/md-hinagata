@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createWebviewHtml, escapeHtml } from "../src/utils/webviewHtml.js";
+import { createWebviewHtml, escapeHtml } from "./webviewHtml.js";
 
 describe("webview HTML utilities", () => {
   it("escapes untrusted text for HTML fragments", () => {

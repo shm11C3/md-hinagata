@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { COMMAND_IDS } from "../src/commands/commandIds.js";
-import { THEME_MANAGER_VIEW_ID } from "../src/views/themeEditorViewProvider.js";
+import { COMMAND_IDS } from "./src/commands/commandIds.js";
+import { THEME_MANAGER_VIEW_ID } from "./src/views/themeEditorViewProvider.js";
 
 interface ExtensionManifest {
   activationEvents?: string[];
@@ -27,7 +27,7 @@ interface ExtensionManifest {
 }
 
 const manifest = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as ExtensionManifest;
 
 describe("extension manifest", () => {
