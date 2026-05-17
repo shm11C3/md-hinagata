@@ -335,6 +335,7 @@ Prerequisites:
 
 - Node.js 22 or 24 with `pnpm` 10.x.
 - Rust toolchain with Cargo.
+- `wasm-bindgen` CLI `0.2.121` for WASM bridge builds.
 
 Install JavaScript workspace dependencies:
 
@@ -346,6 +347,12 @@ Check the Rust workspace:
 
 ```bash
 cargo check --workspace
+```
+
+Install the WASM bridge CLI when building the Rust bridge for the extension:
+
+```bash
+cargo install wasm-bindgen-cli --version 0.2.121 --locked
 ```
 
 Run the current workspace checks:
@@ -364,6 +371,14 @@ Build the VS Code extension bundle:
 ```bash
 pnpm run build
 ```
+
+Build the WASM bridge and copy the generated module into the VS Code extension:
+
+```bash
+pnpm run build:wasm
+```
+
+The generated WASM files are written to `apps/vscode-extension/wasm/` and are not committed.
 
 ## Rust core
 

@@ -1,17 +1,23 @@
 import { describe, expect, it } from "vitest";
 import type * as vscode from "vscode";
 import { DocumentStateService } from "../services/documentStateService.js";
-import { TransformService } from "../services/transformService.js";
 import {
   PREVIEW_PANEL_TITLE,
   PreviewPanel,
+  type PreviewTransformService,
   type PreviewWebviewPanel,
 } from "./previewPanel.js";
 
 describe("PreviewPanel", () => {
-  it("creates a reusable webview panel with rendered placeholder HTML", () => {
+  it("creates a reusable webview panel with rendered placeholder HTML", async () => {
     const documentStateService = new DocumentStateService();
-    const transformService = new TransformService();
+    const transformService: PreviewTransformService = {
+      transform: async (markdown) => ({
+        diagnostics: [],
+        html: markdown,
+        resolvedThemeId: "default",
+      }),
+    };
     const panels: PreviewWebviewPanel[] = [];
     let revealCount = 0;
     let disposeCount = 0;
@@ -53,8 +59,8 @@ describe("PreviewPanel", () => {
       },
     );
 
-    previewPanel.show("");
-    previewPanel.show("");
+    await previewPanel.show("");
+    await previewPanel.show("");
 
     expect(panels).toHaveLength(1);
     expect(revealCount).toBe(2);
@@ -72,5 +78,66 @@ describe("PreviewPanel", () => {
     previewPanel.dispose();
     expect(disposeCount).toBe(1);
     expect(previewPanel.isVisible).toBe(false);
+  });
+
+  it("ignores stale preview transform completions", async () => {
+    const documentStateService = new DocumentStateService();
+    const completions: Array<() => void> = [];
+    const transformService: PreviewTransformService = {
+      transform: (markdown) =>
+        new Promise((resolve) => {
+          completions.push(() => {
+            resolve({
+              diagnostics: [],
+              html: `<p>${markdown}</p>`,
+              resolvedThemeId: "default",
+            });
+          });
+        }),
+    };
+    let revealCount = 0;
+    const panel: PreviewWebviewPanel = {
+      dispose: () => {},
+      onDidDispose: () => ({ dispose: () => {} }),
+      reveal: () => {
+        revealCount += 1;
+      },
+      webview: {
+        asWebviewUri: (_uri: vscode.Uri) =>
+          ({
+            toString: () => "vscode-resource:/preview/styles.css",
+          }) as vscode.Uri,
+        cspSource: "vscode-resource:",
+        html: "",
+      },
+    };
+    const previewPanel = new PreviewPanel(
+      documentStateService,
+      transformService,
+      {
+        createPanel: () => panel,
+        resolveStylesheetUri: (webview) =>
+          webview.asWebviewUri({} as vscode.Uri).toString(),
+        revealPanel: (targetPanel) => {
+          targetPanel.reveal();
+        },
+      },
+    );
+
+    const firstShow = previewPanel.show("first");
+    const secondShow = previewPanel.show("second");
+
+    completions[1]?.();
+    await secondShow;
+    expect(documentStateService.getGeneratedHtml()).toBe("<p>second</p>");
+    expect(panel.webview.html).toContain("<p>second</p>");
+    expect(revealCount).toBe(1);
+
+    completions[0]?.();
+    await firstShow;
+    expect(documentStateService.getGeneratedHtml()).toBe("<p>second</p>");
+    expect(panel.webview.html).toContain("<p>second</p>");
+    expect(panel.webview.html).not.toContain("<p>first</p>");
+    expect(revealCount).toBe(1);
   });
 });
