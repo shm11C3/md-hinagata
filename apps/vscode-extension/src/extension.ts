@@ -10,6 +10,7 @@ import { updateActiveEditorState } from "./services/activeEditorState.js";
 import { DiagnosticsService } from "./services/diagnosticsService.js";
 import { DocumentStateService } from "./services/documentStateService.js";
 import { DocumentTransformService } from "./services/documentTransformService.js";
+import { ThemeFileRefreshService } from "./services/themeFileRefreshService.js";
 import { ThemeResolver } from "./services/themeResolver.js";
 import {
   createWasmModuleLoader,
@@ -85,6 +86,10 @@ export function activate(context: vscode.ExtensionContext): void {
     void documentTransformService.refreshActiveDocument();
   };
   const debouncedRefreshActiveDocument = debounce(refreshActiveDocument, 150);
+  const themeFileRefreshService = new ThemeFileRefreshService(
+    documentStateService,
+    refreshActiveDocument,
+  );
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -103,6 +108,9 @@ export function activate(context: vscode.ExtensionContext): void {
         event.document.getText(),
       );
       debouncedRefreshActiveDocument();
+    }),
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      themeFileRefreshService.refreshIfCurrentThemeFile(document);
     }),
     vscode.window.registerWebviewViewProvider(
       THEME_MANAGER_VIEW_ID,
