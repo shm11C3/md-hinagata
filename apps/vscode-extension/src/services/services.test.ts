@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { DiagnosticMessage } from "../src/services/diagnosticsService.js";
-import { DiagnosticsService } from "../src/services/diagnosticsService.js";
+import type { DiagnosticMessage } from "./diagnosticsService.js";
+import { DiagnosticsService } from "./diagnosticsService.js";
 import {
   TransformService,
   type WasmTransformModuleLoader,
-} from "../src/services/transformService.js";
-import { WorkspaceTrustService } from "../src/services/workspaceTrustService.js";
+} from "./transformService.js";
+import { WorkspaceTrustService } from "./workspaceTrustService.js";
 
 describe("extension services", () => {
   it("returns defensive diagnostic snapshots", () => {

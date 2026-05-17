@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type * as vscode from "vscode";
-
+import { DocumentStateService } from "../services/documentStateService.js";
 import {
   PREVIEW_PANEL_TITLE,
   PreviewPanel,
   type PreviewTransformService,
   type PreviewWebviewPanel,
-} from "../src/panels/previewPanel.js";
-import { DocumentStateService } from "../src/services/documentStateService.js";
+} from "./previewPanel.js";
 
 describe("PreviewPanel", () => {
   it("creates a reusable webview panel with rendered placeholder HTML", async () => {

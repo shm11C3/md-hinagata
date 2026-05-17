@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
-
+import { DocumentStateService } from "../services/documentStateService.js";
+import { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
   getActiveMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
-} from "../src/commands/activeMarkdownDocument.js";
-import { COMMAND_IDS } from "../src/commands/commandIds.js";
-import { copyGeneratedHtml } from "../src/commands/copyGeneratedHtmlCommand.js";
-import { openPreview } from "../src/commands/openPreviewCommand.js";
-import { selectTheme } from "../src/commands/selectThemeCommand.js";
-import { DocumentStateService } from "../src/services/documentStateService.js";
-import { WorkspaceTrustService } from "../src/services/workspaceTrustService.js";
+} from "./activeMarkdownDocument.js";
+import { COMMAND_IDS } from "./commandIds.js";
+import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
+import { openPreview } from "./openPreviewCommand.js";
+import { selectTheme } from "./selectThemeCommand.js";
 
 const themeResolver = {
   canSelectTheme: (themeId: string, options: { isWorkspaceTrusted: boolean }) =>
