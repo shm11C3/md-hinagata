@@ -62,7 +62,10 @@ function ensureWasmBindgen() {
     process.exit(result.status ?? 1);
   }
 
-  if (!result.stdout.includes(WASM_BINDGEN_VERSION)) {
+  const currentVersion = result.stdout
+    .trim()
+    .match(/^wasm-bindgen\s+([^\s]+)/)?.[1];
+  if (currentVersion !== WASM_BINDGEN_VERSION) {
     throw new Error(
       `wasm-bindgen CLI ${WASM_BINDGEN_VERSION} is required. Current version: ${result.stdout.trim()}`,
     );

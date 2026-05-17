@@ -80,4 +80,65 @@ describe("PreviewPanel", () => {
     expect(disposeCount).toBe(1);
     expect(previewPanel.isVisible).toBe(false);
   });
+
+  it("ignores stale preview transform completions", async () => {
+    const documentStateService = new DocumentStateService();
+    const completions: Array<() => void> = [];
+    const transformService: PreviewTransformService = {
+      transform: (markdown) =>
+        new Promise((resolve) => {
+          completions.push(() => {
+            resolve({
+              diagnostics: [],
+              html: `<p>${markdown}</p>`,
+              resolvedThemeId: "default",
+            });
+          });
+        }),
+    };
+    let revealCount = 0;
+    const panel: PreviewWebviewPanel = {
+      dispose: () => {},
+      onDidDispose: () => ({ dispose: () => {} }),
+      reveal: () => {
+        revealCount += 1;
+      },
+      webview: {
+        asWebviewUri: (_uri: vscode.Uri) =>
+          ({
+            toString: () => "vscode-resource:/preview/styles.css",
+          }) as vscode.Uri,
+        cspSource: "vscode-resource:",
+        html: "",
+      },
+    };
+    const previewPanel = new PreviewPanel(
+      documentStateService,
+      transformService,
+      {
+        createPanel: () => panel,
+        resolveStylesheetUri: (webview) =>
+          webview.asWebviewUri({} as vscode.Uri).toString(),
+        revealPanel: (targetPanel) => {
+          targetPanel.reveal();
+        },
+      },
+    );
+
+    const firstShow = previewPanel.show("first");
+    const secondShow = previewPanel.show("second");
+
+    completions[1]?.();
+    await secondShow;
+    expect(documentStateService.getGeneratedHtml()).toBe("<p>second</p>");
+    expect(panel.webview.html).toContain("<p>second</p>");
+    expect(revealCount).toBe(1);
+
+    completions[0]?.();
+    await firstShow;
+    expect(documentStateService.getGeneratedHtml()).toBe("<p>second</p>");
+    expect(panel.webview.html).toContain("<p>second</p>");
+    expect(panel.webview.html).not.toContain("<p>first</p>");
+    expect(revealCount).toBe(1);
+  });
 });

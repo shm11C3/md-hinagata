@@ -32,6 +32,7 @@ export interface PreviewTransformService {
 
 export class PreviewPanel {
   #panel: PreviewWebviewPanel | undefined;
+  #renderSequence = 0;
 
   public constructor(
     private readonly documentStateService: DocumentStateService,
@@ -45,7 +46,12 @@ export class PreviewPanel {
 
   public async show(markdown: string): Promise<void> {
     const panel = this.getOrCreatePanel();
+    const renderSequence = ++this.#renderSequence;
     const result = await this.transformService.transform(markdown);
+    if (renderSequence !== this.#renderSequence || panel !== this.#panel) {
+      return;
+    }
+
     this.documentStateService.setGeneratedHtml(result.html);
     panel.webview.html = createWebviewHtml({
       bodyHtml: [
@@ -63,6 +69,7 @@ export class PreviewPanel {
   }
 
   public dispose(): void {
+    this.#renderSequence += 1;
     this.#panel?.dispose();
     this.#panel = undefined;
   }
