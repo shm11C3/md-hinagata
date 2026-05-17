@@ -25,18 +25,15 @@ describe("extension commands", () => {
   });
 
   it("opens the preview panel", async () => {
-    let openedMarkdown = "";
+    let openCount = 0;
 
-    await openPreview(
-      {
-        show: (markdown) => {
-          openedMarkdown = markdown;
-        },
+    await openPreview({
+      show: () => {
+        openCount += 1;
       },
-      "# Title",
-    );
+    });
 
-    expect(openedMarkdown).toBe("# Title");
+    expect(openCount).toBe(1);
   });
 
   it("returns the active Markdown document", () => {
@@ -44,6 +41,9 @@ describe("extension commands", () => {
     const document = {
       getText: () => "# Title",
       languageId: "markdown",
+      uri: {
+        toString: () => "file:///article.md",
+      },
     };
 
     expect(
@@ -64,6 +64,9 @@ describe("extension commands", () => {
           document: {
             getText: () => "plain text",
             languageId: "plaintext",
+            uri: {
+              toString: () => "file:///notes.txt",
+            },
           },
         },
         showInformationMessage: (message) => messages.push(message),

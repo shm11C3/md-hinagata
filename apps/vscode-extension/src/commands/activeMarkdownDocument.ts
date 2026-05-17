@@ -1,6 +1,9 @@
 export interface TextDocumentLike {
   getText(): string;
   languageId: string;
+  uri: {
+    toString(): string;
+  };
 }
 
 export interface ActiveTextEditorLike {

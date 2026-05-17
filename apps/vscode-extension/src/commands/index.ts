@@ -1,16 +1,20 @@
 import * as vscode from "vscode";
 import type { PreviewPanel } from "../panels/previewPanel.js";
-import type { DocumentStateService } from "../services/documentStateService.js";
+import {
+  createActiveDocumentSnapshot,
+  type DocumentStateService,
+} from "../services/documentStateService.js";
+import type { DocumentTransformService } from "../services/documentTransformService.js";
 import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import { getActiveMarkdownDocument } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
-import { openPreview } from "./openPreviewCommand.js";
 import { selectTheme } from "./selectThemeCommand.js";
 
 export interface CommandDependencies {
   documentStateService: DocumentStateService;
+  documentTransformService: DocumentTransformService;
   previewPanel: PreviewPanel;
   themeResolver: ThemeResolver;
   workspaceTrustService: WorkspaceTrustService;
@@ -27,7 +31,11 @@ export function registerCommands(
         return undefined;
       }
 
-      return openPreview(dependencies.previewPanel, document.getText());
+      dependencies.documentStateService.setActiveDocument(
+        createActiveDocumentSnapshot(document),
+      );
+      dependencies.previewPanel.show();
+      return dependencies.documentTransformService.refreshActiveDocument();
     }),
     vscode.commands.registerCommand(COMMAND_IDS.copyGeneratedHtml, () => {
       const document = getActiveMarkdownDocument(vscode.window);

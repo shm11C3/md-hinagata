@@ -1,7 +1,6 @@
 import type * as vscode from "vscode";
 
 import type { DocumentStateService } from "../services/documentStateService.js";
-import type { TransformResponse } from "../services/transformService.js";
 import { createWebviewHtml, escapeHtml } from "../utils/webviewHtml.js";
 
 export const PREVIEW_PANEL_VIEW_TYPE = "md-hinagata.preview";
@@ -26,50 +25,33 @@ export interface PreviewPanelHost {
   resolveStylesheetUri(webview: PreviewWebview): string;
 }
 
-export interface PreviewTransformService {
-  transform(markdown: string): Promise<TransformResponse>;
-}
-
 export class PreviewPanel {
+  readonly #documentStateSubscription: vscode.Disposable;
   #panel: PreviewWebviewPanel | undefined;
-  #renderSequence = 0;
 
   public constructor(
     private readonly documentStateService: DocumentStateService,
-    private readonly transformService: PreviewTransformService,
     private readonly host: PreviewPanelHost,
-  ) {}
+  ) {
+    this.#documentStateSubscription = this.documentStateService.subscribe(
+      () => {
+        this.render();
+      },
+    );
+  }
 
   public get isVisible(): boolean {
     return this.#panel !== undefined;
   }
 
-  public async show(markdown: string): Promise<void> {
+  public show(): void {
     const panel = this.getOrCreatePanel();
-    const renderSequence = ++this.#renderSequence;
-    const result = await this.transformService.transform(markdown);
-    if (renderSequence !== this.#renderSequence || panel !== this.#panel) {
-      return;
-    }
-
-    this.documentStateService.setGeneratedHtml(result.html);
-    panel.webview.html = createWebviewHtml({
-      bodyHtml: [
-        '<main class="mh-preview">',
-        result.html.length > 0
-          ? result.html
-          : `<p>${escapeHtml("Preview will render here.")}</p>`,
-        "</main>",
-      ].join(""),
-      cspSource: panel.webview.cspSource,
-      stylesheets: [this.host.resolveStylesheetUri(panel.webview)],
-      title: PREVIEW_PANEL_TITLE,
-    });
+    this.render();
     this.host.revealPanel(panel);
   }
 
   public dispose(): void {
-    this.#renderSequence += 1;
+    this.#documentStateSubscription.dispose();
     this.#panel?.dispose();
     this.#panel = undefined;
   }
@@ -85,5 +67,28 @@ export class PreviewPanel {
     });
     this.#panel = panel;
     return panel;
+  }
+
+  private render(): void {
+    const panel = this.#panel;
+    if (panel === undefined) {
+      return;
+    }
+
+    const state = this.documentStateService.getState();
+    const bodyHtml =
+      state.status === "active" && state.generatedHtml.length > 0
+        ? state.generatedHtml
+        : `<p>${escapeHtml("Preview will render here.")}</p>`;
+    const inlineStyles =
+      state.css === undefined || state.css.length === 0 ? [] : [state.css];
+
+    panel.webview.html = createWebviewHtml({
+      bodyHtml: ['<main class="mh-preview">', bodyHtml, "</main>"].join(""),
+      cspSource: panel.webview.cspSource,
+      inlineStyles,
+      stylesheets: [this.host.resolveStylesheetUri(panel.webview)],
+      title: PREVIEW_PANEL_TITLE,
+    });
   }
 }
