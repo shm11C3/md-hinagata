@@ -242,6 +242,7 @@ describe("ThemeResolver", () => {
       },
     });
     await writeTheme(path.join(bundledThemeRoot, "bundled-only"), {
+      id: "bundled-only",
       templates: {
         h1: "<h1>bundled only {{text}}</h1>",
       },
@@ -257,6 +258,7 @@ describe("ThemeResolver", () => {
     await writeTheme(
       path.join(workspaceRoot, ".md-hinagata", "themes", "workspace-only"),
       {
+        id: "workspace-only",
         templates: {
           h1: "<h1>workspace only {{text}}</h1>",
         },
@@ -292,11 +294,13 @@ describe("ThemeResolver", () => {
       templates: {},
     });
     await writeTheme(path.join(bundledThemeRoot, "bundled-only"), {
+      id: "bundled-only",
       templates: {},
     });
     await writeTheme(
       path.join(workspaceRoot, ".md-hinagata", "themes", "workspace-only"),
       {
+        id: "workspace-only",
         templates: {},
       },
     );
@@ -306,6 +310,25 @@ describe("ThemeResolver", () => {
         workspaceFolders: [{ uri: { fsPath: workspaceRoot } }],
       },
     );
+
+    await expect(
+      resolver.listSelectableThemes({ isWorkspaceTrusted: false }),
+    ).resolves.toEqual([
+      {
+        id: "default",
+        source: "bundled",
+      },
+    ]);
+  });
+
+  it("excludes directories without a valid theme manifest from selectable themes", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: {},
+    });
+    await mkdir(path.join(bundledThemeRoot, "not-a-theme"), {
+      recursive: true,
+    });
+    const resolver = new ThemeResolver({ fsPath: extensionRoot });
 
     await expect(
       resolver.listSelectableThemes({ isWorkspaceTrusted: false }),

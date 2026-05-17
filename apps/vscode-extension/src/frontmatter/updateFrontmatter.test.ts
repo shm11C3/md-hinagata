@@ -43,6 +43,19 @@ describe("updateFrontmatterTheme", () => {
     });
   });
 
+  it("does not update nested theme keys under hinagata", () => {
+    expect(
+      updateFrontmatterTheme({
+        source: "---\nhinagata:\n  output:\n    theme: nested\n---\n# Title\n",
+        themeId: "basic",
+      }),
+    ).toEqual({
+      ok: true,
+      source:
+        "---\nhinagata:\n  theme: basic\n  output:\n    theme: nested\n---\n# Title\n",
+    });
+  });
+
   it("adds a hinagata block to existing frontmatter", () => {
     expect(
       updateFrontmatterTheme({

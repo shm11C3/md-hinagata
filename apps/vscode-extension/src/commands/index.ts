@@ -48,8 +48,12 @@ export function registerCommands(
         clipboard: vscode.env.clipboard,
         documentStateService: dependencies.documentStateService,
         notifier: vscode.window,
-        refreshActiveDocument: () =>
-          dependencies.documentTransformService.refreshActiveDocument(),
+        refreshActiveDocument: () => {
+          dependencies.documentStateService.setActiveDocument(
+            createActiveDocumentSnapshot(document),
+          );
+          return dependencies.documentTransformService.refreshActiveDocument();
+        },
       });
     }),
     vscode.commands.registerCommand(

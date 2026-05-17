@@ -150,17 +150,23 @@ function updateFrontmatterLines(
   }
 
   const blockEnd = findTopLevelBlockEnd(nextLines, hinagataIndex);
-  const themeIndex = findNestedKeyIndex(
+  const childIndent = inferDirectChildIndent(
+    nextLines,
+    hinagataIndex,
+    blockEnd,
+  );
+  const themeIndex = findDirectNestedKeyIndex(
     nextLines,
     "theme",
     hinagataIndex + 1,
     blockEnd,
+    childIndent,
   );
   if (themeIndex === undefined) {
     nextLines.splice(
       hinagataIndex + 1,
       0,
-      `  theme: ${formatYamlString(themeId)}`,
+      `${childIndent}theme: ${formatYamlString(themeId)}`,
     );
     return {
       ok: true,
@@ -250,23 +256,47 @@ function findTopLevelBlockEnd(
   return lines.length;
 }
 
-function findNestedKeyIndex(
+function findDirectNestedKeyIndex(
   lines: readonly string[],
   key: string,
   startIndex: number,
   endIndex: number,
+  childIndent: string,
 ): number | undefined {
   for (let index = startIndex; index < endIndex; index += 1) {
     const line = lines[index];
     if (
       line !== undefined &&
-      line.match(new RegExp(`^\\s+${escapeRegExp(key)}\\s*:`)) !== null
+      line.match(
+        new RegExp(`^${escapeRegExp(childIndent)}${escapeRegExp(key)}\\s*:`),
+      ) !== null
     ) {
       return index;
     }
   }
 
   return undefined;
+}
+
+function inferDirectChildIndent(
+  lines: readonly string[],
+  parentIndex: number,
+  blockEnd: number,
+): string {
+  const parentIndent = lines[parentIndex]?.match(/^(\s*)/)?.[1] ?? "";
+  for (let index = parentIndex + 1; index < blockEnd; index += 1) {
+    const line = lines[index];
+    if (line === undefined || line.trim().length === 0) {
+      continue;
+    }
+
+    const indent = line.match(/^(\s*)/)?.[1] ?? "";
+    if (indent.length > parentIndent.length) {
+      return indent;
+    }
+  }
+
+  return `${parentIndent}  `;
 }
 
 function stripInlineComment(value: string): string {

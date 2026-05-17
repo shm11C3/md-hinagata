@@ -519,6 +519,37 @@ describe("extension commands", () => {
     expect(editableDocument.getText()).toBe("# Title\n");
   });
 
+  it("notifies when no themes are available for Quick Pick", async () => {
+    const documentStateService = new DocumentStateService();
+    const workspaceTrustService = new WorkspaceTrustService(() => true);
+    const editableDocument = createEditableDocument("# Title\n");
+    const messages: string[] = [];
+
+    await expect(
+      selectTheme({
+        document: editableDocument.document,
+        documentStateService,
+        notifier: createMessageRecorder(messages),
+        picker: {
+          showQuickPick: async () => {
+            throw new Error("picker should not open");
+          },
+        },
+        refreshActiveDocument: async () => {
+          throw new Error("refresh should not run");
+        },
+        themeResolver: {
+          canSelectTheme: themeResolver.canSelectTheme,
+          listSelectableThemes: async () => [],
+        },
+        workspaceTrustService,
+      }),
+    ).resolves.toBe("default");
+
+    expect(editableDocument.getText()).toBe("# Title\n");
+    expect(messages).toEqual(["info:No md-hinagata themes are available."]);
+  });
+
   it("keeps workspace theme changes disabled in untrusted workspaces", async () => {
     const documentStateService = new DocumentStateService();
     const workspaceTrustService = new WorkspaceTrustService(() => false);

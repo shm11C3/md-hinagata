@@ -54,6 +54,7 @@ export async function selectTheme(
     (await pickThemeId(
       options.themeResolver,
       options.picker,
+      options.notifier,
       selectionOptions,
     ));
 
@@ -100,10 +101,12 @@ export async function selectTheme(
 async function pickThemeId(
   themeResolver: Pick<ThemeResolver, "listSelectableThemes">,
   picker: ThemePicker,
+  notifier: ThemeSelectionNotifier,
   selectionOptions: ThemeSelectionOptions,
 ): Promise<string | undefined> {
   const themes = await themeResolver.listSelectableThemes(selectionOptions);
   if (themes.length === 0) {
+    notifier.showInformationMessage("No md-hinagata themes are available.");
     return undefined;
   }
 

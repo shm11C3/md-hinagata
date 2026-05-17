@@ -250,12 +250,32 @@ export class ThemeResolver {
         continue;
       }
 
+      if (
+        !(await this.isSelectableThemeDirectory(themeRoot, source, entry.name))
+      ) {
+        continue;
+      }
+
       themes.push({
         id: entry.name,
         source,
       });
       seenThemeIds.add(entry.name);
     }
+  }
+
+  private async isSelectableThemeDirectory(
+    themeRoot: string,
+    source: ThemeSource,
+    themeId: string,
+  ): Promise<boolean> {
+    const result = await this.loadThemeFromRoot(
+      path.join(themeRoot, themeId),
+      source,
+      themeId,
+      false,
+    );
+    return result.theme !== undefined;
   }
 
   private async loadThemeFromRoot(
