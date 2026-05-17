@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  getActiveMarkdownDocument,
+  MARKDOWN_REQUIRED_MESSAGE,
+} from "../src/commands/activeMarkdownDocument.js";
 import { COMMAND_IDS } from "../src/commands/commandIds.js";
 import { copyGeneratedHtml } from "../src/commands/copyGeneratedHtmlCommand.js";
 import { openPreview } from "../src/commands/openPreviewCommand.js";
@@ -22,15 +26,51 @@ describe("extension commands", () => {
   });
 
   it("opens the preview panel", async () => {
-    let opened = false;
+    let openedMarkdown = "";
 
-    await openPreview({
-      show: () => {
-        opened = true;
+    await openPreview(
+      {
+        show: (markdown) => {
+          openedMarkdown = markdown;
+        },
       },
-    });
+      "# Title",
+    );
 
-    expect(opened).toBe(true);
+    expect(openedMarkdown).toBe("# Title");
+  });
+
+  it("returns the active Markdown document", () => {
+    const messages: string[] = [];
+    const document = {
+      getText: () => "# Title",
+      languageId: "markdown",
+    };
+
+    expect(
+      getActiveMarkdownDocument({
+        activeTextEditor: { document },
+        showInformationMessage: (message) => messages.push(message),
+      }),
+    ).toBe(document);
+    expect(messages).toEqual([]);
+  });
+
+  it("shows a clear message when no Markdown document is active", () => {
+    const messages: string[] = [];
+
+    expect(
+      getActiveMarkdownDocument({
+        activeTextEditor: {
+          document: {
+            getText: () => "plain text",
+            languageId: "plaintext",
+          },
+        },
+        showInformationMessage: (message) => messages.push(message),
+      }),
+    ).toBeUndefined();
+    expect(messages).toEqual([MARKDOWN_REQUIRED_MESSAGE]);
   });
 
   it("copies the latest generated html", async () => {
