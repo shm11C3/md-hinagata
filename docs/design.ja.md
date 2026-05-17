@@ -1392,6 +1392,8 @@ incremental transform
 
 ## 13. Testing 設計
 
+テストの配置と追加方針は `docs/testing.md` に従う。
+
 ### 13.1 Rust core tests
 
 ```txt

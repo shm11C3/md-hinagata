@@ -303,6 +303,8 @@ The planned test areas are:
 - VS Code extension tests for command registration, frontmatter updates, theme resolution, workspace theme resolution, and copy behavior.
 - Manual QA for preview refresh, theme file refresh, CSS refresh, theme switching, warnings, and generated HTML copying.
 
+Follow `docs/testing.md` for test placement. Colocate unit tests with the implementation they exercise, and keep integration, snapshot, and fixture-driven tests in `tests/` or `examples/`.
+
 When implementation begins, add focused tests for behavior you change. Keep tests aligned with the documented `0.1.0` acceptance criteria.
 
 ## License And Distribution
