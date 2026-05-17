@@ -95,4 +95,38 @@ mod tests {
         assert_eq!(response.css.as_deref(), Some(".mh-document {}"));
         assert!(response.diagnostics.is_empty());
     }
+
+    #[test]
+    fn transform_falls_back_when_default_theme_id_is_unknown() {
+        let request = TransformRequest {
+            markdown: "# Title".to_owned(),
+            themes: vec![
+                ThemePackage {
+                    id: "fallback".to_owned(),
+                    name: "Fallback".to_owned(),
+                    version: "0.1.0".to_owned(),
+                    source: Some(ThemeSource::Bundled),
+                    css: Some(".fallback {}".to_owned()),
+                    templates: Default::default(),
+                    manifest: None,
+                },
+                ThemePackage {
+                    id: "other".to_owned(),
+                    name: "Other".to_owned(),
+                    version: "0.1.0".to_owned(),
+                    source: Some(ThemeSource::Workspace),
+                    css: Some(".other {}".to_owned()),
+                    templates: Default::default(),
+                    manifest: None,
+                },
+            ],
+            default_theme_id: Some("missing".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_theme_id, "fallback");
+        assert_eq!(response.css.as_deref(), Some(".fallback {}"));
+    }
 }

@@ -38,7 +38,14 @@ pub struct TransformResponse {
 pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     let resolved_theme_id = request
         .default_theme_id
-        .clone()
+        .as_ref()
+        .filter(|default_theme_id| {
+            request
+                .themes
+                .iter()
+                .any(|theme| theme.id == **default_theme_id)
+        })
+        .cloned()
         .or_else(|| request.themes.first().map(|theme| theme.id.clone()))
         .unwrap_or_default();
 
