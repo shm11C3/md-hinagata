@@ -49,8 +49,9 @@ export async function selectTheme(
   const selectionOptions: ThemeSelectionOptions = {
     isWorkspaceTrusted: options.workspaceTrustService.isTrusted,
   };
+  const requestedThemeId = normalizeThemeId(options.themeId);
   const nextThemeId =
-    normalizeThemeId(options.themeId) ??
+    requestedThemeId ??
     (await pickThemeId(
       options.themeResolver,
       options.picker,
@@ -63,6 +64,20 @@ export async function selectTheme(
   }
 
   if (!options.themeResolver.canSelectTheme(nextThemeId, selectionOptions)) {
+    options.notifier.showWarningMessage(
+      `Theme '${nextThemeId}' is not available.`,
+    );
+    return options.documentStateService.getCurrentTheme();
+  }
+
+  if (
+    requestedThemeId !== undefined &&
+    !(await isSelectableThemeId(
+      options.themeResolver,
+      requestedThemeId,
+      selectionOptions,
+    ))
+  ) {
     options.notifier.showWarningMessage(
       `Theme '${nextThemeId}' is not available.`,
     );
@@ -115,6 +130,15 @@ async function pickThemeId(
   });
 
   return selected?.themeId;
+}
+
+async function isSelectableThemeId(
+  themeResolver: Pick<ThemeResolver, "listSelectableThemes">,
+  themeId: string,
+  selectionOptions: ThemeSelectionOptions,
+): Promise<boolean> {
+  const themes = await themeResolver.listSelectableThemes(selectionOptions);
+  return themes.some((theme) => theme.id === themeId);
 }
 
 function toQuickPickItem(theme: SelectableTheme): ThemeQuickPickItem {

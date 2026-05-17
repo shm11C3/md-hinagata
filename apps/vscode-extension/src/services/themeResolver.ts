@@ -103,10 +103,8 @@ export class ThemeResolver {
     themeId: string,
     options: ThemeSelectionOptions,
   ): boolean {
-    return (
-      isValidThemeId(themeId) &&
-      (options.isWorkspaceTrusted || themeId === "default")
-    );
+    void options;
+    return isValidThemeId(themeId);
   }
 
   public async listSelectableThemes(

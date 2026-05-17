@@ -12,8 +12,7 @@ import { openThemeFile } from "./openThemeFileCommand.js";
 import { selectTheme } from "./selectThemeCommand.js";
 
 const themeResolver = {
-  canSelectTheme: (themeId: string, options: { isWorkspaceTrusted: boolean }) =>
-    options.isWorkspaceTrusted || themeId === "default",
+  canSelectTheme: (themeId: string) => themeId.length > 0,
   listSelectableThemes: async () => [
     {
       id: "default",
@@ -600,6 +599,29 @@ describe("extension commands", () => {
     ).resolves.toBe("default");
 
     expect(editableDocument.getText()).toContain("theme: default");
+  });
+
+  it("allows bundled non-default themes in untrusted workspaces", async () => {
+    const documentStateService = new DocumentStateService();
+    const workspaceTrustService = new WorkspaceTrustService(() => false);
+    const editableDocument = createEditableDocument("# Title\n");
+
+    await expect(
+      selectTheme({
+        document: editableDocument.document,
+        documentStateService,
+        notifier: createMessageRecorder([]),
+        picker: {
+          showQuickPick: async () => undefined,
+        },
+        refreshActiveDocument: async () => {},
+        themeId: " basic ",
+        themeResolver,
+        workspaceTrustService,
+      }),
+    ).resolves.toBe("basic");
+
+    expect(editableDocument.getText()).toContain("theme: basic");
   });
 
   it("warns when frontmatter cannot be updated safely", async () => {

@@ -289,7 +289,7 @@ describe("ThemeResolver", () => {
     ]);
   });
 
-  it("lists only the bundled default theme in untrusted workspaces", async () => {
+  it("lists bundled themes but not workspace themes in untrusted workspaces", async () => {
     await writeTheme(path.join(bundledThemeRoot, "default"), {
       templates: {},
     });
@@ -314,6 +314,10 @@ describe("ThemeResolver", () => {
     await expect(
       resolver.listSelectableThemes({ isWorkspaceTrusted: false }),
     ).resolves.toEqual([
+      {
+        id: "bundled-only",
+        source: "bundled",
+      },
       {
         id: "default",
         source: "bundled",
