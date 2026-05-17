@@ -1,8 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    frontmatter::parse_frontmatter, markdown::parse_markdown, renderer::render_blocks,
-    theme::resolve_theme, Diagnostic, ParsedFrontmatter, Result, ThemePackage,
+    frontmatter::parse_frontmatter,
+    markdown::{parse_markdown_with_options, MarkdownOptions},
+    renderer::render_blocks,
+    theme::resolve_theme,
+    Diagnostic, ParsedFrontmatter, Result, ThemePackage,
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -53,7 +56,12 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
         &mut diagnostics,
     );
     let resolved_theme_id = theme.map(|theme| theme.id.clone()).unwrap_or_default();
-    let blocks = parse_markdown(&parsed_markdown.markdown);
+    let blocks = parse_markdown_with_options(
+        &parsed_markdown.markdown,
+        MarkdownOptions {
+            allow_raw_html: request.options.allow_raw_html.unwrap_or(false),
+        },
+    );
     let html = render_blocks(&blocks, theme, &mut diagnostics);
 
     let css = theme.and_then(|theme| theme.css.clone());
@@ -198,6 +206,85 @@ mod tests {
             .join("\n"),
         );
         assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_escapes_raw_html_by_default() {
+        let request = TransformRequest {
+            markdown: ["<script>alert(1)</script>", "", "Hello <em>there</em>"].join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "&lt;script&gt;alert(1)&lt;/script&gt;",
+                "<p>Hello &lt;em&gt;there&lt;/em&gt;</p>",
+            ]
+            .join("\n"),
+        );
+        assert!(!response.html.contains("<script>"));
+        assert!(!response.html.contains("<em>there</em>"));
+    }
+
+    #[test]
+    fn transform_escapes_raw_html_when_explicitly_disabled() {
+        let request = TransformRequest {
+            markdown: ["<script>alert(1)</script>", "", "Hello <em>there</em>"].join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions {
+                allow_raw_html: Some(false),
+                sanitize: None,
+            },
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "&lt;script&gt;alert(1)&lt;/script&gt;",
+                "<p>Hello &lt;em&gt;there&lt;/em&gt;</p>",
+            ]
+            .join("\n"),
+        );
+    }
+
+    #[test]
+    fn transform_can_allow_raw_html_for_future_opt_in_paths() {
+        let request = TransformRequest {
+            markdown: ["<div>Raw</div>", "", "Hello <em>there</em>"].join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions {
+                allow_raw_html: Some(true),
+                sanitize: None,
+            },
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            ["<div>Raw</div>", "<p>Hello <em>there</em></p>"].join("\n"),
+        );
     }
 
     #[test]

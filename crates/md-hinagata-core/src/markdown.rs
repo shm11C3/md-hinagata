@@ -25,27 +25,38 @@ pub enum MarkdownBlock {
     },
 }
 
-pub fn parse_markdown(markdown: &str) -> Vec<MarkdownBlock> {
-    let arena = Arena::new();
-    let options = Options::default();
-    let root = parse_document(&arena, markdown, &options);
-
-    root.children().filter_map(parse_block).collect()
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct MarkdownOptions {
+    pub allow_raw_html: bool,
 }
 
-fn parse_block<'a>(node: &'a AstNode<'a>) -> Option<MarkdownBlock> {
+pub fn parse_markdown(markdown: &str) -> Vec<MarkdownBlock> {
+    parse_markdown_with_options(markdown, MarkdownOptions::default())
+}
+
+pub fn parse_markdown_with_options(markdown: &str, options: MarkdownOptions) -> Vec<MarkdownBlock> {
+    let arena = Arena::new();
+    let parse_options = Options::default();
+    let root = parse_document(&arena, markdown, &parse_options);
+
+    root.children()
+        .filter_map(|node| parse_block(node, options))
+        .collect()
+}
+
+fn parse_block<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> Option<MarkdownBlock> {
     match &node.data().value {
         NodeValue::Heading(heading) if (1..=3).contains(&heading.level) => {
             let text = text_content(node);
             Some(MarkdownBlock::Heading {
                 id: slugify(&text),
-                inner_html: inline_html(node),
+                inner_html: inline_html(node, options),
                 level: heading.level,
                 text,
             })
         }
         NodeValue::Paragraph => Some(MarkdownBlock::Paragraph {
-            inner_html: inline_html(node),
+            inner_html: inline_html(node, options),
             text: text_content(node),
         }),
         NodeValue::CodeBlock(code_block) => Some(MarkdownBlock::CodeBlock {
@@ -58,18 +69,18 @@ fn parse_block<'a>(node: &'a AstNode<'a>) -> Option<MarkdownBlock> {
                 .to_owned(),
         }),
         NodeValue::HtmlBlock(html_block) => Some(MarkdownBlock::Html {
-            html: escape_html(&html_block.literal),
+            html: raw_or_escaped_html(&html_block.literal, options),
         }),
         _ => {
-            let html = fallback_html(node);
+            let html = fallback_html(node, options);
             (!html.trim().is_empty()).then_some(MarkdownBlock::Html { html })
         }
     }
 }
 
-fn fallback_html<'a>(node: &'a AstNode<'a>) -> String {
+fn fallback_html<'a>(node: &'a AstNode<'a>, markdown_options: MarkdownOptions) -> String {
     let mut options = Options::default();
-    options.render.escape = true;
+    options.render.escape = !markdown_options.allow_raw_html;
 
     let mut html = String::new();
     if format_html(node, &options, &mut html).is_err() {
@@ -79,20 +90,22 @@ fn fallback_html<'a>(node: &'a AstNode<'a>) -> String {
     html.trim_end().to_owned()
 }
 
-fn inline_html<'a>(node: &'a AstNode<'a>) -> String {
-    node.children().map(render_inline).collect()
+fn inline_html<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String {
+    node.children()
+        .map(|child| render_inline(child, options))
+        .collect()
 }
 
-fn render_inline<'a>(node: &'a AstNode<'a>) -> String {
+fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String {
     match &node.data().value {
         NodeValue::Text(text) => escape_html(text),
         NodeValue::Code(code) => format!("<code>{}</code>", escape_html(&code.literal)),
         NodeValue::SoftBreak => "\n".to_owned(),
         NodeValue::LineBreak => "<br />\n".to_owned(),
-        NodeValue::Emph => format!("<em>{}</em>", inline_html(node)),
-        NodeValue::Strong => format!("<strong>{}</strong>", inline_html(node)),
-        NodeValue::HtmlInline(html) => escape_html(html),
-        _ => inline_html(node),
+        NodeValue::Emph => format!("<em>{}</em>", inline_html(node, options)),
+        NodeValue::Strong => format!("<strong>{}</strong>", inline_html(node, options)),
+        NodeValue::HtmlInline(html) => raw_or_escaped_html(html, options),
+        _ => inline_html(node, options),
     }
 }
 
@@ -114,6 +127,14 @@ fn trim_trailing_newline(value: &str) -> &str {
         .strip_suffix("\r\n")
         .or_else(|| value.strip_suffix('\n'))
         .unwrap_or(value)
+}
+
+fn raw_or_escaped_html(value: &str, options: MarkdownOptions) -> String {
+    if options.allow_raw_html {
+        value.to_owned()
+    } else {
+        escape_html(value)
+    }
 }
 
 pub fn escape_html(value: &str) -> String {
