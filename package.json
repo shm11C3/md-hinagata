@@ -9,8 +9,11 @@
     "build": "pnpm --filter md-hinagata-vscode-extension run build",
     "build:wasm": "node scripts/build-wasm.mjs",
     "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
-    "format": "pnpm --filter md-hinagata-vscode-extension run format && cargo fmt --all",
-    "lint": "pnpm --filter md-hinagata-vscode-extension run lint && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
+    "format": "biome format --write . && cargo fmt --all",
+    "lint": "biome check . && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
     "test": "pnpm --filter md-hinagata-vscode-extension run test && cargo test --workspace"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15"
   }
 }

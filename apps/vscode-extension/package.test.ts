@@ -40,7 +40,9 @@ describe("extension manifest", () => {
     expect(manifest.scripts.build).toBe(
       "node --experimental-strip-types ./esbuild.config.ts",
     );
-    expect(manifest.scripts.format).toBe("biome format --write .");
+    expect(manifest.scripts.format).toBe(
+      "pnpm --workspace-root exec biome format --write apps/vscode-extension",
+    );
   });
 
   it("relies on VS Code contribution activation events", () => {

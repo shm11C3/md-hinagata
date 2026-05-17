@@ -51,12 +51,11 @@
   "scripts": {
     "build": "node --experimental-strip-types ./esbuild.config.ts",
     "check": "tsc --noEmit",
-    "format": "biome format --write .",
-    "lint": "biome check .",
+    "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
+    "lint": "pnpm --workspace-root exec biome check apps/vscode-extension",
     "test": "vitest run"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
     "@types/node": "^22.19.19",
     "@types/vscode": "^1.120.0",
     "esbuild": "^0.28.0",
