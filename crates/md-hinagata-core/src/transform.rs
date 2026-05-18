@@ -209,6 +209,65 @@ mod tests {
     }
 
     #[test]
+    fn transform_renders_blockquote_and_lists_with_theme_templates() {
+        let request = TransformRequest {
+            markdown: [
+                "> Quoted **text**.",
+                "",
+                "- First item",
+                "- Second item",
+                "",
+                "3. First ordered",
+                "4. Second ordered",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [
+                    ("p", "<p class=\"paragraph\">{{{inner_html}}}</p>"),
+                    (
+                        "blockquote",
+                        "<blockquote class=\"quote\">\n{{{inner_html}}}\n</blockquote>",
+                    ),
+                    (
+                        "ul",
+                        "<ul class=\"list unordered\">\n{{{inner_html}}}\n</ul>",
+                    ),
+                    (
+                        "ol",
+                        "<ol class=\"list ordered\" start=\"{{start}}\">\n{{{inner_html}}}\n</ol>",
+                    ),
+                    ("li", "<li class=\"item\">{{{inner_html}}}</li>"),
+                ],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<blockquote class=\"quote\">",
+                "<p class=\"paragraph\">Quoted <strong>text</strong>.</p>",
+                "</blockquote>",
+                "<ul class=\"list unordered\">",
+                "<li class=\"item\">First item</li>",
+                "<li class=\"item\">Second item</li>",
+                "</ul>",
+                "<ol class=\"list ordered\" start=\"3\">",
+                "<li class=\"item\">First ordered</li>",
+                "<li class=\"item\">Second ordered</li>",
+                "</ol>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
     fn transform_escapes_raw_html_by_default() {
         let request = TransformRequest {
             markdown: ["<script>alert(1)</script>", "", "Hello <em>there</em>"].join("\n"),
@@ -323,6 +382,38 @@ mod tests {
 
         assert_eq!(response.html, "<p>Body text.</p>");
         assert_eq!(response.diagnostics[0].code, MISSING_TEMPLATE);
+    }
+
+    #[test]
+    fn transform_falls_back_when_nested_block_templates_are_missing() {
+        let request = TransformRequest {
+            markdown: ["> Quoted text.", "", "- First item"].join("\n"),
+            themes: vec![theme_package("default", None, [])],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<blockquote>",
+                "<p>Quoted text.</p>",
+                "</blockquote>",
+                "<ul>",
+                "<li>First item</li>",
+                "</ul>",
+            ]
+            .join("\n"),
+        );
+        assert!(["p", "blockquote", "li", "ul"]
+            .iter()
+            .all(|template_key| response
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.code == MISSING_TEMPLATE
+                    && diagnostic.message == format!("Template '{template_key}' is missing."))));
     }
 
     fn theme_package<const N: usize>(
