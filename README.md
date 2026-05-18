@@ -2,6 +2,10 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+> [!Note]
+> md-hinagata is not released yet.
+The first usable preview build is planned for v0.1.0.
+
 Themeable Markdown to HTML Studio for VS Code.
 
 md-hinagata is a VS Code extension and Rust-powered transformation engine for turning Markdown into theme-controlled HTML. It is designed for people who want to write content in Markdown, choose an output theme from frontmatter, edit the theme templates, preview the result, and copy the generated HTML fragment.
