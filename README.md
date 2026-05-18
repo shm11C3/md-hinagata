@@ -196,9 +196,6 @@ li
 ### Not included in 0.1.0
 
 - WYSIWYG editing.
-- CMS publishing.
-- Full static site generation.
-- Tauri app.
 - CLI.
 - Theme package import/export.
 - `.hinagata-theme` packages.
@@ -468,6 +465,7 @@ Theme authoring improvements.
 - Template variable inspector.
 - Better theme validation.
 - JSON Schema integration.
+- Table support.
 
 ### 0.3.x
 
@@ -484,7 +482,7 @@ Tooling and export.
 - Theme package import/export.
 - `.hinagata-theme` package format.
 - Syntax highlighting.
-- Link, image, table support.
+- Link, image support.
 - Preview element to template jump.
 - Tauri standalone app.
 
