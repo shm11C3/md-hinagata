@@ -486,7 +486,7 @@ Tooling and export.
 - Syntax highlighting.
 - Link, image support.
 - Preview element to template jump.
-- Tauri standalone app.
+- Desktop app.
 
 ## License
 
