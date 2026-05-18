@@ -490,10 +490,7 @@ Tooling and export.
 
 ## License
 
-md-hinagata uses separate license treatment for source code, themes, examples, user-authored content, and generated output.
+md-hinagata is licensed under MIT OR Apache-2.0.
 
-- Code: `MIT OR Apache-2.0`.
-- Bundled themes: `MIT OR Apache-2.0`.
-- User themes: author-defined.
-- Examples: `MIT OR Apache-2.0` for now. `CC0-1.0` may be considered later.
-- Generated HTML: the tool license does not claim ownership of generated output.
+User-authored content and generated HTML are not claimed by the tool license.
+See [LICENSE](./LICENSE) for details.
