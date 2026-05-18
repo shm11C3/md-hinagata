@@ -1,49 +1,51 @@
 # md-hinagata
 
-VS Code向けの、テーマ選択型 Markdown to HTML Studio です。
+[English](README.md) | [日本語](README.ja.md)
 
-md-hinagata は、Markdownをテーマテンプレートに通して、構造を制御したHTMLへ変換するためのVS Code拡張とRust製変換エンジンです。Markdownを書き、frontmatterでテーマを選び、左パネルでテーマ構成を確認し、テンプレートを編集しながら、右側のプレビューと生成HTMLを確認できます。
+高い自由度でテーマ変更が可能なMarkdown to HTML変換VSCode拡張です。
 
-md-hinagata は、ただのMarkdownプレビュー拡張ではありません。主役は見た目ではなく、**最終的に生成されるHTML構造の制御**です。
+md-hinagataは、VS Code拡張機能とRust製の変換エンジンを組み合わせ、Markdownをテーマ制御されたHTMLへと変換します。「Markdownでコンテンツを書き、テーマを選び編集し、結果をプレビュー・生成されたHTMLをコピーする」といったワークフローを好むユーザー向けに設計されています。
+
+md-hinagataは単なるMarkdownビュワーではありません。その核心となる目的は、最終的なHTML構造を自在に制御することにあります。
 
 ```txt
-Markdown + frontmatter + theme templates
-  -> Rust transform core
-  -> structured HTML fragment
-  -> preview / copy / export
+Markdown + フロントマター + テーマテンプレート
+  -> Rust変換コア
+  -> 構造化されたHTMLフラグメント
+  -> プレビュー / コピー / エクスポート
 ```
 
 ## ステータス
 
-md-hinagata は `0.x.x` 系として開発します。
+md-hinagataは現在、`0.x.x` プロジェクトとして計画されています。
 
-最初の目標は `0.1.0` です。`0.1.0` は完成版ではなく、思想が体験できる縦切りMVPです。
+最初の目標は `0.1.0` です。これはコアとなる体験を実証するバーティカルスライスなMVP（実用最小限の製品）となります。
 
 ```txt
-Markdownを書く
-  -> frontmatterでテーマを選ぶ
-  -> 左パネルでテーマを確認する
-  -> VS Codeでテンプレートを編集する
-  -> テーマ適用後のHTMLをプレビューする
-  -> 生成HTMLをコピーする
+Markdownを記述
+  -> フロントマターでテーマを選択
+  -> 左サイドバーでテーマを検査
+  -> VS Codeでテンプレートを編集
+  -> テーマ適用済みのHTMLをプレビュー
+  -> 生成されたHTMLをコピー
 ```
 
-`0.x.x` の間は、theme schema、frontmatter schema、template variables、Rust APIが変わる可能性があります。
+`0.x.x` の期間中は、テーマのスキーマ、フロントマターのスキーマ、テンプレート変数、およびRust APIに変更が加わる可能性があります。
 
-## なぜmd-hinagataを作るのか
+## なぜ md-hinagata なのか？
 
-多くのMarkdownツールは、以下のどれかを目的にしています。
+ほとんどのMarkdownツールは、以下のいずれかの目標に焦点を当てています。
 
-- Markdownをプレビューする。
-- 静的サイトを生成する。
-- CMSコンテンツを管理する。
-- MarkdownをPDF、docx、HTMLなどへ汎用変換する。
+- Markdownをプレビューとしてレンダリングする。
+- 静的サイト全体を生成する。
+- CMSのコンテンツを管理する。
+- Markdownを多くの出力形式に変換する。
 
-md-hinagata が狙うのは、もっと狭い領域です。
+md-hinagataは、より絞り込まれた課題に焦点を当てています。
 
-> Markdownのブロックを、テーマで定義したHTML構造へ変換する。
+> Markdownのブロックを、予測可能でテーマ制御されたHTMLコンポーネントに変換する。
 
-たとえば、このMarkdownは、
+例えば、次のようなMarkdownがあるとします。
 
 ```md
 ## Notice
@@ -51,7 +53,7 @@ md-hinagata が狙うのは、もっと狭い領域です。
 This action cannot be undone.
 ```
 
-選択したテーマによって、こういうHTMLになります。
+選択されたテーマによって、以下のようなHTMLに変換されます。
 
 ```html
 <h2 id="notice" class="article-heading article-heading--level2">
@@ -62,13 +64,13 @@ This action cannot be undone.
 </p>
 ```
 
-テーマはCSSだけではありません。md-hinagataにおけるテーマは、テンプレート、CSS、メタデータ、出力ルールを含むパッケージです。
+ここで言う「テーマ」とはCSSだけを指すのではありません。テンプレート、スタイル、メタデータ、そして出力ルールのパッケージを指します。
 
-## 基本思想
+## コア・アイディア
 
-### テーマ選択はMarkdown文書自身が持つ
+### テーマの選択はドキュメントに属する
 
-Markdownファイルは、frontmatterで使用するテーマを指定します。
+Markdownファイルは、フロントマターを通じて自身のテーマを選択します。
 
 ```md
 ---
@@ -77,16 +79,16 @@ hinagata:
   output: fragment
 ---
 
-# Title
+# タイトル
 
-Body text.
+本文。
 ```
 
-これにより、文書ごとの出力が再現可能になります。VS Codeのグローバル設定ではなく、文書自身が「どのテーマでHTML化されるか」を持ちます。
+これにより、出力の再現性が保たれます。ドキュメント自体が、自分がどのように変換されるべきかを知っている状態になります。
 
-### テーマはテンプレートパッケージ
+### テーマはテンプレートのパッケージである
 
-テーマはこのようなディレクトリです。
+テーマは、以下のようなディレクトリ構造を持ちます。
 
 ```txt
 .md-hinagata/
@@ -106,7 +108,7 @@ Body text.
         li.hbs
 ```
 
-`theme.json` はテーマの定義ファイルです。
+`theme.json` ファイルでテーマの定義を行います。
 
 ```json
 {
@@ -128,11 +130,11 @@ Body text.
 }
 ```
 
-### テンプレートにはHandlebarsを使う
+### テンプレートにはHandlebarsを使用
 
-テンプレートファイルには `.hbs` を使います。`hbs` は Handlebars の拡張子です。
+テンプレートには `.hbs` ファイル（Handlebars）を使用します。
 
-例: `templates/h2.hbs`
+例： `templates/h2.hbs`
 
 ```hbs
 <h2 id="{{id}}" class="article-heading article-heading--level2">
@@ -140,225 +142,133 @@ Body text.
 </h2>
 ```
 
-例: `templates/codeblock.hbs`
+例： `templates/codeblock.hbs`
 
 ```hbs
 <pre class="code-block"><code class="language-{{lang}}">{{raw}}</code></pre>
 ```
 
-変数の基本ルールは以下です。
+推奨される慣習：
 
 ```txt
 {{text}}
-  HTMLエスケープされたプレーンテキスト。
+  エスケープされたプレーンテキスト。
 
 {{{inner_html}}}
   Markdownの子要素から生成されたHTML。
 
 {{raw}}
-  エスケープされた元テキスト。
+  エスケープされた生のソーステキスト。
 ```
 
-雑にすべてを `{{{ }}}` にしない方針です。HTMLとして挿入できる変数は限定します。
+## 計画中のMVP: v0.1.0
 
-## v0.1.0 MVPスコープ
+`0.1.0` MVPは、意図的に小規模に抑えられています。
 
-`0.1.0` は意図的に小さく作ります。
+### 0.1.0 に含まれる機能
 
-### 0.1.0で入れるもの
-
-- VS Code拡張。
-- VS Code標準Markdownエディタを使う。
-- `hinagata.theme` によるfrontmatterテーマ選択。
-- 左サイドバーのTheme Manager。
-- 右側のThemed Preview Webview。
-- Rust製変換コア。
-- Rust coreのWASM連携。
+- VS Code拡張機能。
+- 標準的なVS Code Markdownエディタ。
+- `hinagata.theme` によるフロントマターベースのテーマ選択。
+- 左サイドバーのテーママネージャー。
+- 右サイドのテーマ適用済みプレビュー（Webview）。
+- WASMにコンパイルされたRust製変換コア。
 - Handlebarsベースのテーマテンプレート。
-- 組み込み `default` テーマ。
-- `.md-hinagata/themes/{themeId}` 配下のワークスペーステーマ。
+- 同梱の `default` テーマ。
+- `.md-hinagata/themes/{themeId}` 下のワークスペーステーマ。
 - Markdown変更時のプレビュー更新。
 - テーマファイル保存時のプレビュー更新。
-- 生成HTMLのコピー。
-- Unknown theme、missing template などの基本diagnostics。
+- 生成されたHTMLのコピーコマンド。
+- 未知のテーマや不足しているテンプレートに対する基本的な診断（Diagnostics）。
 
-最初に対応するMarkdown要素は以下です。
+初期サポートされるMarkdownブロック：
 
 ```txt
-h1
-h2
-h3
-p
-codeblock
-blockquote
-ul
-ol
-li
+h1, h2, h3, p, codeblock, blockquote, ul, ol, li
 ```
 
-### 0.1.0で入れないもの
+### 0.1.0 に含まれない機能
 
 - WYSIWYG編集。
-- CMSへの直接投稿。
-- フル静的サイト生成。
-- Tauriアプリ。
 - CLI。
-- テーマパッケージのimport/export。
+- テーマパッケージのインポート/エクスポート。
 - `.hinagata-theme` パッケージ。
-- table対応。
-- image / link のテンプレート対応。
-- 高度なsyntax highlight。
-- プレビュー要素クリックからテンプレートへジャンプする機能。
-- 左パネル内の本格コードエディタ。
+- テーブル（表）のサポート。
+- 画像およびリンクのテンプレートサポート。
+- 高度なシンタックスハイライト。
+- プレビュー要素からテンプレートへのジャンプ機能。
+- 左サイドバーのコードエディタ。
 
-## VS Code上の体験
+## VS Codeでの体験
 
-想定レイアウトは以下です。
+想定されているレイアウト：
 
 ```txt
 +----------------------+--------------------------+
-| Theme Manager        | Themed Preview           |
+| テーママネージャー      | テーマ適用済みプレビュー    |
 |                      |                          |
-| Current Document     | テーマ適用後HTMLの表示    |
-| Theme: company-blog  |                          |
+| 現在のドキュメント      | Webviewでレンダリングされた |
+| テーマ: company-blog  | 生成済みテーマ適用HTML     |
 |                      |                          |
-| Theme Files          |                          |
+| テーマファイル         |                          |
 | - theme.json         |                          |
 | - styles.css         |                          |
 |                      |                          |
-| Templates            |                          |
+| テンプレート          |                          |
 | - h1.hbs             |                          |
 | - h2.hbs             |                          |
 | - p.hbs              |                          |
 +----------------------+--------------------------+
-| Markdown本文はVS Code標準エディタで編集する        |
+| VS CodeのMarkdownエディタがソースエディタとして機能し続ける |
 +---------------------------------------------------+
 ```
 
-左サイドバーは、Theme Manager / Inspector として使います。テンプレートファイルはVS Code標準エディタで開きます。これにより、編集、検索、diff、Git管理、フォーマットなどはVS Codeに任せます。
+左サイドバーはテーママネージャー兼インスペクターとして機能します。テンプレートファイルは通常のVS Codeエディタで開かれるため、編集、差分比較、検索、フォーマット、GitワークフローなどはVS Codeネイティブの機能がそのまま利用できます。
 
-## テーマ解決
+## テーマの解決順序
 
-`0.1.0` では、テーマ探索順を以下にします。
-
-```txt
-1. workspace/.md-hinagata/themes/{themeId}
-2. bundled themes/{themeId}
-```
-
-将来的には、ユーザー定義のtheme pathsやテーマパッケージのimport/exportを追加します。
-
-## ディレクトリ構成
-
-MVP時点の想定構成です。
+`0.1.0` では、テーマの解決順序は以下のように計画されています。
 
 ```txt
-md-hinagata/
-  package.json
-  pnpm-workspace.yaml
-  Cargo.toml
-  README.md
-  README.ja.md
-
-  apps/
-    vscode-extension/
-      package.json
-      tsconfig.json
-      esbuild.config.ts
-      src/
-        extension.ts
-        commands/
-          openPreviewCommand.ts
-          copyGeneratedHtmlCommand.ts
-          selectThemeCommand.ts
-        panels/
-          previewPanel.ts
-        views/
-          themeEditorViewProvider.ts
-        services/
-          transformService.ts
-          themeResolver.ts
-          documentStateService.ts
-        frontmatter/
-          updateFrontmatter.ts
-        utils/
-          webviewHtml.ts
-          debounce.ts
-      media/
-        preview/
-        theme-editor/
-      resources/
-        md-hinagata.svg
-
-  crates/
-    md-hinagata-core/
-      Cargo.toml
-      src/
-        lib.rs
-        transform.rs
-        frontmatter.rs
-        theme.rs
-        template.rs
-        renderer.rs
-        diagnostics.rs
-
-    md-hinagata-wasm/
-      Cargo.toml
-      src/
-        lib.rs
-
-  themes/
-    default/
-      theme.json
-      styles.css
-      templates/
-        h1.hbs
-        h2.hbs
-        h3.hbs
-        p.hbs
-        codeblock.hbs
-        blockquote.hbs
-        ul.hbs
-        ol.hbs
-        li.hbs
-
-  examples/
-    basic/
-      article.md
-      expected.html
-
-  schemas/
-    theme.schema.json
-    frontmatter.schema.json
+1. ワークスペース/.md-hinagata/themes/{themeId}
+2. 同梱テーマ/{themeId}
 ```
+
+将来のバージョンでは、ユーザーレベルのテーマパスや、インポート可能なテーマパッケージが追加される可能性があります。
+
+## リポジトリ構造
+
+MVPに向けた計画構造：
+
+（※ディレクトリ構造はソースコードの定義に従います。各ファイル・ディレクトリ名の翻訳は省略します）
 
 ## 開発セットアップ
 
-必要なもの:
+前提条件：
 
-- Node.js 22 または 24 と `pnpm` 10.x。
-- Cargo を含む Rust toolchain。
-- WASM bridge build 用の `wasm-bindgen` CLI `0.2.121`。
+- Node.js 22 または 24（`pnpm` 10.x を使用）。
+- Cargoを含むRustツールチェーン。
+- WASMブリッジビルド用の `wasm-bindgen` CLI `0.2.121`。
 
-JavaScript workspace の依存関係をインストールします。
+JavaScriptワークスペースの依存関係をインストール：
 
 ```bash
 pnpm install
 ```
 
-Rust workspace を確認します。
+Rustワークスペースを確認：
 
 ```bash
 cargo check --workspace
 ```
 
-extension 用の Rust bridge をビルドする場合は、WASM bridge CLI をインストールします。
+拡張機能用のRustブリッジをビルドする際、WASMブリッジCLIをインストール：
 
 ```bash
 cargo install wasm-bindgen-cli --version 0.2.121 --locked
 ```
 
-現在の workspace checks を実行します。
+現在のワークスペースのチェックを実行：
 
 ```bash
 pnpm run check
@@ -367,88 +277,86 @@ pnpm run lint
 pnpm run test
 ```
 
-`pnpm run format` は VS Code extension と Rust workspace の両方を整形します。`pnpm run lint` は extension の Biome に続けて、Rust の formatting check と Clippy warnings を確認します。
+`pnpm run format` はVS Code拡張機能とRustワークスペースの両方を整形します。`pnpm run lint` は拡張機能に対してBiomeを実行し、その後RustのフォーマットとClippyの警告を検証します。
 
-VS Code extension bundle をビルドします。
+VS Code拡張機能のバンドルをビルド：
 
 ```bash
 pnpm run build
 ```
 
-WASM bridge をビルドして、生成 module を VS Code extension 側へコピーします。
+WASMブリッジをビルドし、生成されたモジュールをVS Code拡張機能にコピー：
 
 ```bash
 pnpm run build:wasm
 ```
 
-生成された WASM files は `apps/vscode-extension/wasm/` に出力され、commit しません。
+生成されたWASMファイルは `apps/vscode-extension/wasm/` に出力され、Gitコミットの対象にはなりません。
 
-VS Code Extension Host の E2E smoke test を実行します。
+VS Code拡張機能ホストのE2Eスモークテストを実行：
 
 ```bash
 pnpm run test:e2e
 ```
 
-このコマンドは local extension を読み込んだ VS Code を起動し、`examples/basic`
-を開き、contributed commands を確認し、`article.md` に対して Preview と Copy
-Generated HTML を実行します。Linux CI では `xvfb` 経由で実行します。
+これにより、ローカルの拡張機能を含むVS Codeが起動し、`examples/basic` を開き、コントリビュートされたコマンドを検証し、`article.md` に対してプレビューとHTMLコピーを実行します。LinuxのCI環境では、このコマンドは `xvfb` 下で実行されます。
 
-### Extension Development Host
+### 拡張機能開発ホスト
 
-VS Code で repository root を開き、F5 を押すか Run and Debug から `Run md-hinagata Extension` を選びます。
+VS Codeでリポジトリのルートを開き、F5キーを押すか、「実行とデバッグ」から `Run md-hinagata Extension` を選択します。
 
-launch configuration は `apps/vscode-extension` を Extension Development Host として起動し、起動前に `md-hinagata: build extension` task を実行します。VSIX package は不要です。
+この起動設定は `apps/vscode-extension` から拡張機能開発ホストを開始し、起動前に `md-hinagata: build extension` タスクを実行します。これにより、VSIXをパッケージ化することなく拡張機能バンドルをビルドします。
 
-同梱 example で Rust/WASM transform path を確認する場合は、Run and Debug から `Run md-hinagata Extension (Basic Example)` を選びます。この構成は `examples/basic` を Extension Development Host の workspace として開き、`article.md` を開き、起動前に `md-hinagata: prepare basic example` task を実行するため、workspace theme の `.md-hinagata/themes/basic` を利用できます。
+同梱のサンプルを使用してRust/WASMの変換パスを試すには、「実行とデバッグ」から `Run md-hinagata Extension (Basic Example)` を選択してください。これにより、`examples/basic` がワークスペースとして開かれ、`article.md` が開かれます。起動前に `md-hinagata: prepare basic example` タスクが実行されるため、ワークスペーステーマ `.md-hinagata/themes/basic` が利用可能な状態になります。
 
-Extension Development Host では以下を確認します。
+拡張機能開発ホストでの確認手順：
 
-1. basic example launch configuration を使っている場合は `article.md` が active になっていることを確認する。
-2. `md-hinagata` Activity Bar container と Theme Manager view が表示される。
-3. Command Palette から `md-hinagata: Open Preview` を実行する。
-4. generated fragment を `expected.html` と比較する。
-5. `md-hinagata: Copy Generated HTML` と `md-hinagata: Select Theme` が Command Palette に表示される。
+1. 基本サンプルの起動設定を使用している場合、`article.md` がアクティブであることを確認します。
+2. `md-hinagata` アクティビティバーコンテナとテーママネージャービューが表示されていることを確認します。
+3. コマンドパレットから `md-hinagata: Open Preview` を実行します。
+4. 生成されたフラグメントを `expected.html` と比較します。
+5. コマンドパレットに `md-hinagata: Copy Generated HTML` と `md-hinagata: Select Theme` が表示されることを確認します。
 
-## Rust coreの役割
+## Rustコア
 
-Rustを使う理由は、VS Codeの編集体験をRustで置き換えるためではありません。Markdown編集はVS Codeがすでに強いです。
+VS Codeの編集機能にRustは使用していません。編集そのものはVS Codeが優れているためです。
 
-Rustは、変換エンジンを堅く作るために使います。
+Rustは以下の変換エンジンに使用されます。
 
-- Markdown / frontmatter parsing。
-- テーマテンプレートのrendering。
-- HTML generation。
-- diagnostics。
-- 将来のCLI / CI連携。
-- 将来のbatch export。
+- Markdownおよびフロントマターのパース。
+- テーマテンプレートのレンダリング。
+- HTML生成。
+- 診断（Diagnostics）。
+- 将来的なCLIおよびCI統合。
+- 将来的な一括エクスポート。
 
-VS Code拡張側とRust coreの責務は分けます。
+VS Code拡張機能はVS Code固有の処理を担当すべきであり、Rustコアはエディタに依存しない状態を維持すべきです。
 
 ```txt
-VS Code extension:
-  ファイルを読む
+VS Code拡張機能:
+  ファイルを読み込む
   Webviewを管理する
-  frontmatterを書き換える
-  workspace pathを解決する
+  フロントマターを更新する
+  ワークスペースパスを解決する
 
-Rust core:
-  Markdownとtheme packageを受け取る
+Rustコア:
+  Markdownとテーマパッケージを受け取る
   HTMLを生成する
-  diagnosticsを返す
+  診断結果を返す
 ```
 
-## セキュリティ方針
+## セキュリティモデル
 
-md-hinagataはMarkdown、HTML、CSS、テンプレートを扱うため、セキュリティは最初から考えます。
+md-hinagataはMarkdown、HTML、CSS、およびテンプレートを扱うため、セキュリティを考慮した設計になっています。
 
-予定しているデフォルト方針です。
+計画されているデフォルト設定：
 
-- raw HTMLはデフォルトOFF。
-- workspace themeはTrusted Workspaceでのみ有効。
-- Webview CSPを設定する。
-- WebviewのlocalResourceRootsを制限する。
-- テーマパッケージimport時にはパスとサイズを検証する。
-- 生成プレビューHTMLはsanitizeまたはsandbox化する。
+- 生のHTML（Raw HTML）はデフォルトで無効。
+- ワークスペーステーマは信頼されたワークスペースでのみ許可。
+- WebviewのCSP（コンテンツセキュリティポリシー）を必須化。
+- Webviewのローカルリソースルートを制限。
+- テーマパッケージのインポート時にファイルパスとファイルサイズを検証。
+- 生成されたプレビューHTMLはサニタイズまたはサンドボックス化。
 
 ## ロードマップ
 
@@ -456,47 +364,45 @@ md-hinagataはMarkdown、HTML、CSS、テンプレートを扱うため、セキ
 
 MVPの安定化。
 
-- プレビュー更新の安定化。
-- diagnostics改善。
-- theme file watcher改善。
-- READMEとexamples改善。
+- プレビュー更新の信頼性向上。
+- 診断機能の改善。
+- テーマファイルのウォッチ機能の改善。
+- READMEとサンプルの改善。
 
 ### 0.2.x
 
-テーマ作成体験の強化。
+テーマ作成体験の向上。
 
-- Create Theme from Default。
-- Duplicate Theme。
-- Create Missing Template。
-- Template variable inspector。
-- theme validation強化。
-- JSON Schema連携。
+- デフォルトからテーマを作成。
+- テーマの複製。
+- 不足しているテンプレートの作成。
+- テンプレート変数のインスペクター。
+- テーマ検証の強化。
+- JSON Schemaの統合。
+- テーブル（表）のサポート。
 
 ### 0.3.x
 
-ツールとexportの拡張。
+ツールとエクスポート。
 
 - CLI。
-- CI validation。
-- batch export。
-- Open Generated HTML。
-- full HTML export。
+- CIによる検証。
+- 一括エクスポート。
+- 生成されたHTMLを開く。
+- 完全なHTMLエクスポート。
 
-### Later
+### 0.4.x 以降
 
-- テーマパッケージimport/export。
-- `.hinagata-theme` package format。
-- syntax highlight。
-- link、image、table対応。
-- プレビュー要素クリックからtemplateを開く機能。
-- Tauri standalone app。
+- テーマパッケージのインポート/エクスポート。
+- `.hinagata-theme` パッケージ形式。
+- シンタックスハイライト。
+- リンク、画像のサポート。
+- プレビュー要素からテンプレートへのジャンプ。
+- Desktopアプリ。
 
 ## ライセンス
 
-md-hinagata は、コード、テーマ、examples、ユーザー作成コンテンツ、生成物でライセンスの扱いを分けます。
+md-hinagataは MIT または Apache-2.0 ライセンスの下で提供されています。
 
-- Code: `MIT OR Apache-2.0`。
-- Bundled themes: `MIT OR Apache-2.0`。
-- User themes: author-defined。
-- Examples: まずは `MIT OR Apache-2.0`。将来 `CC0-1.0` も検討。
-- Generated HTML: tool license は生成 HTML の所有権を主張しない。
+ユーザーが作成したコンテンツおよび生成されたHTMLに対して、ツールのライセンスは権利を主張しません。
+詳細は [LICENSE](./LICENSE) を参照してください。
