@@ -44,6 +44,8 @@ examples/basic/.md-hinagata/themes/basic/
 
 Treat `examples/basic` as a functional fixture, not only sample content. Keep `article.md`, `expected.html`, and the basic theme files aligned when transform behavior changes.
 
+Upstream conformance fixtures belong under `crates/md-hinagata-core/tests/fixtures/`. See the CommonMark conformance harness in section 3.3.
+
 ### 2.2 TypeScript / VS Code Extension
 
 TypeScript unit tests belong near the source area they exercise.
@@ -77,6 +79,7 @@ If future tests need to launch the VS Code host, keep those separate from coloca
 - Fallback behavior.
 - Diagnostics.
 - Template render errors.
+- CommonMark parser conformance for MVP block elements (see 3.3).
 
 ### 3.2 VS Code Extension
 
@@ -88,7 +91,36 @@ If future tests need to launch the VS Code host, keep those separate from coloca
 - Webview HTML safety boundaries.
 - Preview rendering with generated HTML and theme CSS when preview behavior is involved.
 
-### 3.3 Manual QA
+### 3.3 CommonMark Conformance
+
+A curated subset of CommonMark 0.31.2 spec examples is checked in at
+`crates/md-hinagata-core/tests/fixtures/commonmark/mvp-block-elements.json`
+and exercised by `crates/md-hinagata-core/tests/commonmark_conformance.rs`.
+
+Use this harness when:
+
+- Changing the Rust parser path (`markdown.rs`, `transform.rs`, `renderer.rs`).
+- Upgrading `comrak`.
+- Adjusting fallback HTML behavior for MVP block elements (`h1`-`h3`, `p`, codeblock, blockquote, `ul`, `ol`, `li`).
+
+The harness runs each example through `transform` with no theme so the renderer falls back to parser-level HTML, then normalizes two intentional differences before comparing to the spec:
+
+- md-hinagata strips the trailing newline inside code blocks.
+- md-hinagata adds an `id` slug attribute to `h1`-`h3` headings.
+
+Examples that intentionally diverge from the spec (thematic breaks, raw HTML escaping by default) are listed in the `KNOWN_DIFFERENT` constant in `commonmark_conformance.rs` with a searchable reason. Adding to that list is a deliberate decision: prefer fixing the underlying parser behavior when the difference is unintentional.
+
+Refresh the fixture from the upstream CommonMark spec with:
+
+```bash
+node scripts/refresh-commonmark-fixture.mjs
+```
+
+The script pins the CommonMark version. Bumping it is a separate, deliberate change and may require updating `KNOWN_DIFFERENT` if upstream example numbering shifts.
+
+Use the official CommonMark spec examples for parser-level conformance, the local `examples/basic` fixture for transform-level (theme-rendered) snapshots, and the GitHub Flavored Markdown spec only when GFM coverage is explicitly in scope (out of scope for the `0.1.0` MVP).
+
+### 3.4 Manual QA
 
 Before the `0.1.0` release, verify:
 
