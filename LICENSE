@@ -15,4 +15,6 @@ Unless otherwise noted:
 - Bundled themes are licensed under MIT OR Apache-2.0.
 - Examples are licensed under MIT OR Apache-2.0.
 - User themes are author-defined.
-- Generated HTML is not claimed by the tool license.
+- Generated HTML and user-authored content are not claimed by the tool license.
+  However, any bundled theme assets, templates, CSS, or other project-provided
+  materials embedded in the output remain under their original licenses.
