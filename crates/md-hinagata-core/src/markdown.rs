@@ -1,6 +1,6 @@
 use comrak::{
     format_html,
-    nodes::{AstNode, NodeValue},
+    nodes::{AstNode, ListType, NodeValue},
     parse_document, Arena, Options,
 };
 
@@ -20,9 +20,25 @@ pub enum MarkdownBlock {
         code: String,
         lang: String,
     },
+    Blockquote {
+        children: Vec<MarkdownBlock>,
+        fallback_html: String,
+    },
+    List {
+        ordered: bool,
+        start: usize,
+        items: Vec<MarkdownListItem>,
+        fallback_html: String,
+    },
     Html {
         html: String,
     },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MarkdownListItem {
+    pub children: Vec<MarkdownBlock>,
+    pub fallback_html: String,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -68,6 +84,19 @@ fn parse_block<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> Option<Ma
                 .unwrap_or_default()
                 .to_owned(),
         }),
+        NodeValue::BlockQuote => Some(MarkdownBlock::Blockquote {
+            children: parse_child_blocks(node, options),
+            fallback_html: fallback_html(node, options),
+        }),
+        NodeValue::List(list) => Some(MarkdownBlock::List {
+            ordered: list.list_type == ListType::Ordered,
+            start: list.start,
+            items: node
+                .children()
+                .filter_map(|child| parse_list_item(child, options, list.tight))
+                .collect(),
+            fallback_html: fallback_html(node, options),
+        }),
         NodeValue::HtmlBlock(html_block) => Some(MarkdownBlock::Html {
             html: raw_or_escaped_html(&html_block.literal, options),
         }),
@@ -76,6 +105,40 @@ fn parse_block<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> Option<Ma
             (!html.trim().is_empty()).then_some(MarkdownBlock::Html { html })
         }
     }
+}
+
+fn parse_child_blocks<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> Vec<MarkdownBlock> {
+    node.children()
+        .filter_map(|child| parse_block(child, options))
+        .collect()
+}
+
+fn parse_list_item<'a>(
+    node: &'a AstNode<'a>,
+    options: MarkdownOptions,
+    tight: bool,
+) -> Option<MarkdownListItem> {
+    matches!(node.data().value, NodeValue::Item(_)).then(|| MarkdownListItem {
+        children: node
+            .children()
+            .filter_map(|child| parse_list_item_child(child, options, tight))
+            .collect(),
+        fallback_html: fallback_html(node, options),
+    })
+}
+
+fn parse_list_item_child<'a>(
+    node: &'a AstNode<'a>,
+    options: MarkdownOptions,
+    tight: bool,
+) -> Option<MarkdownBlock> {
+    if tight && matches!(node.data().value, NodeValue::Paragraph) {
+        return Some(MarkdownBlock::Html {
+            html: inline_html(node, options),
+        });
+    }
+
+    parse_block(node, options)
 }
 
 fn fallback_html<'a>(node: &'a AstNode<'a>, markdown_options: MarkdownOptions) -> String {

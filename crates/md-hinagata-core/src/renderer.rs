@@ -1,7 +1,9 @@
 use serde_json::json;
 
 use crate::{
-    markdown::escape_html, template::render_template, Diagnostic, MarkdownBlock, ThemePackage,
+    markdown::{escape_html, MarkdownListItem},
+    template::render_template,
+    Diagnostic, MarkdownBlock, ThemePackage,
 };
 
 pub fn render_blocks(
@@ -69,8 +71,76 @@ fn render_block(
             });
             render_with_theme(theme, "codeblock", &context, fallback, diagnostics)
         }
+        MarkdownBlock::Blockquote {
+            children,
+            fallback_html,
+        } => {
+            let inner_html = render_blocks(children, theme, diagnostics);
+            let context = json!({
+                "inner_html": inner_html,
+            });
+            render_with_theme(
+                theme,
+                "blockquote",
+                &context,
+                fallback_html.clone(),
+                diagnostics,
+            )
+        }
+        MarkdownBlock::List {
+            ordered,
+            start,
+            items,
+            fallback_html,
+        } => {
+            let template_key = if *ordered { "ol" } else { "ul" };
+            let inner_html = render_list_items(items, theme, diagnostics);
+            let context = json!({
+                "inner_html": inner_html,
+                "ordered": *ordered,
+                "start": *start,
+            });
+            render_with_theme(
+                theme,
+                template_key,
+                &context,
+                fallback_html.clone(),
+                diagnostics,
+            )
+        }
         MarkdownBlock::Html { html } => html.clone(),
     }
+}
+
+fn render_list_items(
+    items: &[MarkdownListItem],
+    theme: Option<&ThemePackage>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> String {
+    items
+        .iter()
+        .map(|item| render_list_item(item, theme, diagnostics))
+        .map(|html| html.trim_end().to_owned())
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn render_list_item(
+    item: &MarkdownListItem,
+    theme: Option<&ThemePackage>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> String {
+    let inner_html = render_blocks(&item.children, theme, diagnostics);
+    let context = json!({
+        "inner_html": inner_html,
+    });
+    render_with_theme(
+        theme,
+        "li",
+        &context,
+        item.fallback_html.clone(),
+        diagnostics,
+    )
 }
 
 fn render_with_theme(

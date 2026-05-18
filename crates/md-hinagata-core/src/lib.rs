@@ -13,7 +13,7 @@ pub use diagnostics::{
 };
 pub use error::{CoreError, Result};
 pub use frontmatter::{parse_frontmatter, ParsedFrontmatter, ParsedMarkdown};
-pub use markdown::MarkdownBlock;
+pub use markdown::{MarkdownBlock, MarkdownListItem};
 pub use theme::{ThemeManifest, ThemePackage, ThemeSource};
 pub use transform::{transform, TransformOptions, TransformRequest, TransformResponse};
 
