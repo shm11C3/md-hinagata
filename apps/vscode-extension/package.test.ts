@@ -7,6 +7,13 @@ import { THEME_MANAGER_VIEW_ID } from "./src/views/themeEditorViewProvider.js";
 
 interface ExtensionManifest {
   activationEvents?: string[];
+  capabilities?: {
+    untrustedWorkspaces?: {
+      description?: string;
+      restrictedConfigurations?: string[];
+      supported: "limited" | boolean;
+    };
+  };
   contributes: {
     commands: Array<{
       command: string;
@@ -59,6 +66,15 @@ describe("extension manifest", () => {
       COMMAND_IDS.copyGeneratedHtml,
       COMMAND_IDS.selectTheme,
     ]);
+  });
+
+  it("declares limited untrusted workspace support", () => {
+    const untrustedWorkspaces = manifest.capabilities?.untrustedWorkspaces;
+
+    expect(untrustedWorkspaces).toBeDefined();
+    expect(untrustedWorkspaces?.supported).toBe("limited");
+    expect(untrustedWorkspaces?.description).toMatch(/workspace themes/i);
+    expect(untrustedWorkspaces?.description).toMatch(/untrusted workspaces/i);
   });
 
   it("contributes the theme manager view", () => {
