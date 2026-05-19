@@ -22,7 +22,6 @@ export interface PreviewWebviewPanel {
 export interface PreviewPanelHost {
   createPanel(): PreviewWebviewPanel;
   revealPanel(panel: PreviewWebviewPanel): void;
-  resolveStylesheetUri(webview: PreviewWebview): string;
 }
 
 export class PreviewPanel {
@@ -79,15 +78,11 @@ export class PreviewPanel {
     const bodyHtml =
       state.status === "active"
         ? state.generatedHtml
-        : `<p>${escapeHtml("Preview will render here.")}</p>`;
-    const inlineStyles =
-      state.css === undefined || state.css.length === 0 ? [] : [state.css];
+        : `<main class="mh-preview-placeholder"><p>${escapeHtml("Preview will render here.")}</p></main>`;
 
     panel.webview.html = createWebviewHtml({
-      bodyHtml: ['<main class="mh-preview">', bodyHtml, "</main>"].join(""),
+      bodyHtml,
       cspSource: panel.webview.cspSource,
-      inlineStyles,
-      stylesheets: [this.host.resolveStylesheetUri(panel.webview)],
       title: PREVIEW_PANEL_TITLE,
     });
   }

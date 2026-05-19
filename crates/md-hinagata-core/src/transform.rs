@@ -62,9 +62,9 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
             allow_raw_html: request.options.allow_raw_html.unwrap_or(false),
         },
     );
-    let html = render_blocks(&blocks, theme, &mut diagnostics);
-
     let css = theme.and_then(|theme| theme.css.clone());
+    let rendered_html = render_blocks(&blocks, theme, &mut diagnostics);
+    let html = compose_generated_html(&rendered_html, css.as_deref());
 
     Ok(TransformResponse {
         html,
@@ -73,6 +73,43 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
         frontmatter: parsed_markdown.frontmatter,
         diagnostics,
     })
+}
+
+fn compose_generated_html(rendered_html: &str, css: Option<&str>) -> String {
+    let Some(css) = css.map(str::trim_end).filter(|css| !css.is_empty()) else {
+        return rendered_html.to_owned();
+    };
+    let document_html = wrap_document_html(rendered_html);
+
+    [
+        "<style>",
+        escape_style_text(css).as_str(),
+        "</style>",
+        document_html.as_str(),
+    ]
+    .join("\n")
+}
+
+fn wrap_document_html(rendered_html: &str) -> String {
+    if rendered_html.is_empty() {
+        return "<main class=\"mh-document\"></main>".to_owned();
+    }
+
+    ["<main class=\"mh-document\">", rendered_html, "</main>"].join("\n")
+}
+
+fn escape_style_text(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    let mut remaining = value;
+
+    while let Some(index) = remaining.to_ascii_lowercase().find("</style") {
+        escaped.push_str(&remaining[..index]);
+        escaped.push_str("<\\/style");
+        remaining = &remaining[index + "</style".len()..];
+    }
+
+    escaped.push_str(remaining);
+    escaped
 }
 
 #[cfg(test)]
@@ -144,7 +181,18 @@ mod tests {
         let response = transform(request).expect("transform should return a response");
 
         assert_eq!(response.resolved_theme_id, "default");
-        assert_eq!(response.html, "<h1 id=\"title\">Title</h1>");
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                ".mh-document {}",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1 id=\"title\">Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
         assert_eq!(response.css.as_deref(), Some(".mh-document {}"));
         assert!(response.diagnostics.is_empty());
     }
@@ -366,7 +414,52 @@ mod tests {
 
         assert_eq!(response.resolved_theme_id, "fallback");
         assert_eq!(response.css.as_deref(), Some(".fallback {}"));
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                ".fallback {}",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1>Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
         assert_eq!(response.diagnostics[0].code, UNKNOWN_THEME);
+    }
+
+    #[test]
+    fn transform_includes_theme_css_in_generated_html() {
+        let request = TransformRequest {
+            markdown: "# Title".to_owned(),
+            themes: vec![theme_package(
+                "default",
+                Some("body::after { content: '</style>'; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                "body::after { content: '<\\/style>'; }",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1>Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(
+            response.css.as_deref(),
+            Some("body::after { content: '</style>'; }"),
+        );
     }
 
     #[test]

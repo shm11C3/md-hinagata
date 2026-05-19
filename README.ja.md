@@ -70,6 +70,12 @@ This action cannot be undone.
 
 ここで言う「テーマ」とはCSSだけを指すのではありません。テンプレート、スタイル、メタデータ、そして出力ルールのパッケージを指します。
 
+### MVPの出力契約
+
+`0.1.0` では、`hinagata.output: fragment` は自己完結したHTMLフラグメントを生成します。解決されたテーマが `entryCss` を持つ場合、生成HTMLには `<style>` タグとしてそのCSSが含まれ、その後にテーマ適用済みのdocument rootとMarkdown本文の変換結果が続きます。
+
+Preview webviewは、`md-hinagata: Copy Generated HTML` がコピーする生成HTMLと同じHTMLを表示します。Preview専用の別経路でテーマCSSを適用することはしません。
+
 ## コア・アイディア
 
 ### テーマの選択はドキュメントに属する
@@ -322,7 +328,7 @@ VS Codeでリポジトリのルートを開き、F5キーを押すか、「実�
 1. 基本サンプルの起動設定を使用している場合、`sample.md` がアクティブであることを確認します。
 2. `md-hinagata` アクティビティバーコンテナとテーママネージャービューが表示されていることを確認します。
 3. コマンドパレットから `md-hinagata: Open Preview` を実行します。
-4. 生成されたフラグメントを `expected.html` と比較します。
+4. テーマCSSを含む生成HTMLを `expected.html` と比較します。
 5. コマンドパレットに `md-hinagata: Copy Generated HTML` と `md-hinagata: Select Theme` が表示されることを確認します。
 
 ## Rustコア

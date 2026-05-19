@@ -42,8 +42,6 @@ describe("PreviewPanel", () => {
         panels.push(panel);
         return panel;
       },
-      resolveStylesheetUri: (webview) =>
-        webview.asWebviewUri({} as vscode.Uri).toString(),
       revealPanel: (panel) => {
         panel.reveal();
       },
@@ -56,9 +54,7 @@ describe("PreviewPanel", () => {
     expect(revealCount).toBe(2);
     expect(panels[0]?.webview.html).toContain(PREVIEW_PANEL_TITLE);
     expect(panels[0]?.webview.html).toContain("Preview will render here.");
-    expect(panels[0]?.webview.html).toContain(
-      '<link rel="stylesheet" href="vscode-resource:/preview/styles.css">',
-    );
+    expect(panels[0]?.webview.html).not.toContain('<link rel="stylesheet"');
     expect(panels[0]?.webview.html).toContain(
       'Content-Security-Policy" content="default-src',
     );
@@ -74,8 +70,6 @@ describe("PreviewPanel", () => {
     const panel = createPreviewWebviewPanel();
     const previewPanel = new PreviewPanel(documentStateService, {
       createPanel: () => panel,
-      resolveStylesheetUri: (webview) =>
-        webview.asWebviewUri({} as vscode.Uri).toString(),
       revealPanel: (targetPanel) => {
         targetPanel.reveal();
       },
@@ -90,12 +84,22 @@ describe("PreviewPanel", () => {
     documentStateService.applyTransformResult({
       css: ".article { color: red; }",
       diagnostics: [],
-      html: "<h1>Title</h1>",
+      html: [
+        "<style>",
+        ".article { color: red; }",
+        "</style>",
+        '<main class="mh-document">',
+        "<h1>Title</h1>",
+        "</main>",
+      ].join("\n"),
       resolvedThemeId: "default",
     });
 
     expect(panel.webview.html).toContain("<h1>Title</h1>");
     expect(panel.webview.html).toContain(".article { color: red; }");
+    expect(
+      panel.webview.html.match(/\.article \{ color: red; \}/g),
+    ).toHaveLength(1);
   });
 
   it("renders an active empty transform result without the placeholder", () => {
@@ -103,8 +107,6 @@ describe("PreviewPanel", () => {
     const panel = createPreviewWebviewPanel();
     const previewPanel = new PreviewPanel(documentStateService, {
       createPanel: () => panel,
-      resolveStylesheetUri: (webview) =>
-        webview.asWebviewUri({} as vscode.Uri).toString(),
       revealPanel: (targetPanel) => {
         targetPanel.reveal();
       },
@@ -122,7 +124,7 @@ describe("PreviewPanel", () => {
       resolvedThemeId: "default",
     });
 
-    expect(panel.webview.html).toContain('<main class="mh-preview"></main>');
+    expect(panel.webview.html).toContain("<body></body>");
     expect(panel.webview.html).not.toContain("Preview will render here.");
   });
 
@@ -131,8 +133,6 @@ describe("PreviewPanel", () => {
     const panel = createPreviewWebviewPanel();
     const previewPanel = new PreviewPanel(documentStateService, {
       createPanel: () => panel,
-      resolveStylesheetUri: (webview) =>
-        webview.asWebviewUri({} as vscode.Uri).toString(),
       revealPanel: (targetPanel) => {
         targetPanel.reveal();
       },
@@ -160,9 +160,9 @@ describe("PreviewPanel", () => {
       resolvedThemeId: "basic",
     });
 
-    expect(panel.webview.html).toContain('<main class="mh-preview">');
     expect(panel.webview.html).toContain(expectedHtml);
     expect(panel.webview.html).toContain(".basic-heading");
+    expect(panel.webview.html).not.toContain('<main class="mh-preview">');
     expect(panel.webview.html).toContain(
       'Content-Security-Policy" content="default-src',
     );

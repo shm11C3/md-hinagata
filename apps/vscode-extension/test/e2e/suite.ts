@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import * as vscode from "vscode";
@@ -55,10 +56,19 @@ async function assertCommandsRegistered(): Promise<void> {
 }
 
 async function assertPreviewAndCopyCommandsRun(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
 
   const generatedHtml = await vscode.env.clipboard.readText();
-  assert.match(generatedHtml, /<h1\b/);
-  assert.match(generatedHtml, /Welcome to md-hinagata/);
+  const expectedHtml = await readFile(
+    path.join(workspaceFolder.uri.fsPath, "expected.html"),
+    "utf8",
+  );
+
+  assert.equal(generatedHtml, expectedHtml.trimEnd());
+  assert.match(generatedHtml, /<style>/);
+  assert.match(generatedHtml, /\.basic-heading/);
 }

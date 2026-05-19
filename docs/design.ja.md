@@ -1188,7 +1188,8 @@ C. diagnostic を出して無視する
 
 ```txt
 fragment
-  body 部分の HTML だけを返す。
+  自己完結した HTML fragment を返す。
+  theme CSS がある場合は <style> tag と document root を含める。
 ```
 
 将来候補。
@@ -1214,15 +1215,15 @@ md-hinagata Preview
   beside editor
 ```
 
-### 9.2 CSS injection
+### 9.2 CSS handling
 
-`TransformResponse.css` を preview 内の `<style id="theme-css">` に挿入する。
+Preview は `TransformResponse.html` をそのまま表示する。
+`TransformResponse.css` を preview 専用に別注入しない。
 
 ```ts
 webview.postMessage({
   type: "update",
   html: response.html,
-  css: response.css,
   diagnostics: response.diagnostics,
 });
 ```
@@ -1234,8 +1235,12 @@ Copy Generated HTML では、最後に変換した HTML を使う。
 ```txt
 TransformResponse.html
   -> DocumentState.generatedHtml
+  -> PreviewPanel
   -> clipboard
 ```
+
+Theme CSS は Rust core が `TransformResponse.html` 内の `<style>` tag として組み込む。
+Preview と Copy Generated HTML は同じ `DocumentState.generatedHtml` を使い、Preview-only styling context を持たない。
 
 現在の状態が stale の場合は、copy 前に再変換する。
 

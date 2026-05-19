@@ -74,6 +74,12 @@ can become this HTML, depending on the selected theme:
 
 The theme is not only CSS. A theme is a package of templates, styles, metadata, and output rules.
 
+### MVP output contract
+
+For `0.1.0`, `hinagata.output: fragment` produces a self-contained HTML fragment. When a resolved theme provides `entryCss`, the generated HTML includes that CSS in a `<style>` tag followed by the themed document root and rendered Markdown content.
+
+The Preview webview renders the same generated HTML that `md-hinagata: Copy Generated HTML` copies. Preview does not apply theme CSS through a separate Preview-only path.
+
 ## Core ideas
 
 ### Theme selection belongs to the document
@@ -414,7 +420,7 @@ In the Extension Development Host:
 1. Confirm `sample.md` is active when using the basic example launch configuration.
 2. Confirm the `md-hinagata` Activity Bar container and Theme Manager view are visible.
 3. Run `md-hinagata: Open Preview` from the Command Palette.
-4. Compare the generated fragment with `expected.html`.
+4. Compare the generated HTML, including theme CSS, with `expected.html`.
 5. Confirm `md-hinagata: Copy Generated HTML` and `md-hinagata: Select Theme` appear in the Command Palette.
 
 ## Rust core

@@ -3,7 +3,7 @@ body {
   background-color: #1b232e;
 }
 
-.mh-preview {
+.mh-document {
   box-sizing: border-box;
   min-height: 100vh;
   max-width: 720px;
