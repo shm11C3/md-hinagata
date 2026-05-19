@@ -35,6 +35,10 @@ docs/update-agent-workflow
 chore/update-tooling
 ```
 
+AI coding agents must use branch names that describe the work itself. Do not
+prefix branches with the agent or tool name, such as `codex/`, unless the
+maintainer explicitly asks for that convention.
+
 ## 3. PR Scope Rules
 
 Group changes in one PR only when they share the same purpose and should be reviewed together.
@@ -79,6 +83,10 @@ Split commits when the maintainer asks for it or when separate commits materiall
 ## 5. Pull Request Descriptions
 
 Write PR titles and descriptions in English.
+
+Open PRs as ready for review by default. Use draft PRs only when the maintainer
+asks for a draft, or when the PR is intentionally incomplete or blocked and that
+state is clearly explained in the PR body.
 
 Include:
 
