@@ -6,7 +6,19 @@ if (needsJson === undefined || needsJson.length === 0) {
   process.exit(1);
 }
 
-const needs = JSON.parse(needsJson) as Record<string, { result?: string }>;
+let needs: Record<string, { result?: string }>;
+try {
+  needs = JSON.parse(needsJson);
+} catch (error) {
+  const snippet =
+    needsJson.length > 200 ? `${needsJson.slice(0, 200)}...` : needsJson;
+  console.error(
+    `NEEDS_JSON is invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
+  );
+  console.error(`NEEDS_JSON snippet: ${snippet}`);
+  process.exit(1);
+}
+
 const failedJobs = Object.entries(needs).filter(
   ([, job]) => !allowedResults.has(job.result ?? "missing"),
 );
