@@ -177,6 +177,7 @@ jobs:
         uses: ./.github/actions/setup-node
         with:
           install-deps: "false"
+          node-version: "22.6.0"
 
       - name: Set up Rust
         uses: ./.github/actions/setup-rust
