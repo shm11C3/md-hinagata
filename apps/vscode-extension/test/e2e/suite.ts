@@ -68,7 +68,14 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
     "utf8",
   );
 
-  assert.equal(generatedHtml, expectedHtml.trimEnd());
+  assert.equal(
+    normalizeGeneratedHtml(generatedHtml),
+    normalizeGeneratedHtml(expectedHtml),
+  );
   assert.match(generatedHtml, /<style>/);
   assert.match(generatedHtml, /\.basic-heading/);
+}
+
+function normalizeGeneratedHtml(value: string): string {
+  return value.replaceAll("\r\n", "\n").trimEnd();
 }

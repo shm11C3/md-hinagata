@@ -465,7 +465,7 @@ panels/
 #### 4.5.1 役割
 
 - 変換後 HTML を表示する。
-- theme CSS を適用する。
+- `TransformResponse.html` に含まれる theme CSS を表示に反映する。
 - diagnostics がある場合は簡易表示する。
 - Markdown 変更時に再描画する。
 - theme file 保存時に再描画する。
@@ -477,7 +477,6 @@ Webview には以下を送る。
 ```ts
 type PreviewState = {
   html: string;
-  css?: string;
   diagnostics: Diagnostic[];
 };
 ```
@@ -485,10 +484,12 @@ type PreviewState = {
 Webview 側では以下のように描画する。
 
 ```html
-<style id="theme-css"></style>
 <div id="diagnostics"></div>
-<main id="preview-root"></main>
+<!-- TransformResponse.html is inserted here as-is. -->
 ```
+
+Preview は `TransformResponse.css` を別の `<style>` として注入しない。
+theme CSS は Rust core が `TransformResponse.html` 内に組み込む。
 
 #### 4.5.3 更新タイミング
 
