@@ -10,6 +10,12 @@
     "vscode": "^1.120.0"
   },
   "main": "./dist/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Workspace themes loaded from the workspace are disabled in untrusted workspaces. Bundled themes, preview, and copy behavior remain available."
+    }
+  },
   "contributes": {
     "commands": [
       {
