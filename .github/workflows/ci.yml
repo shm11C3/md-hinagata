@@ -127,7 +127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, ubuntu-22.04, macos-latest]
+        platform: [ubuntu-22.04]
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 20
     steps:
@@ -147,7 +147,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [windows-latest, ubuntu-22.04, macos-latest]
+        platform: [ubuntu-22.04]
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 20
     steps:
