@@ -24,11 +24,6 @@ import {
 } from "./views/themeEditorViewProvider.js";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const previewMediaRoot = vscode.Uri.joinPath(
-    context.extensionUri,
-    "media",
-    "preview",
-  );
   const documentStateService = new DocumentStateService();
   const diagnosticsService = new DiagnosticsService();
   const themeResolver = new ThemeResolver(context.extensionUri, {
@@ -54,14 +49,10 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.ViewColumn.Beside,
         {
           enableScripts: false,
-          localResourceRoots: [previewMediaRoot],
+          localResourceRoots: [],
           retainContextWhenHidden: true,
         },
       ),
-    resolveStylesheetUri: (webview) =>
-      webview
-        .asWebviewUri(vscode.Uri.joinPath(previewMediaRoot, "styles.css"))
-        .toString(),
     revealPanel: (panel) => {
       panel.reveal(vscode.ViewColumn.Beside);
     },

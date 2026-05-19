@@ -87,9 +87,9 @@ If future tests need to launch the VS Code host, keep those separate from coloca
 - Frontmatter updates.
 - Theme resolution.
 - Workspace theme resolution.
-- Copy Generated HTML behavior.
+- Copy Generated HTML behavior, including theme CSS in generated HTML when the resolved theme has CSS.
 - Webview HTML safety boundaries.
-- Preview rendering with generated HTML and theme CSS when preview behavior is involved.
+- Preview rendering the same generated HTML that Copy Generated HTML uses.
 
 ### 3.3 CommonMark Conformance
 
@@ -129,7 +129,8 @@ Before the `0.1.0` release, verify:
 - Saving `styles.css` updates the Preview.
 - Changing `hinagata.theme` in frontmatter switches the theme.
 - Unknown themes produce a warning.
-- Copy Generated HTML copies the expected HTML.
+- Copy Generated HTML copies `examples/basic/expected.html`, including theme CSS.
+- Preview renders the same generated HTML as the copy command.
 
 When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `sample.md` should show generated content rather than the placeholder.
 

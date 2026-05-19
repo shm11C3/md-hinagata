@@ -357,7 +357,7 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 | `id` | string | yes | Theme ID。directory name と一致することが望ましい。 |
 | `name` | string | yes | 表示名。 |
 | `version` | string | yes | Theme version。 |
-| `entryCss` | string | no | Preview に適用する CSS path。 |
+| `entryCss` | string | no | 生成 HTML と Preview に適用する CSS path。`0.1.0` では `<style>` tag として生成 HTML に含める。 |
 | `templates` | object | yes | Markdown 要素と template path の対応。 |
 
 ### 6.4 Template file
@@ -506,6 +506,10 @@ Preview は以下の場合に更新される。
 ### 7.5 Generated HTML
 
 `0.1.0` では生成 HTML の表示パネルは任意とする。ただし、copy command は必須とする。
+
+`0.1.0` の `output: fragment` は、CSS を含めた自己完結 HTML fragment を指す。解決済み theme が CSS を持つ場合、`TransformResponse.html` は `<style>` tag、document root、rendered Markdown HTML を含む。
+
+Preview は `TransformResponse.html` をそのまま表示する。Preview 専用に `TransformResponse.css` を別注入してはならない。`Copy Generated HTML` も同じ `TransformResponse.html` を clipboard にコピーする。
 
 `0.2.0` 以降で `Open Generated HTML` panel を追加する。
 
@@ -829,9 +833,9 @@ project/
 - Theme package の拡張子を `.hinagata-theme` と `.md-hinagata-theme` のどちらにするか。
 - Template variable naming を snake_case に統一するか、camelCase を許容するか。
 - `inner_html` を使う template に対する safety warning をどう設計するか。
-- Preview に CSS をどの範囲で適用するか。
 - Full HTML export を `0.2.0` に入れるか。
 - `output: fragment` 以外の output mode をいつ追加するか。
+- CSS を各要素の `style=""` 属性へ展開する inline output mode をいつ追加するか。
 - syntax highlight を Rust core 側で行うか、Preview 側で行うか。
 
 ---

@@ -86,18 +86,27 @@ describe("extension commands", () => {
     expect(messages).toEqual([MARKDOWN_REQUIRED_MESSAGE]);
   });
 
-  it("copies the latest generated html", async () => {
+  it("copies the latest generated html including theme css", async () => {
     const documentStateService = new DocumentStateService();
     const writes: string[] = [];
     const messages: string[] = [];
+    const generatedHtml = [
+      "<style>",
+      ".article { color: red; }",
+      "</style>",
+      '<main class="mh-document">',
+      "<h1>Hello</h1>",
+      "</main>",
+    ].join("\n");
     documentStateService.setActiveDocument({
       languageId: "markdown",
       markdown: "# Hello",
       uri: "file:///article.md",
     });
     documentStateService.applyTransformResult({
+      css: ".article { color: red; }",
       diagnostics: [],
-      html: "<h1>Hello</h1>",
+      html: generatedHtml,
       resolvedThemeId: "default",
     });
 
@@ -114,7 +123,9 @@ describe("extension commands", () => {
       }),
     ).resolves.toBe(true);
 
-    expect(writes).toEqual(["<h1>Hello</h1>"]);
+    expect(writes).toEqual([generatedHtml]);
+    expect(writes[0]).toContain("<style>");
+    expect(writes[0]).toContain(".article { color: red; }");
     expect(messages).toEqual(["info:Generated HTML copied."]);
   });
 

@@ -40,6 +40,7 @@ describe("ThemeEditorViewProvider", () => {
     });
     documentStateService.applyTransformResult(
       {
+        css: ".basic-heading { color: red; }",
         diagnostics: [
           {
             code: "template-render",
@@ -90,6 +91,9 @@ describe("ThemeEditorViewProvider", () => {
       "<dt>Resolved Theme</dt><dd>default</dd>",
     );
     expect(view.webview.html).toContain("<dt>Output</dt><dd>fragment</dd>");
+    expect(view.webview.html).toContain(
+      "<dt>Generated HTML</dt><dd>fragment with theme CSS</dd>",
+    );
     expect(view.webview.html).toContain("Fallback: basic -> default");
     expect(view.webview.html).toContain("Theme Files");
     expect(view.webview.html).toContain("theme.json");

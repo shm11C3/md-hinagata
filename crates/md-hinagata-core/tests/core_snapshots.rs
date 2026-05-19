@@ -9,6 +9,7 @@ use md_hinagata_core::{
 fn transforms_basic_example_to_expected_html() {
     let article = read_repo_file("examples/basic/sample.md");
     let expected_html = read_repo_file("examples/basic/expected.html");
+    let expected_css = read_repo_file("examples/basic/.md-hinagata/themes/basic/styles.css");
     let request = TransformRequest {
         markdown: article,
         themes: vec![basic_example_theme()],
@@ -34,6 +35,7 @@ fn transforms_basic_example_to_expected_html() {
         Some("fragment"),
     );
     assert_eq!(response.html, expected_html.trim_end());
+    assert_eq!(response.css.as_deref(), Some(expected_css.as_str()));
     assert!(response.diagnostics.is_empty());
 }
 

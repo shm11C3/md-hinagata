@@ -99,6 +99,7 @@ function renderCurrentDocument(
   const requestedTheme = state.frontmatter?.theme ?? state.currentTheme;
   const resolvedTheme = state.resolvedThemeId ?? "Not resolved";
   const output = state.frontmatter?.output ?? "fragment";
+  const generatedHtmlContract = getGeneratedHtmlContract(state);
   const fallbackHtml =
     state.resolvedThemeId !== undefined &&
     requestedTheme !== state.resolvedThemeId
@@ -112,6 +113,7 @@ function renderCurrentDocument(
     renderDefinition("Theme", requestedTheme),
     renderDefinition("Resolved Theme", resolvedTheme),
     renderDefinition("Output", output),
+    renderDefinition("Generated HTML", generatedHtmlContract),
     renderDefinition(
       "Workspace trust",
       isWorkspaceTrusted ? "trusted" : "untrusted",
@@ -120,6 +122,16 @@ function renderCurrentDocument(
     fallbackHtml,
     "</section>",
   ].join("");
+}
+
+function getGeneratedHtmlContract(state: DocumentState): string {
+  if (state.resolvedThemeId === undefined) {
+    return "Not resolved";
+  }
+
+  return state.css === undefined || state.css.length === 0
+    ? "fragment"
+    : "fragment with theme CSS";
 }
 
 function renderThemeFiles(state: DocumentState): string {
