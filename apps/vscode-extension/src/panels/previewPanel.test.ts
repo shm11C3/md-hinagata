@@ -137,7 +137,7 @@ describe("PreviewPanel", () => {
         targetPanel.reveal();
       },
     });
-    const markdown = readBasicExampleFile("article.md");
+    const markdown = readBasicExampleFile("sample.md");
     const expectedHtml = readBasicExampleFile("expected.html").trimEnd();
     const themeCss = readBasicExampleFile(
       ".md-hinagata/themes/basic/styles.css",
@@ -147,7 +147,7 @@ describe("PreviewPanel", () => {
     documentStateService.setActiveDocument({
       languageId: "markdown",
       markdown,
-      uri: "file:///examples/basic/article.md",
+      uri: "file:///examples/basic/sample.md",
     });
     documentStateService.applyTransformResult({
       css: themeCss,
@@ -162,7 +162,7 @@ describe("PreviewPanel", () => {
 
     expect(panel.webview.html).toContain('<main class="mh-preview">');
     expect(panel.webview.html).toContain(expectedHtml);
-    expect(panel.webview.html).toContain(".basic-document");
+    expect(panel.webview.html).toContain(".basic-heading");
     expect(panel.webview.html).toContain(
       'Content-Security-Policy" content="default-src',
     );

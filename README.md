@@ -116,6 +116,8 @@ A `theme.json` file describes the theme:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
+  "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
   "version": "0.1.0",
@@ -133,6 +135,8 @@ A `theme.json` file describes the theme:
   }
 }
 ```
+
+The draft `0.1` JSON Schema is tracked at [`schemas/theme.schema.json`](schemas/theme.schema.json).
 
 ### Templates use Handlebars
 
@@ -324,7 +328,7 @@ md-hinagata/
 
   examples/
     basic/
-      article.md
+      sample.md
       expected.html
 
   schemas/
@@ -391,7 +395,7 @@ pnpm run test:e2e
 
 This launches VS Code with the local extension, opens `examples/basic`, verifies
 the contributed commands, and runs Preview plus Copy Generated HTML against
-`article.md`. On Linux CI this command runs under `xvfb`.
+`sample.md`. On Linux CI this command runs under `xvfb`.
 
 ### Extension Development Host
 
@@ -399,11 +403,11 @@ Open the repository root in VS Code, then press F5 or choose `Run md-hinagata Ex
 
 The launch configuration starts an Extension Development Host from `apps/vscode-extension` and runs the `md-hinagata: build extension` task before launch. This builds the extension bundle without packaging a VSIX.
 
-To exercise the Rust/WASM transform path with the bundled example, choose `Run md-hinagata Extension (Basic Example)` from Run and Debug. This opens `examples/basic` as the Extension Development Host workspace, opens `article.md`, and runs the `md-hinagata: prepare basic example` task before launch, so the workspace theme at `.md-hinagata/themes/basic` is available.
+To exercise the Rust/WASM transform path with the bundled example, choose `Run md-hinagata Extension (Basic Example)` from Run and Debug. This opens `examples/basic` as the Extension Development Host workspace, opens `sample.md`, and runs the `md-hinagata: prepare basic example` task before launch, so the workspace theme at `.md-hinagata/themes/basic` is available.
 
 In the Extension Development Host:
 
-1. Confirm `article.md` is active when using the basic example launch configuration.
+1. Confirm `sample.md` is active when using the basic example launch configuration.
 2. Confirm the `md-hinagata` Activity Bar container and Theme Manager view are visible.
 3. Run `md-hinagata: Open Preview` from the Command Palette.
 4. Compare the generated fragment with `expected.html`.

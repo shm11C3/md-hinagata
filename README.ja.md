@@ -112,6 +112,8 @@ hinagata:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
+  "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
   "version": "0.1.0",
@@ -129,6 +131,8 @@ hinagata:
   }
 }
 ```
+
+`0.1` のドラフトJSON Schemaは [`schemas/theme.schema.json`](schemas/theme.schema.json) で管理します。
 
 ### テンプレートにはHandlebarsを使用
 
@@ -299,7 +303,7 @@ VS Code拡張機能ホストのE2Eスモークテストを実行：
 pnpm run test:e2e
 ```
 
-これにより、ローカルの拡張機能を含むVS Codeが起動し、`examples/basic` を開き、コントリビュートされたコマンドを検証し、`article.md` に対してプレビューとHTMLコピーを実行します。LinuxのCI環境では、このコマンドは `xvfb` 下で実行されます。
+これにより、ローカルの拡張機能を含むVS Codeが起動し、`examples/basic` を開き、コントリビュートされたコマンドを検証し、`sample.md` に対してプレビューとHTMLコピーを実行します。LinuxのCI環境では、このコマンドは `xvfb` 下で実行されます。
 
 ### 拡張機能開発ホスト
 
@@ -307,11 +311,11 @@ VS Codeでリポジトリのルートを開き、F5キーを押すか、「実�
 
 この起動設定は `apps/vscode-extension` から拡張機能開発ホストを開始し、起動前に `md-hinagata: build extension` タスクを実行します。これにより、VSIXをパッケージ化することなく拡張機能バンドルをビルドします。
 
-同梱のサンプルを使用してRust/WASMの変換パスを試すには、「実行とデバッグ」から `Run md-hinagata Extension (Basic Example)` を選択してください。これにより、`examples/basic` がワークスペースとして開かれ、`article.md` が開かれます。起動前に `md-hinagata: prepare basic example` タスクが実行されるため、ワークスペーステーマ `.md-hinagata/themes/basic` が利用可能な状態になります。
+同梱のサンプルを使用してRust/WASMの変換パスを試すには、「実行とデバッグ」から `Run md-hinagata Extension (Basic Example)` を選択してください。これにより、`examples/basic` がワークスペースとして開かれ、`sample.md` が開かれます。起動前に `md-hinagata: prepare basic example` タスクが実行されるため、ワークスペーステーマ `.md-hinagata/themes/basic` が利用可能な状態になります。
 
 拡張機能開発ホストでの確認手順：
 
-1. 基本サンプルの起動設定を使用している場合、`article.md` がアクティブであることを確認します。
+1. 基本サンプルの起動設定を使用している場合、`sample.md` がアクティブであることを確認します。
 2. `md-hinagata` アクティビティバーコンテナとテーママネージャービューが表示されていることを確認します。
 3. コマンドパレットから `md-hinagata: Open Preview` を実行します。
 4. 生成されたフラグメントを `expected.html` と比較します。

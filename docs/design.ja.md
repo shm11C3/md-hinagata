@@ -226,7 +226,7 @@ md-hinagata/
 
   examples/
     basic/
-      article.md
+      sample.md
       expected.html
 
   schemas/
@@ -949,7 +949,7 @@ md-hinagata/
 
 ```json
 {
-  "$schema": "https://md-hinagata.dev/schemas/theme-0.1.schema.json",
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
   "schemaVersion": "0.1",
   "id": "default",
   "name": "Default",
@@ -1407,7 +1407,7 @@ template render error test
 Snapshot test 例。
 
 ```txt
-examples/basic/article.md
+examples/basic/sample.md
   -> transform
   -> examples/basic/expected.html と比較
 ```

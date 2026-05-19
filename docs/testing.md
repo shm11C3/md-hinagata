@@ -37,12 +37,12 @@ crates/md-hinagata-core/tests/
 Snapshot input and expected output fixtures belong under `examples/`.
 
 ```txt
-examples/basic/article.md
+examples/basic/sample.md
 examples/basic/expected.html
 examples/basic/.md-hinagata/themes/basic/
 ```
 
-Treat `examples/basic` as a functional fixture, not only sample content. Keep `article.md`, `expected.html`, and the basic theme files aligned when transform behavior changes.
+Treat `examples/basic` as a functional fixture, not only sample content. Keep `sample.md`, `expected.html`, and the basic theme files aligned when transform behavior changes.
 
 Upstream conformance fixtures belong under `crates/md-hinagata-core/tests/fixtures/`. See the CommonMark conformance harness in section 3.3.
 
@@ -131,7 +131,7 @@ Before the `0.1.0` release, verify:
 - Unknown themes produce a warning.
 - Copy Generated HTML copies the expected HTML.
 
-When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `article.md` should show generated content rather than the placeholder.
+When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `sample.md` should show generated content rather than the placeholder.
 
 ## 4. Commands
 
@@ -162,5 +162,5 @@ pnpm run test:e2e
 ```
 
 This builds the WASM bridge, builds the extension bundle, launches VS Code
-against `examples/basic`, opens `article.md`, verifies the contributed commands,
+against `examples/basic`, opens `sample.md`, verifies the contributed commands,
 and runs the Preview and Copy HTML commands without packaging a VSIX.
