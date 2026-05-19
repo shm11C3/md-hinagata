@@ -86,11 +86,21 @@ function extractExamples(text) {
         markdownLines.push(lines[i]);
         i += 1;
       }
+      if (i >= lines.length) {
+        throw new Error(
+          `Malformed CommonMark spec: missing markdown/html separator for example ${example}`,
+        );
+      }
       i += 1;
       const htmlLines = [];
       while (i < lines.length && !lines[i].startsWith(fence)) {
         htmlLines.push(lines[i]);
         i += 1;
+      }
+      if (i >= lines.length) {
+        throw new Error(
+          `Malformed CommonMark spec: missing closing fence for example ${example}`,
+        );
       }
       i += 1;
       tests.push({

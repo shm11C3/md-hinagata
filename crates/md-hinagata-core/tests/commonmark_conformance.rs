@@ -15,7 +15,11 @@
 //! and compares. Examples that are out of MVP scope are listed in
 //! [`KNOWN_DIFFERENT`] with the reason searchable in this file.
 
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    path::PathBuf,
+};
 
 use md_hinagata_core::{transform, TransformOptions, TransformRequest};
 use serde::Deserialize;
@@ -72,6 +76,7 @@ fn commonmark_mvp_block_elements_match_spec() {
     );
 
     let known: HashMap<u32, &str> = KNOWN_DIFFERENT.iter().copied().collect();
+    let fixture_ids: HashSet<u32> = fixture.examples.iter().map(|ex| ex.example).collect();
 
     let mut passed = 0usize;
     let mut known_different = 0usize;
@@ -96,6 +101,12 @@ fn commonmark_mvp_block_elements_match_spec() {
         }
     }
 
+    let stale_known: Vec<u32> = KNOWN_DIFFERENT
+        .iter()
+        .map(|(id, _)| *id)
+        .filter(|id| !fixture_ids.contains(id))
+        .collect();
+
     eprintln!(
         "CommonMark {} MVP-block conformance: {} passed, {} known-different (of {} examples)",
         fixture.commonmark_version,
@@ -115,6 +126,10 @@ fn commonmark_mvp_block_elements_match_spec() {
         "{} entry/entries in KNOWN_DIFFERENT now match the spec:\n{}",
         surprise_matches.len(),
         surprise_matches.join("\n"),
+    );
+    assert!(
+        stale_known.is_empty(),
+        "KNOWN_DIFFERENT contains example id(s) not present in the fixture: {stale_known:?}",
     );
 }
 
