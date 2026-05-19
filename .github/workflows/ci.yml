@@ -1,0 +1,284 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  change-detection:
+    name: Change Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      is-push: ${{ steps.meta.outputs.is_push }}
+      actions-changed: ${{ steps.changes.outputs.actions }}
+      javascript-changed: ${{ steps.changes.outputs.javascript }}
+      node-deps-changed: ${{ steps.changes.outputs.node-deps }}
+      rust-changed: ${{ steps.changes.outputs.rust }}
+      wasm-changed: ${{ steps.changes.outputs.wasm }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 2
+
+      - id: meta
+        shell: bash
+        run: echo "is_push=${{ github.event_name == 'push' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Check changed files
+        id: changes
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            actions:
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+            javascript:
+              - 'apps/vscode-extension/**'
+              - 'themes/**'
+              - 'scripts/build-wasm.mjs'
+              - 'scripts/copy-wasm-to-extension.mjs'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'biome.jsonc'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+            node-deps:
+              - 'package.json'
+              - 'apps/vscode-extension/package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+            rust:
+              - 'crates/**'
+              - 'examples/**'
+              - 'scripts/refresh-commonmark-fixture.mjs'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+            wasm:
+              - 'crates/**'
+              - 'scripts/build-wasm.mjs'
+              - 'scripts/copy-wasm-to-extension.mjs'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.github/workflows/**'
+              - '.github/actions/**'
+              - '.github/scripts/**'
+
+  lint-actions:
+    name: GitHub Actions Lint
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.actions-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download actionlint
+        id: get-actionlint
+        shell: bash
+        run: bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/393031adb9afb225ee52ae2ccd7a5af5525e03e8/scripts/download-actionlint.bash) 1.7.11
+
+      - name: Run actionlint
+        shell: bash
+        run: ${{ steps.get-actionlint.outputs.executable }} -color
+
+  format-rust:
+    name: Rust Formatting
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.rust-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+
+  lint-rust:
+    name: Rust Clippy (${{ matrix.platform }})
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.rust-changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, ubuntu-22.04, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  test-rust:
+    name: Rust Tests (${{ matrix.platform }})
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.rust-changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, ubuntu-22.04, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Run Rust tests
+        run: cargo test --workspace -- --test-threads=1 --nocapture
+
+  build-wasm:
+    name: WASM Build
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.wasm-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+        with:
+          install-deps: "false"
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
+        with:
+          version: 1.19.1
+
+      - name: Install wasm-bindgen CLI
+        run: cargo binstall wasm-bindgen-cli --version 0.2.121 --no-confirm
+
+      - name: Build WASM bridge
+        run: pnpm run build:wasm
+
+  check-vscode-extension:
+    name: TypeScript Check
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.javascript-changed == 'true' || needs.change-detection.outputs.node-deps-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Run TypeScript check
+        run: pnpm --filter md-hinagata-vscode-extension run check
+
+  lint-javascript:
+    name: JavaScript Lint
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.javascript-changed == 'true' || needs.change-detection.outputs.node-deps-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Run Biome check
+        run: pnpm --workspace-root exec biome check .
+
+  test-vscode-extension:
+    name: Extension Unit Tests
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.javascript-changed == 'true' || needs.change-detection.outputs.node-deps-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Run extension unit tests
+        run: pnpm --filter md-hinagata-vscode-extension run test
+
+  build-vscode-extension:
+    name: Extension Build
+    needs: change-detection
+    if: needs.change-detection.outputs.is-push == 'true' || needs.change-detection.outputs.javascript-changed == 'true' || needs.change-detection.outputs.node-deps-changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Build extension
+        run: pnpm --filter md-hinagata-vscode-extension run build
+
+  merge-gate:
+    name: Merge Gate
+    needs:
+      - change-detection
+      - lint-actions
+      - format-rust
+      - lint-rust
+      - test-rust
+      - build-wasm
+      - check-vscode-extension
+      - lint-javascript
+      - test-vscode-extension
+      - build-vscode-extension
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+
+      - name: Gate required jobs
+        env:
+          NEEDS_JSON: ${{ toJson(needs) }}
+        run: node --experimental-strip-types .github/scripts/merge-gate.ts
