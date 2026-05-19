@@ -1,24 +1,33 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!-- Generator: Adobe Illustrator 30.4.0, SVG Export Plug-In . SVG Version: 9.03 Build 0)  -->
-<svg version="1.1" id="&#x30EC;&#x30A4;&#x30E4;&#x30FC;_1"
-	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 160 160"
-	 style="enable-background:new 0 0 160 160;" xml:space="preserve">
-<g>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="104.056" y1="42.157" x2="135.062" y2="42.157"/>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="98.248" y1="80" x2="129.253" y2="80"/>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="92.653" y1="117.843" x2="123.659" y2="117.843"/>
-</g>
-<g>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="25.607" y1="61.261" x2="83.971" y2="61.261"/>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="28.463" y1="120.362" x2="42.695" y2="39.638"/>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="59.078" y1="120.362" x2="71.213" y2="39.638"/>
-	
-		<line style="fill:#FFFFFF;stroke:#FFFFFF;stroke-width:12;stroke-linecap:round;stroke-miterlimit:10;" x1="19.412" y1="97.423" x2="77.777" y2="97.423"/>
-</g>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <style>
+    svg {
+      color: #111827;
+    }
+
+    .logo-stroke {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-miterlimit: 10;
+      stroke-width: 12;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      svg {
+        color: #ffffff;
+      }
+    }
+  </style>
+  <g>
+    <line class="logo-stroke" x1="104.056" y1="42.157" x2="135.062" y2="42.157" />
+    <line class="logo-stroke" x1="98.248" y1="80" x2="129.253" y2="80" />
+    <line class="logo-stroke" x1="92.653" y1="117.843" x2="123.659" y2="117.843" />
+  </g>
+  <g>
+    <line class="logo-stroke" x1="25.607" y1="61.261" x2="83.971" y2="61.261" />
+    <line class="logo-stroke" x1="28.463" y1="120.362" x2="42.695" y2="39.638" />
+    <line class="logo-stroke" x1="59.078" y1="120.362" x2="71.213" y2="39.638" />
+    <line class="logo-stroke" x1="19.412" y1="97.423" x2="77.777" y2="97.423" />
+  </g>
 </svg>
