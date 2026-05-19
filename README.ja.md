@@ -2,6 +2,10 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+<div align="center">
+  <img src="assets/logo/hinagata-logo.svg" alt="md-hinagata logo" width="200" />
+</div>
+
 高い自由度でテーマ変更が可能なMarkdown to HTML変換VSCode拡張です。
 
 md-hinagataは、VS Code拡張機能とRust製の変換エンジンを組み合わせ、Markdownをテーマ制御されたHTMLへと変換します。「Markdownでコンテンツを書き、テーマを選び編集し、結果をプレビュー・生成されたHTMLをコピーする」といったワークフローを好むユーザー向けに設計されています。

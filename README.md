@@ -2,6 +2,10 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
+<div align="center">
+  <img src="assets/logo/hinagata-logo.svg" alt="md-hinagata logo" width="200" />
+</div>
+
 > [!Note]
 > md-hinagata is not released yet.
 The first usable preview build is planned for v0.1.0.
