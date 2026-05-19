@@ -1,0 +1,19 @@
+name: Set up Rust
+description: Set up the pinned Rust toolchain used by md-hinagata.
+
+inputs:
+  components:
+    description: Additional Rust components to install.
+    default: rustfmt,clippy
+  targets:
+    description: Additional Rust targets to install.
+    default: wasm32-unknown-unknown
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@e081816240890017053eacbb1bdf337761dc5582 # 1.95.0
+      with:
+        components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
