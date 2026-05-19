@@ -7,7 +7,7 @@ use md_hinagata_core::{
 
 #[test]
 fn transforms_basic_example_to_expected_html() {
-    let article = read_repo_file("examples/basic/article.md");
+    let article = read_repo_file("examples/basic/sample.md");
     let expected_html = read_repo_file("examples/basic/expected.html");
     let request = TransformRequest {
         markdown: article,

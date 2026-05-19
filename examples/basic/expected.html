@@ -2,9 +2,17 @@
   Welcome to md-hinagata
 </h1>
 <p class="basic-paragraph">
-  Write Markdown, choose a theme, and copy controlled HTML.
+  Write <strong>Markdown</strong>, choose a theme, and copy <code>controlled HTML</code>.
+</p>
+<h2 id="inline-markdown-in-templates" class="basic-heading basic-heading--h2">
+  Inline <strong>Markdown</strong> in templates
+</h2>
+<p class="basic-paragraph">
+  This paragraph keeps <strong>strong text</strong> and <code>inline code</code> because <code>p.hbs</code> uses <code>inner_html</code>.
 </p>
 <h2 id="code-example" class="basic-heading basic-heading--h2">
   Code example
 </h2>
-<pre class="basic-codeblock"><code class="language-ts">const message = &quot;hello&quot;;</code></pre>
+<pre class="basic-codeblock"><code class="language-ts">const message = &quot;Hello, world!&quot;;
+console.log(message);</code></pre>
+<pre class="basic-codeblock"><code class="language-html">&lt;strong&gt;escaped&lt;/strong&gt;</code></pre>

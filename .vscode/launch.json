@@ -21,7 +21,7 @@
         "--extensionDevelopmentPath=${workspaceFolder}/apps/vscode-extension",
         "${workspaceFolder}/examples/basic",
         "--goto",
-        "${workspaceFolder}/examples/basic/article.md:1"
+        "${workspaceFolder}/examples/basic/sample.md:1"
       ],
       "outFiles": ["${workspaceFolder}/apps/vscode-extension/dist/**/*.js"],
       "preLaunchTask": "md-hinagata: prepare basic example"

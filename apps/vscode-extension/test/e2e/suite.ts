@@ -11,7 +11,7 @@ const COMMAND_IDS = [
 
 export async function run(): Promise<void> {
   await activateExtension();
-  await openBasicArticle();
+  await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
 }
@@ -26,20 +26,20 @@ async function activateExtension(): Promise<void> {
   await extension.activate();
 }
 
-async function openBasicArticle(): Promise<void> {
+async function openBasicSample(): Promise<void> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   assert.ok(workspaceFolder, "E2E test workspace should be open.");
 
-  const articleUri = vscode.Uri.file(
-    path.join(workspaceFolder.uri.fsPath, "article.md"),
+  const sampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "sample.md"),
   );
-  const document = await vscode.workspace.openTextDocument(articleUri);
+  const document = await vscode.workspace.openTextDocument(sampleUri);
   assert.equal(document.languageId, "markdown");
 
   await vscode.window.showTextDocument(document);
   assert.equal(
     vscode.window.activeTextEditor?.document.uri.fsPath,
-    articleUri.fsPath,
+    sampleUri.fsPath,
   );
 }
 

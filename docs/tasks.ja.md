@@ -206,11 +206,11 @@ Acceptance criteria:
 作成する file:
 
 ```txt
-examples/basic/article.md
+examples/basic/sample.md
 examples/basic/expected.html
 ```
 
-`article.md` 例:
+`sample.md` 例:
 
 ````md
 ---
@@ -596,7 +596,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] `examples/basic/article.md` を変換して `expected.html` と比較できる。
+- [ ] `examples/basic/sample.md` を変換して `expected.html` と比較できる。
 - [ ] Unknown theme の test がある。
 - [ ] Missing template の test がある。
 - [ ] Invalid frontmatter の test がある。

@@ -328,7 +328,7 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 
 ```json
 {
-  "$schema": "https://md-hinagata.dev/schemas/theme-0.1.schema.json",
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
   "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
@@ -697,7 +697,7 @@ md-hinagata/
 
   examples/
     basic/
-      article.md
+      sample.md
       expected.html
 
   schemas/

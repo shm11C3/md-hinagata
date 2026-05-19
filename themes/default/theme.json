@@ -1,5 +1,5 @@
 {
-  "$schema": "https://md-hinagata.dev/schemas/theme-0.1.schema.json",
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
   "schemaVersion": "0.1",
   "id": "default",
   "name": "Default",
