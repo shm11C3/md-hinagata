@@ -1,0 +1,226 @@
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish VS Code Marketplace package
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      EXTENSION_DIR: apps/vscode-extension
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Detect package manager
+        id: package-manager
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+            echo "cache=pnpm" >> "$GITHUB_OUTPUT"
+          elif [ -f package-lock.json ]; then
+            echo "manager=npm" >> "$GITHUB_OUTPUT"
+            echo "cache=npm" >> "$GITHUB_OUTPUT"
+          elif [ -f yarn.lock ]; then
+            echo "manager=yarn" >> "$GITHUB_OUTPUT"
+            echo "cache=yarn" >> "$GITHUB_OUTPUT"
+          else
+            echo "manager=npm" >> "$GITHUB_OUTPUT"
+            echo "cache=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: ${{ steps.package-manager.outputs.cache }}
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@aaa84a43aec4955a42c5ffc65d258961e39f276e # v1.19.1
+        with:
+          version: 1.19.1
+
+      - name: Install wasm-bindgen CLI
+        run: cargo binstall wasm-bindgen-cli --version 0.2.121 --no-confirm
+
+      - name: Install dependencies
+        env:
+          PACKAGE_MANAGER: ${{ steps.package-manager.outputs.manager }}
+        run: |
+          case "$PACKAGE_MANAGER" in
+            pnpm)
+              corepack enable
+              pnpm install --frozen-lockfile
+              ;;
+            npm)
+              if [ -f package-lock.json ]; then
+                npm ci
+              else
+                npm install
+              fi
+              ;;
+            yarn)
+              corepack enable
+              yarn install --immutable || yarn install --frozen-lockfile
+              ;;
+            *)
+              echo "Unsupported package manager: $PACKAGE_MANAGER"
+              exit 1
+              ;;
+          esac
+
+      - name: Validate version and release channel
+        id: version
+        run: |
+          export PACKAGE_JSON="./${EXTENSION_DIR}/package.json"
+          PACKAGE_VERSION="$(node -p "require(process.env.PACKAGE_JSON).version")"
+
+          if ! echo "$PACKAGE_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "package.json version must be major.minor.patch: $PACKAGE_VERSION"
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+
+            if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+              echo "Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)"
+              exit 1
+            fi
+          fi
+
+          MAJOR="$(node -p "require(process.env.PACKAGE_JSON).version.split('.')[0]")"
+          MINOR="$(node -p "require(process.env.PACKAGE_JSON).version.split('.')[1]")"
+
+          if [ "$MAJOR" -eq 0 ] && [ "$MINOR" -eq 0 ]; then
+            echo "0.0.x is not published to Marketplace. Use 0.1.0 or later for pre-release and 0.2.0 or later for stable."
+            exit 1
+          fi
+
+          # VS Code Marketplace pre-release versions must still be major.minor.patch.
+          # This repository uses even minor versions for stable releases (0.2.x, 0.4.x)
+          # and odd minor versions for Marketplace pre-release/test builds (0.1.x, 0.3.x, 0.5.x).
+          if [ $((10#$MINOR % 2)) -eq 1 ]; then
+            CHANNEL="pre-release"
+            echo "channel=pre-release" >> "$GITHUB_OUTPUT"
+            echo "vsce_args=--pre-release" >> "$GITHUB_OUTPUT"
+          else
+            CHANNEL="stable"
+            echo "channel=stable" >> "$GITHUB_OUTPUT"
+            echo "vsce_args=" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "Validated $PACKAGE_VERSION for $CHANNEL publishing."
+
+      - name: Validate extension manifest
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+
+          const manifestPath = `${process.env.EXTENSION_DIR}/package.json`;
+          const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+          const requiredFields = [
+            ["name", manifest.name],
+            ["displayName", manifest.displayName],
+            ["publisher", manifest.publisher],
+            ["version", manifest.version],
+            ["engines.vscode", manifest.engines?.vscode],
+            ["repository", manifest.repository],
+            ["license", manifest.license],
+          ];
+
+          const missingFields = requiredFields
+            .filter(([, value]) => value === undefined || value === null || value === "")
+            .map(([field]) => field);
+
+          if (!Array.isArray(manifest.categories) || manifest.categories.length === 0) {
+            missingFields.push("categories");
+          }
+
+          if (missingFields.length > 0) {
+            console.error(
+              `${manifestPath} is missing Marketplace metadata: ${missingFields.join(", ")}`,
+            );
+            if (missingFields.includes("publisher")) {
+              console.error("Add the real VS Code Marketplace publisher ID before publishing.");
+            }
+            process.exit(1);
+          }
+          NODE
+
+      - name: Run project checks
+        env:
+          PACKAGE_MANAGER: ${{ steps.package-manager.outputs.manager }}
+        run: |
+          script_exists() {
+            node -e "const scripts = require('./package.json').scripts || {}; process.exit(Object.prototype.hasOwnProperty.call(scripts, process.argv[1]) ? 0 : 1)" "$1"
+          }
+
+          run_script_if_present() {
+            local script="$1"
+
+            if [ "$PACKAGE_MANAGER" = "npm" ]; then
+              npm run "$script" --if-present
+              return
+            fi
+
+            if script_exists "$script"; then
+              case "$PACKAGE_MANAGER" in
+                pnpm)
+                  pnpm run "$script"
+                  ;;
+                yarn)
+                  yarn run "$script"
+                  ;;
+                *)
+                  echo "Unsupported package manager: $PACKAGE_MANAGER"
+                  exit 1
+                  ;;
+              esac
+            else
+              echo "Skipping missing script: $script"
+            fi
+          }
+
+          run_script_if_present check
+          run_script_if_present lint
+          run_script_if_present typecheck
+          run_script_if_present test
+          run_script_if_present build:wasm
+          run_script_if_present build
+
+      - name: Publish to VS Code Marketplace
+        working-directory: ${{ env.EXTENSION_DIR }}
+        env:
+          NPM_CONFIG_YES: "true"
+          VSCE_ARGS: ${{ steps.version.outputs.vsce_args }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_ARGS" ]; then
+            npx @vscode/vsce publish "$VSCE_ARGS"
+          else
+            npx @vscode/vsce publish
+          fi
