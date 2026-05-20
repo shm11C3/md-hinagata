@@ -219,8 +219,10 @@ jobs:
           VSCE_ARGS: ${{ steps.version.outputs.vsce_args }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
+          VSCE_PUBLISH_ARGS=(--no-dependencies)
+
           if [ -n "$VSCE_ARGS" ]; then
-            npx @vscode/vsce publish "$VSCE_ARGS"
-          else
-            npx @vscode/vsce publish
+            VSCE_PUBLISH_ARGS+=("$VSCE_ARGS")
           fi
+
+          npx @vscode/vsce publish "${VSCE_PUBLISH_ARGS[@]}"
