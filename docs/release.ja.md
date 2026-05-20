@@ -54,11 +54,15 @@ channel は minor version の偶奇で決める。
 
 | Channel | Minor version | Examples | Publish command |
 |---|---:|---|---|
-| stable | even | `0.2.0`, `0.2.1`, `0.4.0` | `npx @vscode/vsce publish` |
-| pre-release | odd | `0.1.0`, `0.1.1`, `0.3.0`, `0.5.0` | `npx @vscode/vsce publish --pre-release` |
+| stable | even | `0.2.0`, `0.2.1`, `0.4.0` | `npx @vscode/vsce publish --no-dependencies` |
+| pre-release | odd | `0.1.0`, `0.1.1`, `0.3.0`, `0.5.0` | `npx @vscode/vsce publish --no-dependencies --pre-release` |
 
 GitHub Actions workflow は `apps/vscode-extension/package.json` の `version` を読み取り、
 minor が偶数なら stable、奇数なら pre-release として公開する。
+
+この repository は pnpm workspace を使い、extension は publish 前に bundle する。
+そのため workflow は `vsce` の npm/yarn 依存検出を避けるために
+`--no-dependencies` を付けて publish する。
 
 ## 3. Tag Rule
 
@@ -162,7 +166,7 @@ git push origin v0.1.0
 ```
 
 6. GitHub Actions の `Publish VS Code Extension` workflow が
-   `npx @vscode/vsce publish --pre-release` で公開することを確認する。
+   `npx @vscode/vsce publish --no-dependencies --pre-release` で公開することを確認する。
 
 pre-release patch の場合も同じ手順で、minor は奇数のまま patch を上げる。
 
