@@ -109,7 +109,62 @@ Marketplace 公開前に以下を満たす。
 publisher ID は Marketplace の publisher 作成後に確定する値を使う。
 未確定のまま推測で設定しない。
 
-## 5. Stable Release Procedure
+## 5. Extension Changelog Automation
+
+`apps/vscode-extension/CHANGELOG.md` は VS Code Marketplace に表示する
+Extension Changelog である。
+
+通常の feature / bug fix PR では `CHANGELOG.md` を直接更新しない。
+Extension Changelog は、`apps/vscode-extension/package.json` の `version` を更新する
+release preparation PR で自動生成する。
+
+release preparation PR は以下を満たす。
+
+- `apps/vscode-extension/package.json` の `version` を次の公開対象 version に更新する。
+- PR に `area:release` と `changelog:skip` を付ける。
+- fork から作成しない。
+
+GitHub Actions の `Extension Changelog` workflow は、release preparation PR を検出すると、
+前回の extension tag から release preparation PR の base branch までに merge された PR を集める。
+
+前回 tag は、新しい version より小さい最大の `vX.Y.Z` tag とする。
+
+```txt
+new 0.1.1 -> previous v0.1.0
+new 0.2.0 -> previous v0.1.1
+new 0.2.1 -> previous v0.2.0
+```
+
+生成対象 PR の分類は GitHub labels を source of truth とする。
+
+| Label | Changelog section |
+|---|---|
+| `area:security` | `Security` |
+| `type:feature` | `Added` |
+| `type:bug` | `Fixed` |
+| `type:docs` | `Documentation` |
+| `area:release` | `Maintenance` |
+| `type:test` | `Maintenance` |
+| `type:refactor` | `Maintenance` |
+
+各 PR は、上記 category label をちょうど1つ持つか、明示的に `changelog:skip` を持つ。
+category label がない PR、複数 category label を持つ PR、または `changelog:skip` と
+category label を併用する PR は workflow で失敗する。
+
+例外として、release preparation PR は `area:release` と `changelog:skip` の併用を許可する。
+release preparation PR 自身は、その release の Extension Changelog には載せない。
+
+生成される changelog item の文言は、まず PR body の1行 `Changelog: ...` を使う。
+指定がない場合は PR title から conventional prefix を除いて生成する。
+category は常に labels で決める。`Changelog: ...` は category を変更しない。
+
+`changelog:skip` は、maintainer が確認する release-visible な判断である。
+user-visible behavior change、bug fix、documented feature change、security relevant change には使わない。
+
+`Extension Changelog` workflow は `pull_request_target` で動くが、trusted base branch の script だけを実行し、
+fork PR では実行しない。PR branch は `CHANGELOG.md` の書き換え対象として checkout する。
+
+## 6. Stable Release Procedure
 
 例として `0.2.0` stable release を公開する場合:
 
@@ -144,7 +199,7 @@ stable patch release の場合も同じ手順で、minor は偶数のまま patc
 0.4.0
 ```
 
-## 6. Pre-release Procedure
+## 7. Pre-release Procedure
 
 例として初回 `0.1.0` pre-release を公開する場合:
 
@@ -181,7 +236,7 @@ pre-release patch の場合も同じ手順で、minor は奇数のまま patch �
 0.3.0
 ```
 
-## 7. Manual Dispatch
+## 8. Manual Dispatch
 
 `workflow_dispatch` でも publish workflow を起動できる。
 
@@ -192,7 +247,7 @@ manual dispatch は、指定 branch の `apps/vscode-extension/package.json` に
 manual dispatch では tag と package version の照合ができないため、
 通常リリースでは `vX.Y.Z` tag push を使う。
 
-## 8. Failure Cases
+## 9. Failure Cases
 
 workflow は主に以下の場合に失敗する。
 
@@ -203,3 +258,6 @@ workflow は主に以下の場合に失敗する。
 - `publisher` が未設定である。
 - `VSCE_PAT` が未設定、期限切れ、または Marketplace Manage scope を持っていない。
 - checks、tests、build、publish のいずれかが失敗した。
+- release preparation PR に必要な changelog labels がない、または矛盾している。
+- release preparation PR が fork から作成されている。
+- 公開対象 version と同じ tag が既に存在している。

@@ -1,0 +1,140 @@
+name: Extension Changelog
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+      - labeled
+      - unlabeled
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extension-changelog-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate-labels:
+    name: Validate changelog labels
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Check out trusted base scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Validate labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types .github/scripts/check-pr-changelog-labels.ts
+
+  update-changelog:
+    name: Update extension changelog
+    needs: validate-labels
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Check out trusted base scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Check out pull request branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: pr
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Generate changelog
+        working-directory: trusted
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WORKSPACE_PATH: ../pr
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types .github/scripts/generate-extension-changelog.ts --write
+
+      - name: Commit generated changelog
+        working-directory: pr
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- apps/vscode-extension/CHANGELOG.md; then
+            echo "No changelog changes to commit."
+            exit 0
+          fi
+
+          VERSION="$(node -e "const fs = require('node:fs'); const manifest = JSON.parse(fs.readFileSync('apps/vscode-extension/package.json', 'utf8')); process.stdout.write(manifest.version);")"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/vscode-extension/CHANGELOG.md
+          git commit -m "chore: update extension changelog for ${VERSION}"
+          git push origin "HEAD:${HEAD_BRANCH}"
+
+  check-changelog:
+    name: Check generated changelog
+    needs: update-changelog
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - name: Check out trusted base scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+          persist-credentials: false
+
+      - name: Check out pull request branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: pr
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Check changelog
+        working-directory: trusted
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WORKSPACE_PATH: ../pr
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types .github/scripts/generate-extension-changelog.ts --check
