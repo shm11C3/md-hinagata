@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 export interface WebviewHtmlOptions {
+  allowGeneratedInlineStyles?: boolean;
   bodyHtml: string;
   cspSource: string;
   inlineStyles?: readonly string[];
@@ -14,7 +15,7 @@ export function createWebviewHtml(options: WebviewHtmlOptions): string {
   const csp = [
     "default-src 'none'",
     `img-src ${options.cspSource}`,
-    `style-src ${options.cspSource} 'nonce-${nonce}'`,
+    ...createStyleDirectives(options, nonce),
     `script-src 'nonce-${nonce}'`,
   ].join("; ");
 
@@ -33,6 +34,21 @@ export function createWebviewHtml(options: WebviewHtmlOptions): string {
     "</body>",
     "</html>",
   ].join("");
+}
+
+function createStyleDirectives(
+  options: WebviewHtmlOptions,
+  nonce: string,
+): string[] {
+  if (options.allowGeneratedInlineStyles === true) {
+    return [
+      `style-src ${options.cspSource}`,
+      `style-src-elem ${options.cspSource} 'unsafe-inline'`,
+      "style-src-attr 'unsafe-inline'",
+    ];
+  }
+
+  return [`style-src ${options.cspSource} 'nonce-${nonce}'`];
 }
 
 function createInlineStyles(

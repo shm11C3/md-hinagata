@@ -90,16 +90,19 @@ describe("PreviewPanel", () => {
         "</style>",
         '<main class="mh-document">',
         "<h1>Title</h1>",
+        '<p style="color: red;">Styled</p>',
         "</main>",
       ].join("\n"),
       resolvedThemeId: "default",
     });
 
     expect(panel.webview.html).toContain("<h1>Title</h1>");
+    expect(panel.webview.html).toContain('<p style="color: red;">Styled</p>');
     expect(panel.webview.html).toContain(".article { color: red; }");
     expect(
       panel.webview.html.match(/\.article \{ color: red; \}/g),
     ).toHaveLength(1);
+    expect(panel.webview.html).toContain("style-src-attr 'unsafe-inline'");
   });
 
   it("renders an active empty transform result without the placeholder", () => {

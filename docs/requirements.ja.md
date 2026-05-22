@@ -510,6 +510,7 @@ Preview は以下の場合に更新される。
 `0.1.0` の `output: fragment` は、CSS を含めた自己完結 HTML fragment を指す。解決済み theme が CSS を持つ場合、`TransformResponse.html` は `<style>` tag、document root、rendered Markdown HTML を含む。
 
 Preview は `TransformResponse.html` をそのまま表示する。Preview 専用に `TransformResponse.css` を別注入してはならない。`Copy Generated HTML` も同じ `TransformResponse.html` を clipboard にコピーする。
+Preview Webview は、active generated HTML に含まれる `<style>` tag と `style` 属性を反映できる CSP にする。
 
 `0.2.0` 以降で `Open Generated HTML` panel を追加する。
 
@@ -603,6 +604,7 @@ md-hinagata は Markdown、HTML、CSS、template を扱うため、セキュリ�
 
 - raw HTML は default off。
 - Preview Webview に CSP を設定する。
+- Preview Webview では generated HTML の `<style>` tag と `style` 属性を反映する。
 - Webview の `enableScripts` は必要最小限にする。
 - `localResourceRoots` を必要な resource directory に制限する。
 - Workspace theme は trusted workspace のみで有効にする。

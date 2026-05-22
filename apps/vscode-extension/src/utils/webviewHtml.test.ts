@@ -33,4 +33,21 @@ describe("webview HTML utilities", () => {
     expect(html).not.toContain("<title><Theme Manager></title>");
     expect(html).not.toContain("unsafe-inline");
   });
+
+  it("can opt into generated inline styles for preview webviews", () => {
+    const html = createWebviewHtml({
+      allowGeneratedInlineStyles: true,
+      bodyHtml:
+        '<style>.article { color: red; }</style><p style="color: red;">Styled</p>',
+      cspSource: "vscode-resource:",
+      nonce: "testnonce",
+      title: "Preview",
+    });
+
+    expect(html).toContain(
+      `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-resource:; style-src vscode-resource:; style-src-elem vscode-resource: 'unsafe-inline'; style-src-attr 'unsafe-inline'; script-src 'nonce-testnonce';">`,
+    );
+    expect(html).toContain("<style>.article { color: red; }</style>");
+    expect(html).toContain('<p style="color: red;">Styled</p>');
+  });
 });

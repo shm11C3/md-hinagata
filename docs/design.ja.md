@@ -1242,6 +1242,7 @@ TransformResponse.html
 
 Theme CSS は Rust core が `TransformResponse.html` 内の `<style>` tag として組み込む。
 Preview と Copy Generated HTML は同じ `DocumentState.generatedHtml` を使い、Preview-only styling context を持たない。
+Preview は active generated HTML に含まれる `<style>` tag と `style` 属性を CSP で許可し、Copy Generated HTML と同じ自己完結 fragment の見た目を確認できるようにする。
 
 現在の状態が stale の場合は、copy 前に再変換する。
 
@@ -1273,7 +1274,8 @@ Preview と Theme Manager の Webview には CSP を設定する。
 
 ```txt
 script-src は nonce 付き script のみ
-style-src は Webview local resource と nonce style のみ
+Theme Manager の style-src は Webview local resource と nonce style のみ
+Preview の active generated HTML では generated HTML 内の `<style>` tag と `style` 属性を許可する
 img-src は https と data を必要に応じて許可
 ```
 
