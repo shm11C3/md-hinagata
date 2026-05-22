@@ -75,12 +75,13 @@ export class PreviewPanel {
     }
 
     const state = this.documentStateService.getState();
-    const bodyHtml =
-      state.status === "active"
-        ? state.generatedHtml
-        : `<main class="mh-preview-placeholder"><p>${escapeHtml("Preview will render here.")}</p></main>`;
+    const isActiveDocument = state.status === "active";
+    const bodyHtml = isActiveDocument
+      ? state.generatedHtml
+      : `<main class="mh-preview-placeholder"><p>${escapeHtml("Preview will render here.")}</p></main>`;
 
     panel.webview.html = createWebviewHtml({
+      allowGeneratedInlineStyles: isActiveDocument,
       bodyHtml,
       cspSource: panel.webview.cspSource,
       title: PREVIEW_PANEL_TITLE,
