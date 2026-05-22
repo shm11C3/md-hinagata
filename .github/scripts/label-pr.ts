@@ -44,6 +44,7 @@ interface IssueResponse {
 }
 
 const MANAGED_LABELS = new Set([
+  CHANGELOG_SKIP_LABEL,
   "area:docs",
   "area:extension",
   "area:release",
