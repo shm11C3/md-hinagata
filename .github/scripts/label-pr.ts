@@ -39,6 +39,25 @@ interface LabelDefinition {
   name: string;
 }
 
+interface IssueResponse {
+  labels: Array<string | { name?: string }>;
+}
+
+const MANAGED_LABELS = new Set([
+  "area:docs",
+  "area:extension",
+  "area:release",
+  "area:rust-core",
+  "area:theme",
+  "area:wasm",
+  "area:webview",
+  "type:bug",
+  "type:docs",
+  "type:feature",
+  "type:refactor",
+  "type:test",
+]);
+
 const LABEL_DEFINITIONS: Record<string, LabelDefinition> = {
   [CHANGELOG_SKIP_LABEL]: {
     color: "ededed",
@@ -60,21 +79,24 @@ async function main(): Promise<void> {
   );
   const labels = await inferLabels(client, pullRequest, files);
 
-  if (labels.size === 0) {
-    console.log(`No labels inferred for PR #${pullRequestNumber}.`);
-    return;
+  await ensureLabels(client, labels);
+  const currentLabels = await fetchCurrentLabels(client, pullRequestNumber);
+  const nextLabels = new Set(
+    currentLabels.filter((label) => !MANAGED_LABELS.has(label)),
+  );
+  for (const label of labels) {
+    nextLabels.add(label);
   }
 
-  await ensureLabels(client, labels);
   await client.request(
-    "POST",
+    "PUT",
     client.repoPath(`/issues/${pullRequestNumber}/labels`),
     {
-      body: { labels: [...labels].sort() },
+      body: { labels: [...nextLabels].sort() },
     },
   );
   console.log(
-    `Added inferred labels to PR #${pullRequestNumber}: ${[...labels].sort().join(", ")}`,
+    `Updated inferred labels on PR #${pullRequestNumber}: ${labels.size === 0 ? "(none)" : [...labels].sort().join(", ")}`,
   );
 }
 
@@ -91,6 +113,21 @@ async function fetchPullRequest(
   }
 
   return pullRequest;
+}
+
+async function fetchCurrentLabels(
+  client: GitHubClient,
+  pullRequestNumber: number,
+): Promise<string[]> {
+  const issue = await client.request<IssueResponse>(
+    "GET",
+    client.repoPath(`/issues/${pullRequestNumber}`),
+  );
+  if (issue === undefined) {
+    throw new Error(`Pull request #${pullRequestNumber} was not found.`);
+  }
+
+  return issue.labels.map(readLabelName).filter(isPresent);
 }
 
 async function inferLabels(
@@ -235,6 +272,14 @@ function isTestOnlyChange(filenames: readonly string[]): boolean {
         (filename.startsWith("crates/") && filename.includes("/tests/")),
     )
   );
+}
+
+function readLabelName(label: string | { name?: string }): string | undefined {
+  return typeof label === "string" ? label : label.name;
+}
+
+function isPresent(value: string | undefined): value is string {
+  return value !== undefined && value.length > 0;
 }
 
 async function didExtensionVersionChange(

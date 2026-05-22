@@ -234,7 +234,7 @@ export function extractChangelogOverride(
   const matches =
     body
       ?.split(/\r?\n/)
-      .map((line) => line.match(/^Changelog:\s*(.+?)\s*$/))
+      .map((line) => line.match(/^Changelog:\s*(.*?)\s*$/))
       .filter((match): match is RegExpMatchArray => match !== null) ?? [];
 
   if (matches.length === 0) {

@@ -77,6 +77,13 @@ test("rejects linked Changelog overrides", () => {
   );
 });
 
+test("rejects bare Changelog override lines", () => {
+  assert.throws(
+    () => extractChangelogOverride("Changelog:", 42),
+    /empty Changelog: override/,
+  );
+});
+
 test("formats conventional PR titles", () => {
   assert.equal(
     formatPullRequestTitle("fix(webview): allow inline styles in preview"),

@@ -6,17 +6,20 @@ export interface Repository {
 export interface GitHubClientOptions {
   apiUrl?: string;
   repository: Repository;
+  requestTimeoutMs?: number;
   token: string;
 }
 
 export class GitHubClient {
   readonly #apiUrl: string;
   readonly #repository: Repository;
+  readonly #requestTimeoutMs: number;
   readonly #token: string;
 
   public constructor(options: GitHubClientOptions) {
     this.#apiUrl = options.apiUrl ?? "https://api.github.com";
     this.#repository = options.repository;
+    this.#requestTimeoutMs = options.requestTimeoutMs ?? 30_000;
     this.#token = options.token;
   }
 
@@ -29,17 +32,36 @@ export class GitHubClient {
     path: string,
     options: { body?: unknown; optional?: boolean } = {},
   ): Promise<T | undefined> {
-    const response = await fetch(`${this.#apiUrl}${path}`, {
-      body:
-        options.body === undefined ? undefined : JSON.stringify(options.body),
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${this.#token}`,
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-      method,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, this.#requestTimeoutMs);
+
+    let response: Response;
+    try {
+      response = await fetch(`${this.#apiUrl}${path}`, {
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${this.#token}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw new Error(
+          `GitHub API ${method} ${path} timed out after ${this.#requestTimeoutMs}ms.`,
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (response.status === 404 && options.optional === true) {
       return undefined;
@@ -98,16 +120,12 @@ export function readRepositoryFromEnv(): Repository {
 }
 
 export function parseRepository(value: string): Repository {
-  const [owner, repo] = value.split("/");
-  if (
-    owner === undefined ||
-    repo === undefined ||
-    owner === "" ||
-    repo === ""
-  ) {
+  const parts = value.split("/");
+  if (parts.length !== 2 || parts[0] === "" || parts[1] === "") {
     throw new Error(`Invalid repository: ${value}`);
   }
 
+  const [owner, repo] = parts;
   return { owner, repo };
 }
 
@@ -117,4 +135,13 @@ export function createGitHubClientFromEnv(): GitHubClient {
     repository: readRepositoryFromEnv(),
     token: readRequiredEnv("GITHUB_TOKEN"),
   });
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
 }
