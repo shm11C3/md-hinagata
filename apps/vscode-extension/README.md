@@ -1,0 +1,111 @@
+# md-hinagata
+
+md-hinagata is a VS Code extension for turning Markdown into theme-controlled HTML fragments.
+
+It is for writers and teams who want to keep authoring in Markdown while controlling the final HTML structure with theme templates. A Markdown document selects its theme through frontmatter, md-hinagata renders the themed preview in VS Code, and the generated HTML can be copied for use in a CMS, design system, internal wiki, knowledge base, or other publishing workflow.
+
+## Features
+
+- Edit Markdown with the standard VS Code editor.
+- Select a document theme through `hinagata.theme` frontmatter.
+- Preview the generated themed HTML in a side panel.
+- Copy the generated HTML fragment to the clipboard.
+- Inspect the current theme files from the md-hinagata sidebar.
+- Use workspace themes from `.md-hinagata/themes/{themeId}`.
+- Refresh the preview when Markdown or active theme files are saved.
+
+## Getting Started
+
+Open a Markdown file and add md-hinagata frontmatter:
+
+```md
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
+# Title
+
+Body text.
+```
+
+Then run one of the md-hinagata commands from the Command Palette.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `md-hinagata: Open Preview` | Opens the themed HTML preview beside the current Markdown editor. |
+| `md-hinagata: Copy Generated HTML` | Copies the generated HTML fragment for the current Markdown document. |
+| `md-hinagata: Select Theme` | Updates the current Markdown document's `hinagata.theme` frontmatter. |
+
+## Workspace Themes
+
+Workspace themes live under `.md-hinagata/themes/{themeId}`:
+
+```txt
+.md-hinagata/
+  themes/
+    company-blog/
+      theme.json
+      styles.css
+      templates/
+        h1.hbs
+        h2.hbs
+        h3.hbs
+        p.hbs
+        codeblock.hbs
+        blockquote.hbs
+        ul.hbs
+        ol.hbs
+        li.hbs
+```
+
+A theme manifest looks like this:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
+  "schemaVersion": "0.1",
+  "id": "company-blog",
+  "name": "Company Blog",
+  "version": "0.1.0",
+  "entryCss": "styles.css",
+  "templates": {
+    "h1": "templates/h1.hbs",
+    "h2": "templates/h2.hbs",
+    "h3": "templates/h3.hbs",
+    "p": "templates/p.hbs",
+    "codeblock": "templates/codeblock.hbs",
+    "blockquote": "templates/blockquote.hbs",
+    "ul": "templates/ul.hbs",
+    "ol": "templates/ol.hbs",
+    "li": "templates/li.hbs"
+  }
+}
+```
+
+Templates use Handlebars syntax:
+
+```hbs
+<h2 id="{{id}}" class="article-heading article-heading--level2">
+  {{{inner_html}}}
+</h2>
+```
+
+## Workspace Trust
+
+Workspace themes are loaded only in trusted workspaces. In untrusted workspaces, md-hinagata limits workspace theme loading while keeping the extension available.
+
+## Current Scope
+
+md-hinagata is in early `0.x.x` development. The `0.1.0` flow focuses on Markdown headings, paragraphs, code blocks, blockquotes, lists, themed preview, and copying HTML fragments.
+
+The current extension is not a CMS publisher, static site generator, WYSIWYG editor, or full Markdown preview replacement.
+
+## Links
+
+- Repository: https://github.com/shm11C3/md-hinagata
+- Requirements: https://github.com/shm11C3/md-hinagata/blob/main/docs/requirements.ja.md
+- Theme schema: https://github.com/shm11C3/md-hinagata/blob/main/schemas/theme.schema.json
