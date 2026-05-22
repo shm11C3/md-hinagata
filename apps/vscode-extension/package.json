@@ -2,7 +2,7 @@
   "name": "md-hinagata-vscode-extension",
   "displayName": "md-hinagata",
   "publisher": "Shm11C3",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "VS Code extension for md-hinagata.",
   "license": "MIT OR Apache-2.0",
