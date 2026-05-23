@@ -25,11 +25,18 @@ describe("ThemeEditorViewProvider", () => {
 
     provider.resolveWebviewView(view);
     expect(view.webview.options).toMatchObject({
-      enableCommandUris: [COMMAND_IDS.openThemeFile],
+      enableCommandUris: [
+        COMMAND_IDS.createThemeFromDefault,
+        COMMAND_IDS.openThemeFile,
+      ],
       enableScripts: false,
       localResourceRoots: [],
     });
     expect(view.webview.html).toContain("No active Markdown document.");
+    expect(view.webview.html).toContain("Create Theme from Default");
+    expect(view.webview.html).toContain(
+      "command:md-hinagata.createThemeFromDefault",
+    );
     expect(view.webview.html).toContain("No resolved theme files.");
     expect(view.webview.html).toContain("No issues");
 

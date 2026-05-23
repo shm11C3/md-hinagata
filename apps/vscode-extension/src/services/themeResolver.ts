@@ -9,7 +9,7 @@ import type {
   ThemeSource,
 } from "./transformService.js";
 
-const WORKSPACE_THEME_DIRECTORY = ".md-hinagata/themes";
+export const WORKSPACE_THEME_DIRECTORY = ".md-hinagata/themes";
 
 export interface ThemeResolverUri {
   fsPath: string;
@@ -449,7 +449,14 @@ export class ThemeResolver {
 function getDefaultBundledThemeRoots(
   extensionUri: ThemeResolverUri,
 ): readonly string[] {
-  return [path.join(extensionUri.fsPath, "themes")];
+  const bundledThemeRoots = [path.join(extensionUri.fsPath, "themes")];
+  if (isRepositoryExtensionPackageRoot(extensionUri.fsPath)) {
+    bundledThemeRoots.push(
+      path.resolve(extensionUri.fsPath, "..", "..", "themes"),
+    );
+  }
+
+  return uniquePaths(bundledThemeRoots);
 }
 
 async function readTextUtf8(filePath: string): Promise<string> {
@@ -621,7 +628,7 @@ function resolveThemeAssetPath(
   return resolvedPath;
 }
 
-function isValidThemeId(themeId: string): boolean {
+export function isValidThemeId(themeId: string): boolean {
   return (
     themeId.length > 0 &&
     themeId.trim() === themeId &&
@@ -631,6 +638,22 @@ function isValidThemeId(themeId: string): boolean {
     !path.win32.isAbsolute(themeId) &&
     !themeId.includes("/") &&
     !themeId.includes("\\")
+  );
+}
+
+function uniquePaths(paths: readonly string[]): string[] {
+  const unique = new Set<string>();
+  for (const entry of paths) {
+    unique.add(path.resolve(entry));
+  }
+
+  return [...unique];
+}
+
+function isRepositoryExtensionPackageRoot(extensionRootPath: string): boolean {
+  return (
+    path.basename(extensionRootPath) === "vscode-extension" &&
+    path.basename(path.dirname(extensionRootPath)) === "apps"
   );
 }
 

@@ -1,4 +1,15 @@
-import { describe, expect, it } from "vitest";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DocumentStateService } from "../services/documentStateService.js";
 import { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
@@ -7,6 +18,11 @@ import {
 } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
+import {
+  createThemeDisplayName,
+  createThemeFromDefault,
+  validateCreatableThemeId,
+} from "./createThemeFromDefaultCommand.js";
 import { openPreview } from "./openPreviewCommand.js";
 import { openThemeFile } from "./openThemeFileCommand.js";
 import { selectTheme } from "./selectThemeCommand.js";
@@ -26,9 +42,20 @@ const themeResolver = {
 };
 
 describe("extension commands", () => {
+  let testRoot: string;
+
+  beforeEach(async () => {
+    testRoot = await mkdtemp(path.join(tmpdir(), "md-hinagata-command-"));
+  });
+
+  afterEach(async () => {
+    await rm(testRoot, { force: true, recursive: true });
+  });
+
   it("defines stable command ids", () => {
     expect(COMMAND_IDS).toEqual({
       copyGeneratedHtml: "md-hinagata.copyGeneratedHtml",
+      createThemeFromDefault: "md-hinagata.createThemeFromDefault",
       openThemeFile: "md-hinagata.openThemeFile",
       openPreview: "md-hinagata.openPreview",
       selectTheme: "md-hinagata.selectTheme",
@@ -663,6 +690,398 @@ describe("extension commands", () => {
       "warning:Could not update frontmatter: Frontmatter could not be parsed safely.",
     ]);
   });
+
+  it("validates creatable theme ids without loosening resolver rules", () => {
+    expect(validateCreatableThemeId("company-blog")).toBeUndefined();
+    expect(validateCreatableThemeId("internal_wiki")).toBeUndefined();
+    expect(createThemeDisplayName("company-blog")).toBe("Company Blog");
+    expect(createThemeDisplayName("internal_wiki")).toBe("Internal Wiki");
+    expect(validateCreatableThemeId("brand theme")).toBe(
+      "Theme ID must not contain whitespace.",
+    );
+    expect(validateCreatableThemeId(" default")).toBe(
+      "Theme ID must not contain whitespace.",
+    );
+    expect(validateCreatableThemeId("../theme")).toBe(
+      "Theme ID must be a non-empty name, not a path.",
+    );
+    expect(validateCreatableThemeId("default")).toBe(
+      "Theme ID 'default' is reserved.",
+    );
+    expect(validateCreatableThemeId("--")).toBe(
+      "Theme ID must contain a name.",
+    );
+  });
+
+  it("creates a workspace theme from the bundled default theme and updates active Markdown", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    await mkdir(workspaceRoot, { recursive: true });
+    const documentStateService = new DocumentStateService();
+    const workspaceTrustService = new WorkspaceTrustService(() => true);
+    const editableDocument = createEditableDocument("# Title\n");
+    const messages: string[] = [];
+    const openedFiles: string[] = [];
+    let refreshCount = 0;
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "company-blog",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        document: editableDocument.document,
+        documentStateService,
+        fileOpener: {
+          open: (filePath) => {
+            openedFiles.push(filePath);
+          },
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          refreshCount += 1;
+        },
+        workspaceFolders: [
+          {
+            name: "workspace",
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService,
+      }),
+    ).resolves.toBe("company-blog");
+
+    const themeRoot = path.join(
+      workspaceRoot,
+      ".md-hinagata",
+      "themes",
+      "company-blog",
+    );
+    const manifest = JSON.parse(
+      await readFile(path.join(themeRoot, "theme.json"), "utf8"),
+    ) as { id: string; name: string; templates: Record<string, string> };
+
+    expect(manifest).toMatchObject({
+      id: "company-blog",
+      name: "Company Blog",
+      templates: {
+        h1: "templates/h1.hbs",
+        codeblock: "templates/codeblock.hbs",
+      },
+    });
+    await expect(
+      readFile(path.join(themeRoot, "templates", "h1.hbs"), "utf8"),
+    ).resolves.toContain("mh-heading--h1");
+    expect(editableDocument.getText()).toBe(
+      "---\nhinagata:\n  theme: company-blog\n---\n\n# Title\n",
+    );
+    expect(documentStateService.getCurrentTheme()).toBe("company-blog");
+    expect(openedFiles).toEqual([path.join(themeRoot, "theme.json")]);
+    expect(refreshCount).toBe(1);
+    expect(messages).toEqual([
+      "info:Created md-hinagata theme 'company-blog'.",
+    ]);
+  });
+
+  it("creates a workspace theme without an active Markdown document", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const documentStateService = new DocumentStateService();
+    const messages: string[] = [];
+    let refreshCount = 0;
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "docs",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        documentStateService,
+        fileOpener: {
+          open: () => {},
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          refreshCount += 1;
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBe("docs");
+
+    await expect(
+      readFile(
+        path.join(
+          workspaceRoot,
+          ".md-hinagata",
+          "themes",
+          "docs",
+          "theme.json",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('"id": "docs"');
+    expect(documentStateService.getCurrentTheme()).toBe("default");
+    expect(refreshCount).toBe(0);
+    expect(messages).toEqual(["info:Created md-hinagata theme 'docs'."]);
+  });
+
+  it("keeps the created theme when active Markdown frontmatter cannot be updated", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const editableDocument = createEditableDocument(
+      "---\nhinagata: [\n---\n# Title\n",
+    );
+    const messages: string[] = [];
+    let refreshCount = 0;
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "kept-theme",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        document: editableDocument.document,
+        documentStateService: new DocumentStateService(),
+        fileOpener: {
+          open: () => {},
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          refreshCount += 1;
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBe("kept-theme");
+
+    await expect(
+      readFile(
+        path.join(
+          workspaceRoot,
+          ".md-hinagata",
+          "themes",
+          "kept-theme",
+          "theme.json",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('"id": "kept-theme"');
+    expect(editableDocument.getText()).toBe("---\nhinagata: [\n---\n# Title\n");
+    expect(refreshCount).toBe(0);
+    expect(messages).toEqual([
+      "warning:Theme was created, but the active document could not be updated: Frontmatter could not be parsed safely.",
+      "info:Created md-hinagata theme 'kept-theme'.",
+    ]);
+  });
+
+  it("does not create themes in untrusted workspaces", async () => {
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const messages: string[] = [];
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "blocked",
+        },
+        defaultThemeRoots: [path.join(testRoot, "bundled")],
+        documentStateService: new DocumentStateService(),
+        fileOpener: {
+          open: () => {
+            throw new Error("open should not run");
+          },
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          throw new Error("refresh should not run");
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => false),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(messages).toEqual([
+      "warning:Workspace themes are disabled in untrusted workspaces. Trust this workspace to create a theme.",
+    ]);
+  });
+
+  it("does not overwrite an existing workspace theme", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const existingThemeRoot = path.join(
+      workspaceRoot,
+      ".md-hinagata",
+      "themes",
+      "company-blog",
+    );
+    await mkdir(existingThemeRoot, { recursive: true });
+    await writeFile(
+      path.join(existingThemeRoot, "theme.json"),
+      "existing",
+      "utf8",
+    );
+    const messages: string[] = [];
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "company-blog",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        documentStateService: new DocumentStateService(),
+        fileOpener: {
+          open: () => {
+            throw new Error("open should not run");
+          },
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          throw new Error("refresh should not run");
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBeUndefined();
+
+    await expect(
+      readFile(path.join(existingThemeRoot, "theme.json"), "utf8"),
+    ).resolves.toBe("existing");
+    expect(messages).toEqual([
+      "error:Failed to create theme 'company-blog': Theme 'company-blog' already exists.",
+    ]);
+  });
+
+  it("cleans up the temporary theme directory when creation fails", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+      {
+        manifest: "{",
+      },
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const messages: string[] = [];
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "broken-theme",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        documentStateService: new DocumentStateService(),
+        fileOpener: {
+          open: () => {
+            throw new Error("open should not run");
+          },
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          throw new Error("refresh should not run");
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBeUndefined();
+
+    const themeParentEntries = await readdir(
+      path.join(workspaceRoot, ".md-hinagata", "themes"),
+    );
+    expect(themeParentEntries).toEqual([]);
+    expect(messages[0]).toMatch(
+      /^error:Failed to create theme 'broken-theme': /,
+    );
+  });
+
+  it("uses Quick Pick for multi-root target workspace selection", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const firstWorkspaceRoot = path.join(testRoot, "first");
+    const secondWorkspaceRoot = path.join(testRoot, "second");
+    const pickerLabels: string[] = [];
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "picked-theme",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        documentStateService: new DocumentStateService(),
+        fileOpener: {
+          open: () => {},
+        },
+        notifier: createMessageRecorder([]),
+        picker: {
+          showInputBox: async () => {
+            throw new Error("input box should not open");
+          },
+          showQuickPick: async (items) => {
+            pickerLabels.push(...items.map((item) => item.label));
+            return items.find((item) => item.label === "second");
+          },
+        },
+        refreshActiveDocument: async () => {},
+        workspaceFolders: [
+          {
+            name: "first",
+            uri: createUri(firstWorkspaceRoot),
+          },
+          {
+            name: "second",
+            uri: createUri(secondWorkspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBe("picked-theme");
+
+    expect(pickerLabels).toEqual(["first", "second"]);
+    await expect(
+      readFile(
+        path.join(
+          secondWorkspaceRoot,
+          ".md-hinagata",
+          "themes",
+          "picked-theme",
+          "theme.json",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('"id": "picked-theme"');
+  });
 });
 
 function createMessageRecorder(messages: string[]) {
@@ -691,4 +1110,69 @@ function createEditableDocument(source: string) {
     },
     getText: () => text,
   };
+}
+
+function createFailingCreateThemePicker() {
+  return {
+    showInputBox: async () => {
+      throw new Error("input box should not open");
+    },
+    showQuickPick: async () => {
+      throw new Error("quick pick should not open");
+    },
+  };
+}
+
+function createUri(filePath: string) {
+  return {
+    fsPath: filePath,
+    toString: () => `file://${filePath}`,
+  };
+}
+
+async function writeDefaultThemeFixture(
+  themeRoot: string,
+  options: {
+    manifest?: string;
+  } = {},
+): Promise<string> {
+  await mkdir(path.join(themeRoot, "templates"), { recursive: true });
+  await writeFile(
+    path.join(themeRoot, "styles.css"),
+    ".mh-document {}",
+    "utf8",
+  );
+  await writeFile(
+    path.join(themeRoot, "templates", "h1.hbs"),
+    '<h1 class="mh-heading mh-heading--h1">{{{inner_html}}}</h1>',
+    "utf8",
+  );
+  await writeFile(
+    path.join(themeRoot, "templates", "codeblock.hbs"),
+    '<pre class="mh-codeblock"><code>{{code}}</code></pre>',
+    "utf8",
+  );
+  await writeFile(
+    path.join(themeRoot, "theme.json"),
+    options.manifest ??
+      `${JSON.stringify(
+        {
+          $schema: "https://example.test/theme.schema.json",
+          entryCss: "styles.css",
+          id: "default",
+          name: "Default",
+          schemaVersion: "0.1",
+          templates: {
+            codeblock: "templates/codeblock.hbs",
+            h1: "templates/h1.hbs",
+          },
+          version: "0.1.0",
+        },
+        null,
+        2,
+      )}\n`,
+    "utf8",
+  );
+
+  return themeRoot;
 }

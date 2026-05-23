@@ -803,6 +803,84 @@ Acceptance criteria:
 
 ---
 
+#### MS-062: Create Theme from Default command を実装する
+
+- Milestone: `0.1.0`
+- Priority: P0
+- Type: extension
+- Depends on: MS-010, MS-051, MS-060, MS-061, MS-102
+
+Command:
+
+```txt
+md-hinagata.createThemeFromDefault
+md-hinagata: Create Theme from Default
+```
+
+目的:
+
+```txt
+bundled default theme を複製し、現在の workspace に編集可能な workspace theme を作成する。
+```
+
+作成先:
+
+```txt
+.md-hinagata/themes/{themeId}
+```
+
+作成する file:
+
+```txt
+.md-hinagata/
+  themes/
+    {themeId}/
+      theme.json
+      styles.css
+      templates/
+        h1.hbs
+        h2.hbs
+        h3.hbs
+        p.hbs
+        codeblock.hbs
+        blockquote.hbs
+        ul.hbs
+        ol.hbs
+        li.hbs
+```
+
+Acceptance criteria:
+
+- [ ] Command Palette から `md-hinagata: Create Theme from Default` を実行できる。
+- [ ] Theme Manager の Actions から同じ command を実行できる。
+- [ ] trusted workspace でのみ実行できる。
+- [ ] untrusted workspace では workspace theme 作成を行わず warning を表示する。
+- [ ] workspace folder がない場合は分かりやすい message を表示する。
+- [ ] multi-root workspace では作成先 workspace folder を Quick Pick で選べる。
+- [ ] themeId を Quick Input で入力できる。
+- [ ] 空、whitespace、絶対 path、`/`、`\`、`.`、`..`、`default`、表示名を作れない記号のみの値を themeId として拒否できる。
+- [ ] 既存の `.md-hinagata/themes/{themeId}` がある場合は上書きせず error を表示する。
+- [ ] bundled `default` theme の file set を複製できる。
+- [ ] 生成後の `theme.json` は `id: {themeId}` に更新される。
+- [ ] 生成後の `theme.json` は themeId から作った表示名を `name` に設定する。
+- [ ] `version`, `schemaVersion`, `entryCss`, `templates` は default theme と互換の値を保持する。
+- [ ] active Markdown document がある場合、作成後に `hinagata.theme` を `{themeId}` へ更新できる。
+- [ ] active Markdown document がない場合でも theme 作成は成功する。
+- [ ] 作成後に新 theme の `theme.json` を VS Code 標準エディタで開ける。
+- [ ] 作成後に Preview と Theme Manager が refresh される。
+- [ ] unit test で themeId validation、collision、manifest rewrite、active Markdown 更新を確認できる。
+- [ ] e2e test で command 登録、workspace theme 作成、active Markdown 更新、生成 HTML 反映を確認できる。
+- [ ] README または docs にコマンドの使い方を記載する。
+
+Out of scope:
+
+- [ ] 現在選択中 theme からの複製。
+- [ ] 既存 theme の上書き、merge、repair。
+- [ ] 不足 template の個別作成。
+- [ ] CLI からの theme 作成。
+
+---
+
 ### 4.8 Preview behavior
 
 #### MS-070: Markdown change で Preview を更新する
@@ -1179,7 +1257,6 @@ Acceptance criteria:
 
 ### Theme management
 
-- [ ] `Create Workspace Theme` command を追加する。
 - [ ] `Duplicate Theme` command を追加する。
 - [ ] `Open Current Theme` command を追加する。
 - [ ] `Create Missing Template` action を追加する。

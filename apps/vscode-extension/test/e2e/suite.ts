@@ -8,6 +8,7 @@ const COMMAND_IDS = [
   "md-hinagata.openPreview",
   "md-hinagata.copyGeneratedHtml",
   "md-hinagata.selectTheme",
+  "md-hinagata.createThemeFromDefault",
 ] as const;
 
 export async function run(): Promise<void> {
@@ -15,6 +16,7 @@ export async function run(): Promise<void> {
   await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
+  await assertCreateThemeFromDefaultCommandRuns();
 }
 
 async function activateExtension(): Promise<void> {
@@ -74,6 +76,43 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   );
   assert.match(generatedHtml, /<style>/);
   assert.match(generatedHtml, /\.basic-heading/);
+}
+
+async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  const createdThemeId = "e2e-theme";
+  await openBasicSample();
+  await vscode.commands.executeCommand("md-hinagata.createThemeFromDefault", {
+    themeId: createdThemeId,
+    workspaceFolderUri: workspaceFolder.uri.toString(),
+  });
+
+  const createdThemeRoot = path.join(
+    workspaceFolder.uri.fsPath,
+    ".md-hinagata",
+    "themes",
+    createdThemeId,
+  );
+  const createdManifest = JSON.parse(
+    await readFile(path.join(createdThemeRoot, "theme.json"), "utf8"),
+  ) as { id?: string; name?: string };
+  assert.equal(createdManifest.id, createdThemeId);
+  assert.equal(createdManifest.name, "E2e Theme");
+
+  const sampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "sample.md"),
+  );
+  const sampleDocument = await vscode.workspace.openTextDocument(sampleUri);
+  assert.match(sampleDocument.getText(), /theme: e2e-theme/);
+
+  await openBasicSample();
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
+  const generatedHtml = await vscode.env.clipboard.readText();
+  assert.match(generatedHtml, /mh-heading--h1/);
+  assert.match(generatedHtml, /mh-codeblock/);
 }
 
 function normalizeGeneratedHtml(value: string): string {

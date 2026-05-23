@@ -190,6 +190,7 @@ hinagata:
 - Handlebarsベースのテーマテンプレート。
 - 同梱の `default` テーマ。
 - `.md-hinagata/themes/{themeId}` 下のワークスペーステーマ。
+- `Create Theme from Default` コマンド。
 - Markdown変更時のプレビュー更新。
 - テーマファイル保存時のプレビュー更新。
 - 生成されたHTMLのコピーコマンド。
@@ -313,7 +314,7 @@ VS Code拡張機能ホストのE2Eスモークテストを実行：
 pnpm run test:e2e
 ```
 
-これにより、ローカルの拡張機能を含むVS Codeが起動し、`examples/basic` を開き、コントリビュートされたコマンドを検証し、`sample.md` に対してプレビューとHTMLコピーを実行します。LinuxのCI環境では、このコマンドは `xvfb` 下で実行されます。
+これにより、`examples/basic` を一時ワークスペースにコピーし、ローカルの拡張機能を含むVS Codeを起動し、コントリビュートされたコマンドを検証し、`sample.md` に対してプレビュー、HTMLコピー、`Create Theme from Default` を実行します。LinuxのCI環境では、このコマンドは `xvfb` 下で実行されます。
 
 ### 拡張機能開発ホスト
 

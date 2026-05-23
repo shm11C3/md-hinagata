@@ -37,7 +37,10 @@ export class ThemeEditorViewProvider
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
     this.#webviewView = webviewView;
     webviewView.webview.options = {
-      enableCommandUris: [COMMAND_IDS.openThemeFile],
+      enableCommandUris: [
+        COMMAND_IDS.createThemeFromDefault,
+        COMMAND_IDS.openThemeFile,
+      ],
       enableScripts: false,
       localResourceRoots: [],
     };
@@ -76,6 +79,7 @@ function renderThemeManagerBody(options: {
   return [
     '<main class="mh-theme-manager">',
     renderCurrentDocument(options.state, options.isWorkspaceTrusted),
+    renderActions(),
     renderThemeFiles(options.state),
     renderDiagnostics(options.diagnostics),
     "</main>",
@@ -132,6 +136,21 @@ function getGeneratedHtmlContract(state: DocumentState): string {
   return state.css === undefined || state.css.length === 0
     ? "fragment"
     : "fragment with theme CSS";
+}
+
+function renderActions(): string {
+  return [
+    '<section class="mh-section">',
+    "<h2>Actions</h2>",
+    '<ul class="mh-file-list">',
+    "<li>",
+    `<a href="${escapeHtml(createCommandUri(COMMAND_IDS.createThemeFromDefault))}">`,
+    "Create Theme from Default",
+    "</a>",
+    "</li>",
+    "</ul>",
+    "</section>",
+  ].join("");
 }
 
 function renderThemeFiles(state: DocumentState): string {
@@ -238,7 +257,11 @@ function renderDefinition(label: string, value: string): string {
 }
 
 function createOpenThemeFileCommandUri(filePath: string): string {
-  return `command:${COMMAND_IDS.openThemeFile}?${encodeURIComponent(JSON.stringify([filePath]))}`;
+  return `${createCommandUri(COMMAND_IDS.openThemeFile)}?${encodeURIComponent(JSON.stringify([filePath]))}`;
+}
+
+function createCommandUri(commandId: string): string {
+  return `command:${commandId}`;
 }
 
 function formatSeverity(severity: DiagnosticMessage["severity"]): string {

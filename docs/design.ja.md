@@ -345,6 +345,7 @@ export function activate(context: vscode.ExtensionContext) {
 md-hinagata.openPreview
 md-hinagata.copyGeneratedHtml
 md-hinagata.selectTheme
+md-hinagata.createThemeFromDefault
 ```
 
 将来候補。
@@ -352,7 +353,8 @@ md-hinagata.selectTheme
 ```txt
 md-hinagata.openGeneratedHtml
 md-hinagata.validateTheme
-md-hinagata.createTheme
+md-hinagata.openCurrentTheme
+md-hinagata.duplicateTheme
 md-hinagata.createMissingTemplate
 md-hinagata.exportHtml
 ```

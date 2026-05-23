@@ -446,8 +446,9 @@ Markdown 本文の編集は VS Code 標準エディタに任せる。独自 Mark
 | `md-hinagata: Open Preview` | 現在の Markdown の Themed Preview を開く。 |
 | `md-hinagata: Copy Generated HTML` | 現在の生成 HTML fragment をコピーする。 |
 | `md-hinagata: Select Theme` | 現在の Markdown の `hinagata.theme` を更新する。 |
-| `md-hinagata: Open Current Theme` | 現在使用中の theme directory または `theme.json` を開く。 |
-| `md-hinagata: Validate Current Theme` | 現在の theme を検証する。 |
+| `md-hinagata: Create Theme from Default` | bundled default theme を複製し、workspace theme を作成する。 |
+
+`Open Current Theme` と `Validate Current Theme` は `0.2.0` 以降の Theme Manager / diagnostics 強化で扱う。
 
 ### 7.3 Theme Manager sidebar
 

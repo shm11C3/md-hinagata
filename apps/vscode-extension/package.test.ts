@@ -65,6 +65,7 @@ describe("extension manifest", () => {
       COMMAND_IDS.openPreview,
       COMMAND_IDS.copyGeneratedHtml,
       COMMAND_IDS.selectTheme,
+      COMMAND_IDS.createThemeFromDefault,
     ]);
   });
 
