@@ -14,11 +14,11 @@ pub use diagnostics::{
     UNSUPPORTED_INLINE_CSS,
 };
 pub use error::{CoreError, Result};
-pub use frontmatter::{parse_frontmatter, ParsedFrontmatter, ParsedMarkdown};
+pub use frontmatter::{ParsedFrontmatter, ParsedMarkdown, parse_frontmatter};
 pub use markdown::{MarkdownBlock, MarkdownListItem};
 pub use theme::{ThemeManifest, ThemePackage, ThemeSource};
 pub use transform::{
-    transform, CssOutputMode, TransformOptions, TransformRequest, TransformResponse,
+    CssOutputMode, TransformOptions, TransformRequest, TransformResponse, transform,
 };
 
 pub fn version() -> &'static str {

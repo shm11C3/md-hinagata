@@ -2,8 +2,8 @@ use handlebars::Handlebars;
 use serde::Serialize;
 
 use crate::{
-    markdown::escape_html, Diagnostic, DiagnosticSource, ThemePackage, MISSING_TEMPLATE,
-    TEMPLATE_RENDER_ERROR,
+    Diagnostic, DiagnosticSource, MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR, ThemePackage,
+    markdown::escape_html,
 };
 
 pub fn render_template<T>(
