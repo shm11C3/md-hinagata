@@ -139,6 +139,7 @@ function createDocumentStateWithThemeFiles(
       css: ".basic {}",
       diagnostics: [],
       html: "<h1>Title</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "basic",
     },
     {

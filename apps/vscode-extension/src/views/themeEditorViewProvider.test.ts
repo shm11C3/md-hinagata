@@ -61,6 +61,7 @@ describe("ThemeEditorViewProvider", () => {
           theme: "basic",
         },
         html: "<h1>Title</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "default",
       },
       {
@@ -145,6 +146,7 @@ describe("ThemeEditorViewProvider", () => {
       {
         diagnostics: [],
         html: "<h1>Title</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "default",
       },
       {

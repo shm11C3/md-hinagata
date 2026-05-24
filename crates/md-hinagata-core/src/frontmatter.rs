@@ -9,6 +9,8 @@ pub struct ParsedFrontmatter {
     pub theme: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub css_mode: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -89,4 +91,31 @@ fn find_frontmatter_bounds(markdown: &str) -> Option<Result<(&str, &str), ()>> {
 
 fn invalid_frontmatter_diagnostic(message: impl Into<String>) -> Diagnostic {
     Diagnostic::error(INVALID_FRONTMATTER, message).with_source(DiagnosticSource::Frontmatter)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_frontmatter_reads_css_mode() {
+        let markdown = [
+            "---",
+            "hinagata:",
+            "  theme: default",
+            "  output: fragment",
+            "  cssMode: separate",
+            "---",
+            "",
+            "# Title",
+        ]
+        .join("\n");
+        let parsed = parse_frontmatter(&markdown);
+
+        let frontmatter = parsed.frontmatter.expect("frontmatter should parse");
+
+        assert_eq!(frontmatter.theme.as_deref(), Some("default"));
+        assert_eq!(frontmatter.output.as_deref(), Some("fragment"));
+        assert_eq!(frontmatter.css_mode.as_deref(), Some("separate"));
+    }
 }

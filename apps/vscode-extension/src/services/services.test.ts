@@ -109,6 +109,7 @@ describe("extension services", () => {
           theme: "basic",
         },
         html: "<h1>First</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "basic",
       },
       {
@@ -204,6 +205,7 @@ describe("extension services", () => {
           theme: "basic",
         },
         html: "<h1>Title</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "basic",
       },
       {
@@ -285,6 +287,7 @@ describe("extension services", () => {
       {
         diagnostics: [],
         html: "<h1>First</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "default",
       },
       {
@@ -362,6 +365,7 @@ describe("extension services", () => {
                   theme: "workspace",
                 },
                 html: "<p>Default</p>",
+                resolvedCssMode: "style-tag",
                 resolvedThemeId: "default",
               }
             : {
@@ -371,6 +375,7 @@ describe("extension services", () => {
                   theme: "workspace",
                 },
                 html: "<p>Workspace</p>",
+                resolvedCssMode: "style-tag",
                 resolvedThemeId: "workspace",
               };
         },
@@ -452,6 +457,7 @@ describe("extension services", () => {
     completeTransform?.({
       diagnostics: [],
       html: "<h1>First</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -473,6 +479,7 @@ describe("extension services", () => {
         transformMarkdownJson: (request) => ({
           diagnostics: [],
           html: `<p>${request.markdown}</p>`,
+          resolvedCssMode: "style-tag",
           resolvedThemeId: request.defaultThemeId ?? "",
         }),
       };
