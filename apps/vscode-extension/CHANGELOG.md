@@ -8,6 +8,7 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 
 - Add Create Theme from Default command. ([#84](https://github.com/shm11C3/md-hinagata/pull/84))
 - Implement CSS output mode contract. ([#93](https://github.com/shm11C3/md-hinagata/pull/93))
+- Implement inline CSS output mode. ([#94](https://github.com/shm11C3/md-hinagata/pull/94))
 
 ### Fixed
 
@@ -18,7 +19,6 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 - Remove accidental frontmatter. ([#87](https://github.com/shm11C3/md-hinagata/pull/87))
 - Define CSS output modes. ([#91](https://github.com/shm11C3/md-hinagata/pull/91))
 - Update task checklist status. ([#92](https://github.com/shm11C3/md-hinagata/pull/92))
-- Implement inline CSS output mode. ([#94](https://github.com/shm11C3/md-hinagata/pull/94))
 - Surface CSS output mode in the extension. ([#95](https://github.com/shm11C3/md-hinagata/pull/95))
 
 ### Maintenance
