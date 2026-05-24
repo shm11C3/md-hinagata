@@ -67,9 +67,10 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   assert.ok(workspaceFolder, "E2E test workspace should be open.");
 
   await vscode.commands.executeCommand("md-hinagata.openPreview");
-  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
 
-  const generatedHtml = await vscode.env.clipboard.readText();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
   const expectedHtml = await readFile(
     path.join(workspaceFolder.uri.fsPath, "expected.html"),
     "utf8",
@@ -142,8 +143,9 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
 
   await openBasicSample();
   await vscode.commands.executeCommand("md-hinagata.openPreview");
-  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
-  const generatedHtml = await vscode.env.clipboard.readText();
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
   assert.match(generatedHtml, /mh-heading--h1/);
   assert.match(generatedHtml, /mh-codeblock/);
 }
@@ -162,6 +164,8 @@ async function assertLargePreviewUpdatePerformance(): Promise<void> {
   );
   const document = await vscode.workspace.openTextDocument(largeSampleUri);
   await vscode.window.showTextDocument(document);
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await vscode.window.showTextDocument(document);
 
   const startedAt = performance.now();
   await vscode.commands.executeCommand("md-hinagata.openPreview");
@@ -177,10 +181,27 @@ async function assertLargePreviewUpdatePerformance(): Promise<void> {
   );
 
   await vscode.window.showTextDocument(document);
-  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
-  const generatedHtml = await vscode.env.clipboard.readText();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
   assert.match(generatedHtml, /Large benchmark document/);
   assert.match(generatedHtml, /Section 400/);
+}
+
+async function copyActiveMarkdownGeneratedHtml(): Promise<string> {
+  const copied = await vscode.commands.executeCommand<boolean>(
+    "md-hinagata.copyGeneratedHtml",
+  );
+  assert.equal(copied, true, "copyGeneratedHtml should report success.");
+  return vscode.env.clipboard.readText();
+}
+
+async function closePreviewTabs(title: string): Promise<void> {
+  const previewTabs = getTabs(title);
+  if (previewTabs.length === 0) {
+    return;
+  }
+
+  await vscode.window.tabGroups.close(previewTabs, true);
+  await waitForPreviewTabsClosed(title);
 }
 
 async function waitForPreviewTab(title: string): Promise<void> {
@@ -196,9 +217,26 @@ async function waitForPreviewTab(title: string): Promise<void> {
   assert.fail(`Preview tab '${title}' was not visible.`);
 }
 
+async function waitForPreviewTabsClosed(title: string): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (!hasTab(title)) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail(`Preview tab '${title}' was still visible.`);
+}
+
 function hasTab(title: string): boolean {
-  return vscode.window.tabGroups.all.some((group) =>
-    group.tabs.some((tab) => tab.label === title),
+  return getTabs(title).length > 0;
+}
+
+function getTabs(title: string): vscode.Tab[] {
+  return vscode.window.tabGroups.all.flatMap((group) =>
+    group.tabs.filter((tab) => tab.label === title),
   );
 }
 
