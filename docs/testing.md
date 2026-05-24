@@ -209,11 +209,12 @@ execution through Webview HTML assignment and Preview tab visibility, not a
 Chromium paint-complete callback from inside the Webview.
 
 For before/after comparisons, save a baseline before the change and compare
-after the change:
+after the change. Adjust the output path for your OS; for example, use `/tmp`
+on macOS/Linux or `%TEMP%` on Windows.
 
 ```bash
-pnpm --filter md-hinagata-vscode-extension run bench -- --outputJson /private/tmp/md-hinagata-bench-before.json
-pnpm --filter md-hinagata-vscode-extension run bench -- --compare /private/tmp/md-hinagata-bench-before.json
+pnpm --filter ./apps/vscode-extension run bench -- --outputJson /tmp/md-hinagata-bench-before.json
+pnpm --filter ./apps/vscode-extension run bench -- --compare /tmp/md-hinagata-bench-before.json
 ```
 
 Record the benchmark command and notable before/after results in the PR when a

@@ -6,7 +6,7 @@
   "license": "MIT OR Apache-2.0",
   "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "bench": "pnpm --filter md-hinagata-vscode-extension run bench",
+    "bench": "pnpm --filter ./apps/vscode-extension run bench",
     "build": "pnpm --filter md-hinagata-vscode-extension run build",
     "build:release": "pnpm --filter md-hinagata-vscode-extension run build:release",
     "build:wasm": "node scripts/build-wasm.mjs",

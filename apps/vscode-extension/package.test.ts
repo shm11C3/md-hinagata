@@ -58,7 +58,7 @@ describe("extension manifest", () => {
     );
     expect(manifest.scripts.bench).toBe("vitest bench");
     expect(rootPackage.scripts.bench).toBe(
-      "pnpm --filter md-hinagata-vscode-extension run bench",
+      "pnpm --filter ./apps/vscode-extension run bench",
     );
     expect(manifest.scripts["build:release"]).toBe(
       "node --experimental-strip-types ./esbuild.config.ts --release",
