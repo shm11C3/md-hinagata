@@ -1,9 +1,12 @@
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type BuildOptions, build, context } from "esbuild";
 
 const watch = process.argv.includes("--watch");
+const release = process.argv.includes("--release");
 const configDirectory = path.dirname(fileURLToPath(import.meta.url));
+const outfile = "dist/extension.js";
 
 const options: BuildOptions = {
   alias: {
@@ -14,10 +17,10 @@ const options: BuildOptions = {
   external: ["vscode"],
   format: "esm",
   logLevel: "info",
-  minify: false,
-  outfile: "dist/extension.js",
+  minify: release,
+  outfile,
   platform: "node",
-  sourcemap: true,
+  sourcemap: !release,
   target: "node22",
 };
 
@@ -25,5 +28,8 @@ if (watch) {
   const buildContext = await context(options);
   await buildContext.watch();
 } else {
+  if (release) {
+    await rm(`${outfile}.map`, { force: true });
+  }
   await build(options);
 }

@@ -8,6 +8,7 @@
   "scripts": {
     "bench": "pnpm --filter md-hinagata-vscode-extension run bench",
     "build": "pnpm --filter md-hinagata-vscode-extension run build",
+    "build:release": "pnpm --filter md-hinagata-vscode-extension run build:release",
     "build:wasm": "node scripts/build-wasm.mjs",
     "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
     "format": "biome format --write . && cargo fmt --all",

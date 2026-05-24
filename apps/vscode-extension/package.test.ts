@@ -60,6 +60,12 @@ describe("extension manifest", () => {
     expect(rootPackage.scripts.bench).toBe(
       "pnpm --filter md-hinagata-vscode-extension run bench",
     );
+    expect(manifest.scripts["build:release"]).toBe(
+      "node --experimental-strip-types ./esbuild.config.ts --release",
+    );
+    expect(rootPackage.scripts["build:release"]).toBe(
+      "pnpm --filter md-hinagata-vscode-extension run build:release",
+    );
     expect(manifest.scripts.format).toBe(
       "pnpm --workspace-root exec biome format --write apps/vscode-extension",
     );

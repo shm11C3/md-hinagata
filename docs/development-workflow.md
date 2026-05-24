@@ -118,6 +118,7 @@ pnpm run check
 pnpm run lint
 pnpm run test
 pnpm run build
+pnpm run build:release
 pnpm run build:wasm
 ```
 
@@ -127,6 +128,10 @@ Run `pnpm run build:wasm` when the WASM bridge, Rust transform path, preview run
 
 Run `pnpm run bench` before and after changes that are justified by measured
 extension performance improvements.
+
+Use `pnpm run build:release` for VS Code Marketplace packaging checks. It
+minifies the extension bundle and omits source maps; keep `pnpm run build` for
+development and E2E builds that benefit from source maps.
 
 ## 8. Agent Checklist
 
