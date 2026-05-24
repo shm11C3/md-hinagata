@@ -2,9 +2,9 @@
   "name": "md-hinagata-vscode-extension",
   "displayName": "md-hinagata",
   "publisher": "Shm11C3",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
-  "description": "VS Code extension for md-hinagata.",
+  "description": "Convert Markdown into theme-controlled HTML fragments in VS Code.",
   "license": "MIT OR Apache-2.0",
   "icon": "resources/md-hinagata.png",
   "repository": {
