@@ -60,9 +60,10 @@ channel は minor version の偶奇で決める。
 GitHub Actions workflow は `apps/vscode-extension/package.json` の `version` を読み取り、
 minor が偶数なら stable、奇数なら pre-release として公開する。
 
-この repository は pnpm workspace を使い、extension は publish 前に bundle する。
+この repository は pnpm workspace を使い、extension は publish 前に release build として bundle する。
 そのため workflow は `vsce` の npm/yarn 依存検出を避けるために
 `--no-dependencies` を付けて publish する。
+release build は `pnpm run build:release` を使い、extension bundle を minify し、source map を同梱しない。
 
 VS Code Marketplace 用の license file は repository root の `LICENSE`、
 `LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。

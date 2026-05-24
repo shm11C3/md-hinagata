@@ -210,7 +210,11 @@ jobs:
           run_script_if_present typecheck
           run_script_if_present test
           run_script_if_present build:wasm
-          run_script_if_present build
+          if script_exists build:release; then
+            run_script_if_present build:release
+          else
+            run_script_if_present build
+          fi
 
       - name: Prepare extension package assets
         run: pnpm run prepare:vscode-extension-package

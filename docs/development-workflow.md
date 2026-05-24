@@ -118,12 +118,17 @@ pnpm run check
 pnpm run lint
 pnpm run test
 pnpm run build
+pnpm run build:release
 pnpm run build:wasm
 ```
 
 Use `pnpm` for TypeScript and workspace-level tasks. Use `cargo` directly for Rust-only investigation or when a root script does not cover the needed check.
 
 Run `pnpm run build:wasm` when the WASM bridge, Rust transform path, preview runtime integration, or example launch path is involved.
+
+Use `pnpm run build:release` for VS Code Marketplace packaging checks. It
+minifies the extension bundle and omits source maps; keep `pnpm run build` for
+development and E2E builds that benefit from source maps.
 
 ## 8. Agent Checklist
 

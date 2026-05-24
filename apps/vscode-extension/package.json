@@ -82,6 +82,7 @@
   },
   "scripts": {
     "build": "node --experimental-strip-types ./esbuild.config.ts",
+    "build:release": "node --experimental-strip-types ./esbuild.config.ts --release",
     "check": "tsc --noEmit",
     "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
     "lint": "pnpm --workspace-root exec biome check apps/vscode-extension",

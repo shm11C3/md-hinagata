@@ -7,6 +7,7 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "pnpm --filter md-hinagata-vscode-extension run build",
+    "build:release": "pnpm --filter md-hinagata-vscode-extension run build:release",
     "build:wasm": "node scripts/build-wasm.mjs",
     "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
     "format": "biome format --write . && cargo fmt --all",
