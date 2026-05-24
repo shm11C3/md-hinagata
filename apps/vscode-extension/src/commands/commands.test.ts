@@ -135,6 +135,7 @@ describe("extension commands", () => {
       css: ".article { color: red; }",
       diagnostics: [],
       html: generatedHtml,
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -180,6 +181,7 @@ describe("extension commands", () => {
           documentStateService.applyTransformResult({
             diagnostics: [],
             html: "<h1>Hello</h1>",
+            resolvedCssMode: "style-tag",
             resolvedThemeId: "default",
           }),
       }),
@@ -200,6 +202,7 @@ describe("extension commands", () => {
     documentStateService.applyTransformResult({
       diagnostics: [],
       html: "<h1>Hello</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -268,6 +271,7 @@ describe("extension commands", () => {
           documentStateService.applyTransformResult({
             diagnostics: [],
             html: "",
+            resolvedCssMode: "style-tag",
             resolvedThemeId: "default",
           }),
       }),
@@ -318,6 +322,7 @@ describe("extension commands", () => {
     documentStateService.applyTransformResult({
       diagnostics: [],
       html: "<h1>Before</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
     documentStateService.updateMarkdown("file:///article.md", "# After");
@@ -335,6 +340,7 @@ describe("extension commands", () => {
           documentStateService.applyTransformResult({
             diagnostics: [],
             html: "<h1>After</h1>",
+            resolvedCssMode: "style-tag",
             resolvedThemeId: "default",
           }),
       }),
@@ -357,6 +363,7 @@ describe("extension commands", () => {
     documentStateService.applyTransformResult({
       diagnostics: [],
       html: "<h1>Current</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -393,6 +400,7 @@ describe("extension commands", () => {
       {
         diagnostics: [],
         html: "<h1>Title</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "basic",
       },
       {
@@ -444,6 +452,7 @@ describe("extension commands", () => {
       {
         diagnostics: [],
         html: "<h1>Title</h1>",
+        resolvedCssMode: "style-tag",
         resolvedThemeId: "basic",
       },
       {

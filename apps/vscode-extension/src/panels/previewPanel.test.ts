@@ -93,6 +93,7 @@ describe("PreviewPanel", () => {
         '<p style="color: red;">Styled</p>',
         "</main>",
       ].join("\n"),
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -124,6 +125,7 @@ describe("PreviewPanel", () => {
     documentStateService.applyTransformResult({
       diagnostics: [],
       html: "",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 
@@ -160,6 +162,7 @@ describe("PreviewPanel", () => {
         theme: "basic",
       },
       html: expectedHtml,
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "basic",
     });
 

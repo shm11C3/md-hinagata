@@ -18,6 +18,7 @@ describe("active editor state", () => {
     documentStateService.applyTransformResult({
       diagnostics: [],
       html: "<h1>Title</h1>",
+      resolvedCssMode: "style-tag",
       resolvedThemeId: "default",
     });
 

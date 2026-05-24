@@ -5,7 +5,7 @@ use crate::{
     markdown::{parse_markdown_with_options, MarkdownOptions},
     renderer::render_blocks,
     theme::resolve_theme,
-    Diagnostic, ParsedFrontmatter, Result, ThemePackage,
+    Diagnostic, DiagnosticSource, ParsedFrontmatter, Result, ThemePackage, UNSUPPORTED_CSS_MODE,
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,15 +36,27 @@ pub struct TransformResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub css: Option<String>,
     pub resolved_theme_id: String,
+    pub resolved_css_mode: CssOutputMode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frontmatter: Option<ParsedFrontmatter>,
     pub diagnostics: Vec<Diagnostic>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CssOutputMode {
+    None,
+    Separate,
+    StyleTag,
+    Inline,
 }
 
 pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     let mut diagnostics = Vec::new();
     let parsed_markdown = parse_frontmatter(&request.markdown);
     diagnostics.extend(parsed_markdown.diagnostics);
+    let resolved_css_mode =
+        resolve_css_output_mode(parsed_markdown.frontmatter.as_ref(), &mut diagnostics);
 
     let theme = resolve_theme(
         &request.themes,
@@ -64,18 +76,78 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     );
     let css = theme.and_then(|theme| theme.css.clone());
     let rendered_html = render_blocks(&blocks, theme, &mut diagnostics);
-    let html = compose_generated_html(&rendered_html, css.as_deref());
+    let output = compose_generated_output(&rendered_html, css.as_deref(), resolved_css_mode);
 
     Ok(TransformResponse {
-        html,
-        css,
+        html: output.html,
+        css: output.css,
         resolved_theme_id,
+        resolved_css_mode,
         frontmatter: parsed_markdown.frontmatter,
         diagnostics,
     })
 }
 
-fn compose_generated_html(rendered_html: &str, css: Option<&str>) -> String {
+struct GeneratedOutput {
+    html: String,
+    css: Option<String>,
+}
+
+fn resolve_css_output_mode(
+    frontmatter: Option<&ParsedFrontmatter>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> CssOutputMode {
+    let Some(raw_css_mode) = frontmatter.and_then(|frontmatter| frontmatter.css_mode.as_deref())
+    else {
+        return CssOutputMode::StyleTag;
+    };
+    let css_mode = raw_css_mode.trim();
+
+    match css_mode {
+        "none" => CssOutputMode::None,
+        "separate" => CssOutputMode::Separate,
+        "style-tag" => CssOutputMode::StyleTag,
+        "inline" => {
+            diagnostics.push(unsupported_css_mode_diagnostic(css_mode));
+            CssOutputMode::StyleTag
+        }
+        unsupported_css_mode => {
+            diagnostics.push(unsupported_css_mode_diagnostic(unsupported_css_mode));
+            CssOutputMode::StyleTag
+        }
+    }
+}
+
+fn unsupported_css_mode_diagnostic(value: &str) -> Diagnostic {
+    Diagnostic::warning(
+        UNSUPPORTED_CSS_MODE,
+        format!("Unsupported hinagata.cssMode '{value}'; falling back to 'style-tag'."),
+    )
+    .with_source(DiagnosticSource::Frontmatter)
+}
+
+fn compose_generated_output(
+    rendered_html: &str,
+    css: Option<&str>,
+    css_mode: CssOutputMode,
+) -> GeneratedOutput {
+    match css_mode {
+        CssOutputMode::None => GeneratedOutput {
+            html: wrap_document_html(rendered_html),
+            css: None,
+        },
+        CssOutputMode::Separate => GeneratedOutput {
+            html: wrap_document_html(rendered_html),
+            css: css.map(str::to_owned),
+        },
+        CssOutputMode::StyleTag | CssOutputMode::Inline => GeneratedOutput {
+            html: compose_style_tag_html(rendered_html, css),
+            css: css.map(str::to_owned),
+        },
+    }
+}
+
+fn compose_style_tag_html(rendered_html: &str, css: Option<&str>) -> String {
     let Some(css) = css.map(str::trim_end).filter(|css| !css.is_empty()) else {
         return rendered_html.to_owned();
     };
@@ -117,7 +189,9 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use crate::{ThemeSource, MISSING_TEMPLATE, UNKNOWN_THEME};
+    use crate::{
+        DiagnosticSource, ThemeSource, MISSING_TEMPLATE, UNKNOWN_THEME, UNSUPPORTED_CSS_MODE,
+    };
     use serde_json::json;
 
     #[test]
@@ -147,9 +221,11 @@ mod tests {
             html: "<h1>Hello</h1>".to_owned(),
             css: None,
             resolved_theme_id: "default".to_owned(),
+            resolved_css_mode: CssOutputMode::StyleTag,
             frontmatter: Some(ParsedFrontmatter {
                 theme: Some("default".to_owned()),
                 output: Some("fragment".to_owned()),
+                css_mode: Some("style-tag".to_owned()),
             }),
             diagnostics: vec![Diagnostic::warning(
                 "missing-template",
@@ -160,7 +236,9 @@ mod tests {
         let serialized = serde_json::to_value(&response).expect("response should serialize");
 
         assert_eq!(serialized["resolvedThemeId"], "default");
+        assert_eq!(serialized["resolvedCssMode"], "style-tag");
         assert_eq!(serialized["frontmatter"]["theme"], "default");
+        assert_eq!(serialized["frontmatter"]["cssMode"], "style-tag");
         assert_eq!(serialized["diagnostics"][0]["severity"], "warning");
         assert_eq!(serialized["diagnostics"][0]["code"], "missing-template");
     }
@@ -181,6 +259,7 @@ mod tests {
         let response = transform(request).expect("transform should return a response");
 
         assert_eq!(response.resolved_theme_id, "default");
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
         assert_eq!(
             response.html,
             [
@@ -195,6 +274,37 @@ mod tests {
         );
         assert_eq!(response.css.as_deref(), Some(".mh-document {}"));
         assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_defaults_missing_css_mode_to_style_tag() {
+        let request = TransformRequest {
+            markdown: "# Title".to_owned(),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document {}"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                ".mh-document {}",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1>Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(response.css.as_deref(), Some(".mh-document {}"));
     }
 
     #[test]
@@ -460,6 +570,180 @@ mod tests {
             response.css.as_deref(),
             Some("body::after { content: '</style>'; }"),
         );
+    }
+
+    #[test]
+    fn transform_css_mode_none_omits_css_from_html_and_response_css() {
+        let request = TransformRequest {
+            markdown: ["---", "hinagata:", "  cssMode: none", "---", "", "# Title"].join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::None);
+        assert_eq!(
+            response.html,
+            ["<main class=\"mh-document\">", "<h1>Title</h1>", "</main>",].join("\n"),
+        );
+        assert_eq!(response.css, None);
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_separate_returns_document_html_and_response_css() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: separate",
+                "---",
+                "",
+                "# Title",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::Separate);
+        assert_eq!(
+            response.html,
+            ["<main class=\"mh-document\">", "<h1>Title</h1>", "</main>",].join("\n"),
+        );
+        assert_eq!(
+            response.css.as_deref(),
+            Some(".mh-document { color: red; }")
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_style_tag_includes_theme_css_in_html() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: style-tag",
+                "---",
+                "",
+                "# Title",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                ".mh-document { color: red; }",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1>Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(
+            response.css.as_deref(),
+            Some(".mh-document { color: red; }")
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_warns_and_falls_back_for_invalid_css_mode() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: unsupported",
+                "---",
+                "",
+                "# Title",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(
+            response.html,
+            [
+                "<style>",
+                ".mh-document { color: red; }",
+                "</style>",
+                "<main class=\"mh-document\">",
+                "<h1>Title</h1>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == UNSUPPORTED_CSS_MODE
+                && diagnostic.source == Some(DiagnosticSource::Frontmatter)
+        }));
+    }
+
+    #[test]
+    fn transform_warns_and_falls_back_for_inline_css_mode_until_supported() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "# Title",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("h1", "<h1>{{text}}</h1>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == UNSUPPORTED_CSS_MODE
+                && diagnostic.source == Some(DiagnosticSource::Frontmatter)
+        }));
     }
 
     #[test]

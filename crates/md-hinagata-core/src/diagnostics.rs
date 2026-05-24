@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub const UNKNOWN_THEME: &str = "unknown-theme";
 pub const INVALID_FRONTMATTER: &str = "invalid-frontmatter";
+pub const UNSUPPORTED_CSS_MODE: &str = "unsupported-css-mode";
 pub const MISSING_TEMPLATE: &str = "missing-template";
 pub const TEMPLATE_RENDER_ERROR: &str = "template-render-error";
 
