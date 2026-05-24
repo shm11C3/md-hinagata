@@ -103,6 +103,7 @@ function renderCurrentDocument(
   const requestedTheme = state.frontmatter?.theme ?? state.currentTheme;
   const resolvedTheme = state.resolvedThemeId ?? "Not resolved";
   const output = state.frontmatter?.output ?? "fragment";
+  const cssOutputMode = getCssOutputModeLabel(state);
   const generatedHtmlContract = getGeneratedHtmlContract(state);
   const fallbackHtml =
     state.resolvedThemeId !== undefined &&
@@ -117,6 +118,7 @@ function renderCurrentDocument(
     renderDefinition("Theme", requestedTheme),
     renderDefinition("Resolved Theme", resolvedTheme),
     renderDefinition("Output", output),
+    renderDefinition("CSS Output Mode", cssOutputMode),
     renderDefinition("Generated HTML", generatedHtmlContract),
     renderDefinition(
       "Workspace trust",
@@ -128,14 +130,37 @@ function renderCurrentDocument(
   ].join("");
 }
 
+function getCssOutputModeLabel(state: DocumentState): string {
+  const resolvedCssMode = state.resolvedCssMode;
+  if (resolvedCssMode === undefined) {
+    return "Not resolved";
+  }
+
+  const requestedCssMode = state.frontmatter?.cssMode;
+  return requestedCssMode !== undefined && requestedCssMode !== resolvedCssMode
+    ? `${requestedCssMode} -> ${resolvedCssMode}`
+    : resolvedCssMode;
+}
+
 function getGeneratedHtmlContract(state: DocumentState): string {
+  switch (state.resolvedCssMode) {
+    case "style-tag":
+      return "fragment with style tag";
+    case "inline":
+      return "fragment with inline styles";
+    case "separate":
+      return "fragment with separate CSS";
+    case "none":
+      return "fragment without theme CSS";
+    case undefined:
+      break;
+  }
+
   if (state.resolvedThemeId === undefined) {
     return "Not resolved";
   }
 
-  return state.css === undefined || state.css.length === 0
-    ? "fragment"
-    : "fragment with theme CSS";
+  return "fragment";
 }
 
 function renderActions(): string {

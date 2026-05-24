@@ -32,6 +32,17 @@ Body text.
 
 Then run one of the md-hinagata commands from the Command Palette.
 
+## CSS Output Mode
+
+Set `hinagata.cssMode` in document frontmatter to choose how theme CSS is represented. The document frontmatter is the source of truth; the extension does not add separate copy commands for each mode.
+
+| Mode | What `Copy Generated HTML` copies |
+|---|---|
+| `style-tag` | Generated HTML with a `<style>` tag. This is the default. |
+| `inline` | Generated HTML with supported CSS expanded into `style` attributes. |
+| `separate` | Generated document HTML without an embedded `<style>` tag. |
+| `none` | Generated document HTML without theme CSS. |
+
 ## Commands
 
 | Command | What it does |

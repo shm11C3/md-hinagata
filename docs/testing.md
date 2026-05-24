@@ -132,6 +132,14 @@ Before the `0.1.0` release, verify:
 - Copy Generated HTML copies `examples/basic/expected.html`, including theme CSS.
 - Preview renders the same generated HTML as the copy command.
 
+For `0.2.0` CSS output modes, verify each `hinagata.cssMode` value with Preview and Copy Generated HTML:
+
+- `style-tag`: Preview renders generated HTML with theme CSS from the embedded `<style>` tag; Copy Generated HTML copies the same `<style>` tag output.
+- `inline`: Preview renders generated HTML with inline `style` attributes; Copy Generated HTML copies the same inline HTML.
+- `separate`: Preview and Copy Generated HTML both use `TransformResponse.html` without Preview-only CSS injection.
+- `none`: Preview and Copy Generated HTML both use generated document HTML without theme CSS.
+- Invalid `hinagata.cssMode`: Theme Manager shows the requested value and resolved fallback, and diagnostics show the warning.
+
 When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `sample.md` should show generated content rather than the placeholder.
 
 ## 4. Commands
