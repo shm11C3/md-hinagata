@@ -11,6 +11,7 @@
     "check": "pnpm --filter md-hinagata-vscode-extension run check && cargo check --workspace",
     "format": "biome format --write . && cargo fmt --all",
     "lint": "biome check . && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
+    "prepare:vscode-extension-package": "node scripts/sync-vscode-extension-license.mjs",
     "test": "pnpm run test:github-scripts && pnpm --filter md-hinagata-vscode-extension run test && cargo test --workspace",
     "test:github-scripts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types .github/scripts/*.test.ts",
     "test:e2e": "pnpm run build:wasm && pnpm --filter md-hinagata-vscode-extension run test:e2e"
