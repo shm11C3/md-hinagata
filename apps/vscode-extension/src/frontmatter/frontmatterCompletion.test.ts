@@ -27,6 +27,14 @@ describe("getFrontmatterCompletions", () => {
         themes: [],
       }),
     ).toEqual([]);
+
+    expect(
+      getFrontmatterCompletions({
+        offset: markdown.indexOf("\n---") + 1,
+        source: markdown,
+        themes: [],
+      }),
+    ).toEqual([]);
   });
 
   it("suggests only missing hinagata child keys under the existing block", () => {

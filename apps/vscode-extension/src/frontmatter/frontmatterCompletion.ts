@@ -71,7 +71,7 @@ export function getFrontmatterCompletions(
   if (
     frontmatter === undefined ||
     request.offset < frontmatter.contentStart ||
-    request.offset > frontmatter.contentEnd
+    request.offset >= frontmatter.contentEnd
   ) {
     return [];
   }
