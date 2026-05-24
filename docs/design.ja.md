@@ -851,7 +851,12 @@ Body text.
 hinagata:
   theme: string
   output: fragment
+  cssMode: style-tag | inline | separate | none
 ```
+
+frontmatter schema は `schemas/frontmatter.schema.json` に置く。この schema は frontmatter YAML の中身だけを表し、Markdown 本文や `---` delimiter は含めない。
+
+VS Code 拡張は Markdown 先頭の frontmatter 内だけで補完を出す。`hinagata:` は `theme` と `output` を含む snippet として挿入し、既存 `hinagata` block がある場合は重複させない。`hinagata.theme` の値候補は `ThemeResolver.listSelectableThemes()` から取得し、trusted workspace の境界は既存の theme 解決と同じにする。
 
 ### 6.3 theme 解決
 

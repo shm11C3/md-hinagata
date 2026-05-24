@@ -258,6 +258,10 @@ Body text.
 | `hinagata.output` | string | `fragment` | no | 出力形式。`0.1.0` では実質 `fragment` のみ。 |
 | `hinagata.cssMode` | string | `style-tag` | no | CSS output mode。`0.2.0` では `none`、`separate`、`style-tag`、`inline` を扱う。 |
 
+frontmatter YAML の中身に対するドラフト schema は `schemas/frontmatter.schema.json` で管理する。Markdown 本文や `---` delimiter は schema の対象外とする。
+
+VS Code 拡張は Markdown 先頭の frontmatter 内だけで `hinagata` key と対応値の補完を提供する。`hinagata.theme` の値候補は `Select Theme` と同じ選択可能 theme の集合を使い、trusted workspace では workspace theme を含め、untrusted workspace では bundled theme のみにする。
+
 `hinagata.cssMode` は document frontmatter を source of truth とする。`0.2.0` では VS Code setting や command argument による一時的な上書きは行わない。
 未対応または不正な `hinagata.cssMode` は warning diagnostic を返し、`style-tag` として扱う。
 

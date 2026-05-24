@@ -109,6 +109,8 @@ Body text.
 
 This keeps the output reproducible. The document itself knows how it should be transformed.
 
+The draft `0.1` frontmatter JSON Schema is tracked at [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json). The VS Code extension offers completions for `hinagata` keys inside leading Markdown frontmatter; `hinagata.theme` values come from the same selectable theme set as `md-hinagata: Select Theme`.
+
 ### Themes are template packages
 
 A theme is a directory such as:

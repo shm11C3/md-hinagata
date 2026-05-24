@@ -105,6 +105,8 @@ hinagata:
 
 これにより、出力の再現性が保たれます。ドキュメント自体が、自分がどのように変換されるべきかを知っている状態になります。
 
+`0.1` のフロントマターJSON Schemaは [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) で管理します。VS Code拡張はMarkdown先頭のフロントマター内で `hinagata` key の補完を提供し、`hinagata.theme` の値候補には `md-hinagata: Select Theme` と同じ選択可能テーマを使います。
+
 ### テーマはテンプレートのパッケージである
 
 テーマは、以下のようなディレクトリ構造を持ちます。

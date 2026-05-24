@@ -8,6 +8,7 @@ It is for writers and teams who want to keep authoring in Markdown while control
 
 - Edit Markdown with the standard VS Code editor.
 - Select a document theme through `hinagata.theme` frontmatter.
+- Complete `hinagata` frontmatter keys and supported values in Markdown files.
 - Preview the generated themed HTML in a side panel.
 - Copy the generated HTML fragment to the clipboard.
 - Inspect the current theme files from the md-hinagata sidebar.
@@ -31,6 +32,8 @@ Body text.
 ```
 
 Then run one of the md-hinagata commands from the Command Palette.
+
+In Markdown frontmatter, VS Code completion suggests the `hinagata` block, supported child keys, fixed `output` / `cssMode` values, and selectable theme IDs.
 
 ## CSS Output Mode
 
