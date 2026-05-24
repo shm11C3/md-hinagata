@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 use md_hinagata_core::{
-    transform, CssOutputMode, ThemePackage, ThemeSource, TransformOptions, TransformRequest,
-    INVALID_FRONTMATTER, MISSING_TEMPLATE, UNKNOWN_THEME,
+    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, ThemePackage, ThemeSource,
+    TransformOptions, TransformRequest, UNKNOWN_THEME, transform,
 };
 
 #[test]

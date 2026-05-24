@@ -1,9 +1,9 @@
 use serde_json::json;
 
 use crate::{
-    markdown::{escape_html, MarkdownListItem},
-    template::render_template,
     Diagnostic, MarkdownBlock, ThemePackage,
+    markdown::{MarkdownListItem, escape_html},
+    template::render_template,
 };
 
 pub fn render_blocks(

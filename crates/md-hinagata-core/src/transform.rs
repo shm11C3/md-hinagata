@@ -1,12 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    Diagnostic, DiagnosticSource, ParsedFrontmatter, Result, ThemePackage, UNSUPPORTED_CSS_MODE,
     frontmatter::parse_frontmatter,
     inline_css::inline_theme_css,
-    markdown::{parse_markdown_with_options, MarkdownOptions},
+    markdown::{MarkdownOptions, parse_markdown_with_options},
     renderer::render_blocks,
     theme::resolve_theme,
-    Diagnostic, DiagnosticSource, ParsedFrontmatter, Result, ThemePackage, UNSUPPORTED_CSS_MODE,
 };
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -201,7 +201,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        DiagnosticSource, ThemeSource, MISSING_TEMPLATE, UNKNOWN_THEME, UNSUPPORTED_CSS_MODE,
+        DiagnosticSource, MISSING_TEMPLATE, ThemeSource, UNKNOWN_THEME, UNSUPPORTED_CSS_MODE,
     };
     use serde_json::json;
 
@@ -1421,13 +1421,12 @@ mod tests {
             ]
             .join("\n"),
         );
-        assert!(["p", "blockquote", "li", "ul"]
-            .iter()
-            .all(|template_key| response
-                .diagnostics
-                .iter()
-                .any(|diagnostic| diagnostic.code == MISSING_TEMPLATE
-                    && diagnostic.message == format!("Template '{template_key}' is missing."))));
+        assert!(["p", "blockquote", "li", "ul"].iter().all(|template_key| {
+            response.diagnostics.iter().any(|diagnostic| {
+                diagnostic.code == MISSING_TEMPLATE
+                    && diagnostic.message == format!("Template '{template_key}' is missing.")
+            })
+        }));
     }
 
     fn theme_package<const N: usize>(

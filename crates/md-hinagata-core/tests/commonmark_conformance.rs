@@ -21,7 +21,7 @@ use std::{
     path::PathBuf,
 };
 
-use md_hinagata_core::{transform, TransformOptions, TransformRequest};
+use md_hinagata_core::{TransformOptions, TransformRequest, transform};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

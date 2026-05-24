@@ -1,7 +1,7 @@
 use comrak::{
-    format_html,
+    Arena, Options, format_html,
     nodes::{AstNode, ListType, NodeValue},
-    parse_document, Arena, Options,
+    parse_document,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]

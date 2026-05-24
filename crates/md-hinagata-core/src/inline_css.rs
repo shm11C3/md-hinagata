@@ -1,4 +1,4 @@
-use crate::{markdown::escape_html, Diagnostic, DiagnosticSource, UNSUPPORTED_INLINE_CSS};
+use crate::{Diagnostic, DiagnosticSource, UNSUPPORTED_INLINE_CSS, markdown::escape_html};
 
 pub fn inline_theme_css(
     document_html: &str,
@@ -147,11 +147,11 @@ fn strip_css_comments(css: &str) -> String {
             ('/', Some((_, '*'))) => {
                 characters.next();
                 while let Some((_, comment_character)) = characters.next() {
-                    if comment_character == '*' {
-                        if let Some((_, '/')) = characters.peek() {
-                            characters.next();
-                            break;
-                        }
+                    if comment_character == '*'
+                        && let Some((_, '/')) = characters.peek()
+                    {
+                        characters.next();
+                        break;
                     }
                 }
             }
@@ -210,13 +210,13 @@ fn parse_inline_css_declarations(
                 return None;
             }
 
-            if property.starts_with("--") || value.to_ascii_lowercase().contains("var(") {
-                if let Some(diagnostics) = diagnostics.as_deref_mut() {
-                    diagnostics.push(unsupported_inline_css_diagnostic(format!(
-                        "Unsupported CSS variable declaration '{property}' was skipped while inlining CSS."
-                    )));
-                    return None;
-                }
+            if (property.starts_with("--") || value.to_ascii_lowercase().contains("var("))
+                && let Some(diagnostics) = diagnostics.as_deref_mut()
+            {
+                diagnostics.push(unsupported_inline_css_diagnostic(format!(
+                    "Unsupported CSS variable declaration '{property}' was skipped while inlining CSS."
+                )));
+                return None;
             }
 
             let (value, important) = strip_important(value);
@@ -589,16 +589,16 @@ fn start_tag_matches(start_tag: &str, selector: &SimpleSelector) -> bool {
     let Some(tag_name) = read_tag_name(start_tag) else {
         return false;
     };
-    if let Some(selector_tag_name) = selector.tag_name.as_deref() {
-        if tag_name != selector_tag_name {
-            return false;
-        }
+    if let Some(selector_tag_name) = selector.tag_name.as_deref()
+        && tag_name != selector_tag_name
+    {
+        return false;
     }
 
-    if let Some(selector_id) = selector.id.as_deref() {
-        if read_attribute_value(start_tag, "id").as_deref() != Some(selector_id) {
-            return false;
-        }
+    if let Some(selector_id) = selector.id.as_deref()
+        && read_attribute_value(start_tag, "id").as_deref() != Some(selector_id)
+    {
+        return false;
     }
 
     let element_classes = read_attribute_value(start_tag, "class").unwrap_or_default();
@@ -698,28 +698,26 @@ fn insert_style_attribute(start_tag: &str, style: &str) -> String {
     if let Some(style_attribute) = read_attributes(start_tag)
         .into_iter()
         .find(|attribute| attribute.name == "style")
+        && let Some(value_range) = style_attribute.value_range
     {
-        if let Some(value_range) = style_attribute.value_range {
-            return [
-                &start_tag[..value_range.start],
-                escape_html(style).as_str(),
-                &start_tag[value_range.end..],
-            ]
-            .join("");
-        }
+        return [
+            &start_tag[..value_range.start],
+            escape_html(style).as_str(),
+            &start_tag[value_range.end..],
+        ]
+        .join("");
     }
 
     let Some(mut insertion_index) = start_tag.rfind('>') else {
         return start_tag.to_owned();
     };
-    if is_self_closing_start_tag(start_tag) {
-        if let Some(self_closing_slash_index) = start_tag[..insertion_index].rfind('/') {
-            insertion_index = self_closing_slash_index;
-            while insertion_index > 0
-                && start_tag.as_bytes()[insertion_index - 1].is_ascii_whitespace()
-            {
-                insertion_index -= 1;
-            }
+    if is_self_closing_start_tag(start_tag)
+        && let Some(self_closing_slash_index) = start_tag[..insertion_index].rfind('/')
+    {
+        insertion_index = self_closing_slash_index;
+        while insertion_index > 0 && start_tag.as_bytes()[insertion_index - 1].is_ascii_whitespace()
+        {
+            insertion_index -= 1;
         }
     }
     let style_attribute = format!(" style=\"{}\"", escape_html(style));
