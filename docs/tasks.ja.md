@@ -46,23 +46,23 @@ Rust/WASM core で theme template を適用する
 
 `0.1.0` は、以下を満たした時点でリリース可能とします。
 
-- [ ] VS Code で Markdown ファイルを開ける。
-- [ ] frontmatter の `hinagata.theme` を読める。
-- [ ] frontmatter がない場合に `default` theme を使える。
-- [ ] workspace theme を `.md-hinagata/themes/{themeId}` から読み込める。
-- [ ] bundled `default` theme を読み込める。
-- [ ] Rust/WASM core で Markdown を HTML fragment に変換できる。
-- [ ] `h1`, `h2`, `h3`, `p`, `codeblock` を template で変換できる。
-- [ ] 可能なら `blockquote`, `ul`, `ol`, `li` も template で変換できる。
-- [ ] 右側 Webview Preview に変換結果を表示できる。
-- [ ] Markdown 編集時に Preview が更新される。
-- [ ] template 保存時に Preview が更新される。
-- [ ] 左側 Theme Manager に現在 theme と template 一覧が表示される。
-- [ ] template 一覧から `.hbs` ファイルを VS Code 標準エディタで開ける。
-- [ ] `Copy Generated HTML` で HTML fragment をクリップボードにコピーできる。
-- [ ] Unknown theme の warning を出せる。
-- [ ] Missing template の warning を出せる。
-- [ ] README と docs の手順通りにローカル実行できる。
+- [x] VS Code で Markdown ファイルを開ける。
+- [x] frontmatter の `hinagata.theme` を読める。
+- [x] frontmatter がない場合に `default` theme を使える。
+- [x] workspace theme を `.md-hinagata/themes/{themeId}` から読み込める。
+- [x] bundled `default` theme を読み込める。
+- [x] Rust/WASM core で Markdown を HTML fragment に変換できる。
+- [x] `h1`, `h2`, `h3`, `p`, `codeblock` を template で変換できる。
+- [x] 可能なら `blockquote`, `ul`, `ol`, `li` も template で変換できる。
+- [x] 右側 Webview Preview に変換結果を表示できる。
+- [x] Markdown 編集時に Preview が更新される。
+- [x] template 保存時に Preview が更新される。
+- [x] 左側 Theme Manager に現在 theme と template 一覧が表示される。
+- [x] template 一覧から `.hbs` ファイルを VS Code 標準エディタで開ける。
+- [x] `Copy Generated HTML` で HTML fragment をクリップボードにコピーできる。
+- [x] Unknown theme の warning を出せる。
+- [x] Missing template の warning を出せる。
+- [x] README と docs の手順通りにローカル実行できる。
 
 ---
 
@@ -99,10 +99,10 @@ md-hinagata/
 
 Acceptance criteria:
 
-- [ ] `pnpm install` が通る。
-- [ ] `cargo check --workspace` が通る。
-- [ ] VS Code extension project と Rust workspace が同じ repo に存在する。
-- [ ] README に開発セットアップ手順がある。
+- [x] `pnpm install` が通る。
+- [x] `cargo check --workspace` が通る。
+- [x] VS Code extension project と Rust workspace が同じ repo に存在する。
+- [x] README に開発セットアップ手順がある。
 
 ---
 
@@ -129,9 +129,9 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] root から extension build を実行できる。
-- [ ] root から wasm build を実行できる。
-- [ ] root から最低限の test または check を実行できる。
+- [x] root から extension build を実行できる。
+- [x] root から wasm build を実行できる。
+- [x] root から最低限の test または check を実行できる。
 
 ---
 
@@ -154,9 +154,9 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] Extension Development Host を起動できる。
-- [ ] Rust と TypeScript の基本的な開発拡張が推奨される。
-- [ ] build task が VS Code から実行できる。
+- [x] Extension Development Host を起動できる。
+- [x] Rust と TypeScript の基本的な開発拡張が推奨される。
+- [x] build task が VS Code から実行できる。
 
 ---
 
@@ -189,10 +189,10 @@ themes/default/
 
 Acceptance criteria:
 
-- [ ] `theme.json` に `id`, `name`, `version`, `entryCss`, `templates` がある。
-- [ ] `h1`, `h2`, `h3`, `p`, `codeblock` の template が存在する。
-- [ ] `blockquote`, `ul`, `ol`, `li` の template が存在する。
-- [ ] `styles.css` が Preview に適用できる内容になっている。
+- [x] `theme.json` に `id`, `name`, `version`, `entryCss`, `templates` がある。
+- [x] `h1`, `h2`, `h3`, `p`, `codeblock` の template が存在する。
+- [x] `blockquote`, `ul`, `ol`, `li` の template が存在する。
+- [x] `styles.css` が Preview に適用できる内容になっている。
 
 ---
 
@@ -234,9 +234,9 @@ const message = "hello";
 
 Acceptance criteria:
 
-- [ ] frontmatter に `hinagata.theme` がある。
-- [ ] `h1`, `h2`, `p`, `codeblock` の変換を確認できる。
-- [ ] `expected.html` が snapshot test の基準として使える。
+- [x] frontmatter に `hinagata.theme` がある。
+- [x] `h1`, `h2`, `p`, `codeblock` の変換を確認できる。
+- [x] `expected.html` が snapshot test の基準として使える。
 
 ---
 
@@ -255,10 +255,10 @@ schemas/theme.schema.json
 
 Acceptance criteria:
 
-- [ ] `theme.json` の必須 field を検証できる。
-- [ ] `templates` が object であることを検証できる。
-- [ ] `entryCss` が string であることを検証できる。
-- [ ] 0.1.0 時点の schema として README から参照できる。
+- [x] `theme.json` の必須 field を検証できる。
+- [x] `templates` が object であることを検証できる。
+- [x] `entryCss` が string であることを検証できる。
+- [x] 0.1.0 時点の schema として README から参照できる。
 
 ---
 
@@ -284,9 +284,9 @@ apps/vscode-extension/
 
 Acceptance criteria:
 
-- [ ] Extension Development Host で拡張が起動する。
-- [ ] `activate` と `deactivate` が実装されている。
-- [ ] package できる状態になっている。
+- [x] Extension Development Host で拡張が起動する。
+- [x] `activate` と `deactivate` が実装されている。
+- [x] package できる状態になっている。
 
 ---
 
@@ -315,9 +315,9 @@ md-hinagata: Select Theme
 
 Acceptance criteria:
 
-- [ ] Command Palette から各 command を実行できる。
-- [ ] Markdown file 以外で実行した場合に分かりやすい message を出せる。
-- [ ] command handler が個別 file に分割されている。
+- [x] Command Palette から各 command を実行できる。
+- [x] Markdown file 以外で実行した場合に分かりやすい message を出せる。
+- [x] command handler が個別 file に分割されている。
 
 ---
 
@@ -338,10 +338,10 @@ apps/vscode-extension/media/preview/styles.css
 
 Acceptance criteria:
 
-- [ ] `Open Preview` で右側に Webview Panel が開く。
-- [ ] placeholder HTML を表示できる。
-- [ ] Webview に CSS を適用できる。
-- [ ] Panel を再利用できる。重複して複数開かない。
+- [x] `Open Preview` で右側に Webview Panel が開く。
+- [x] placeholder HTML を表示できる。
+- [x] Webview に CSS を適用できる。
+- [x] Panel を再利用できる。重複して複数開かない。
 
 ---
 
@@ -389,9 +389,9 @@ package contribution:
 
 Acceptance criteria:
 
-- [ ] Activity Bar に md-hinagata icon が表示される。
-- [ ] 左サイドバーに Theme Manager が表示される。
-- [ ] placeholder UI を表示できる。
+- [x] Activity Bar に md-hinagata icon が表示される。
+- [x] 左サイドバーに Theme Manager が表示される。
+- [x] placeholder UI を表示できる。
 - [ ] extension から view に state を postMessage できる。
 
 ---
@@ -423,9 +423,9 @@ crates/md-hinagata-core/
 
 Acceptance criteria:
 
-- [ ] `cargo check -p md-hinagata-core` が通る。
-- [ ] `transform` module が public API を持つ。
-- [ ] unit test を実行できる。
+- [x] `cargo check -p md-hinagata-core` が通る。
+- [x] `transform` module が public API を持つ。
+- [x] unit test を実行できる。
 
 ---
 
@@ -456,9 +456,9 @@ pub struct TransformResponse {
 
 Acceptance criteria:
 
-- [ ] `serde` で serialize / deserialize できる。
-- [ ] VS Code 側から JSON 経由で扱いやすい field 名になっている。
-- [ ] diagnostics を response に含められる。
+- [x] `serde` で serialize / deserialize できる。
+- [x] VS Code 側から JSON 経由で扱いやすい field 名になっている。
+- [x] diagnostics を response に含められる。
 
 ---
 
@@ -481,11 +481,11 @@ hinagata:
 
 Acceptance criteria:
 
-- [ ] frontmatter がある場合に parse できる。
-- [ ] frontmatter がない場合に本文全体を Markdown として扱える。
-- [ ] `hinagata.theme` を取得できる。
-- [ ] `hinagata.output` を取得できる。
-- [ ] YAML が壊れている場合に diagnostic を返せる。
+- [x] frontmatter がある場合に parse できる。
+- [x] frontmatter がない場合に本文全体を Markdown として扱える。
+- [x] `hinagata.theme` を取得できる。
+- [x] `hinagata.output` を取得できる。
+- [x] YAML が壊れている場合に diagnostic を返せる。
 
 ---
 
@@ -510,10 +510,10 @@ pub struct ThemePackage {
 
 Acceptance criteria:
 
-- [ ] VS Code 側で読み込んだ theme files を Rust core に渡せる。
-- [ ] theme id で対象 theme を選択できる。
-- [ ] theme が見つからない場合に default theme へ fallback できる。
-- [ ] fallback した場合に diagnostic を返せる。
+- [x] VS Code 側で読み込んだ theme files を Rust core に渡せる。
+- [x] theme id で対象 theme を選択できる。
+- [x] theme が見つからない場合に default theme へ fallback できる。
+- [x] fallback した場合に diagnostic を返せる。
 
 ---
 
@@ -526,11 +526,11 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] template string を render できる。
-- [ ] `{{text}}` を HTML escaped text として扱える。
-- [ ] `{{{inner_html}}}` を HTML として挿入できる。
-- [ ] render error を diagnostic として返せる。
-- [ ] unknown variable の検出は 0.1.0 では warning 対応または future task として扱える。
+- [x] template string を render できる。
+- [x] `{{text}}` を HTML escaped text として扱える。
+- [x] `{{{inner_html}}}` を HTML として挿入できる。
+- [x] render error を diagnostic として返せる。
+- [x] unknown variable の検出は 0.1.0 では warning 対応または future task として扱える。
 
 ---
 
@@ -553,12 +553,12 @@ codeblock
 
 Acceptance criteria:
 
-- [ ] `# Title` を `h1.hbs` で render できる。
-- [ ] `## Section` を `h2.hbs` で render できる。
-- [ ] `### Section` を `h3.hbs` で render できる。
-- [ ] paragraph を `p.hbs` で render できる。
-- [ ] fenced code block を `codeblock.hbs` で render できる。
-- [ ] missing template の場合に fallback または warning を出せる。
+- [x] `# Title` を `h1.hbs` で render できる。
+- [x] `## Section` を `h2.hbs` で render できる。
+- [x] `### Section` を `h3.hbs` で render できる。
+- [x] paragraph を `p.hbs` で render できる。
+- [x] fenced code block を `codeblock.hbs` で render できる。
+- [x] missing template の場合に fallback または warning を出せる。
 
 ---
 
@@ -580,10 +580,10 @@ li
 
 Acceptance criteria:
 
-- [ ] blockquote を `blockquote.hbs` で render できる。
-- [ ] unordered list を `ul.hbs` と `li.hbs` で render できる。
-- [ ] ordered list を `ol.hbs` と `li.hbs` で render できる。
-- [ ] nested list は最低限壊れずに出力できる。
+- [x] blockquote を `blockquote.hbs` で render できる。
+- [x] unordered list を `ul.hbs` と `li.hbs` で render できる。
+- [x] ordered list を `ol.hbs` と `li.hbs` で render できる。
+- [x] nested list は最低限壊れずに出力できる。
 
 ---
 
@@ -596,10 +596,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] `examples/basic/sample.md` を変換して `expected.html` と比較できる。
-- [ ] Unknown theme の test がある。
-- [ ] Missing template の test がある。
-- [ ] Invalid frontmatter の test がある。
+- [x] `examples/basic/sample.md` を変換して `expected.html` と比較できる。
+- [x] Unknown theme の test がある。
+- [x] Missing template の test がある。
+- [x] Invalid frontmatter の test がある。
 
 ---
 
@@ -622,9 +622,9 @@ crates/md-hinagata-wasm/
 
 Acceptance criteria:
 
-- [ ] `wasm-bindgen` で build できる。
-- [ ] JS から `transform_json` を呼べる。
-- [ ] panic hook を設定できる。
+- [x] `wasm-bindgen` で build できる。
+- [x] JS から `transform_json` を呼べる。
+- [x] panic hook を設定できる。
 
 ---
 
@@ -644,9 +644,9 @@ scripts/copy-wasm-to-extension.mjs
 
 Acceptance criteria:
 
-- [ ] root script から WASM を build できる。
-- [ ] build artifact を VS Code extension 側にコピーできる。
-- [ ] build 手順が README に記載されている。
+- [x] root script から WASM を build できる。
+- [x] build artifact を VS Code extension 側にコピーできる。
+- [x] build 手順が README に記載されている。
 
 ---
 
@@ -665,10 +665,10 @@ apps/vscode-extension/src/services/transformService.ts
 
 Acceptance criteria:
 
-- [ ] Markdown text と ThemePackage を WASM に渡せる。
-- [ ] TransformResponse を受け取れる。
-- [ ] transform error を user visible な diagnostic に変換できる。
-- [ ] 変換処理が Preview Panel と Theme Manager から利用できる。
+- [x] Markdown text と ThemePackage を WASM に渡せる。
+- [x] TransformResponse を受け取れる。
+- [x] transform error を user visible な diagnostic に変換できる。
+- [x] 変換処理が Preview Panel と Theme Manager から利用できる。
 
 ---
 
@@ -689,9 +689,9 @@ apps/vscode-extension/src/services/themeResolver.ts
 
 Acceptance criteria:
 
-- [ ] extension bundled `themes/default` を読み込める。
-- [ ] `theme.json`, `styles.css`, `templates/*.hbs` を ThemePackage に変換できる。
-- [ ] theme file が欠けている場合に diagnostic を出せる。
+- [x] extension bundled `themes/default` を読み込める。
+- [x] `theme.json`, `styles.css`, `templates/*.hbs` を ThemePackage に変換できる。
+- [x] theme file が欠けている場合に diagnostic を出せる。
 
 ---
 
@@ -710,10 +710,10 @@ workspace/.md-hinagata/themes/{themeId}
 
 Acceptance criteria:
 
-- [ ] workspace theme を bundled theme より優先できる。
-- [ ] `.md-hinagata/themes/{themeId}/theme.json` を読める。
-- [ ] workspace theme が壊れている場合に diagnostic を出せる。
-- [ ] workspace がない場合にも bundled theme だけで動く。
+- [x] workspace theme を bundled theme より優先できる。
+- [x] `.md-hinagata/themes/{themeId}/theme.json` を読める。
+- [x] workspace theme が壊れている場合に diagnostic を出せる。
+- [x] workspace がない場合にも bundled theme だけで動く。
 
 ---
 
@@ -743,10 +743,10 @@ current theme files
 
 Acceptance criteria:
 
-- [ ] active editor が変わった時に state が更新される。
-- [ ] Markdown file 以外では適切に inactive state になる。
-- [ ] Preview と Theme Manager が同じ state を参照できる。
-- [ ] Copy Generated HTML が最新の html を使える。
+- [x] active editor が変わった時に state が更新される。
+- [x] Markdown file 以外では適切に inactive state になる。
+- [x] Preview と Theme Manager が同じ state を参照できる。
+- [x] Copy Generated HTML が最新の html を使える。
 
 ---
 
@@ -780,10 +780,10 @@ frontmatter が壊れている場合:
 
 Acceptance criteria:
 
-- [ ] `Select Theme` で `hinagata.theme` を更新できる。
-- [ ] 既存の `title`, `tags` などを壊さない。
-- [ ] frontmatter がない Markdown に frontmatter を追加できる。
-- [ ] YAML が壊れている場合は warning を出して更新しない。
+- [x] `Select Theme` で `hinagata.theme` を更新できる。
+- [x] 既存の `title`, `tags` などを壊さない。
+- [x] frontmatter がない Markdown に frontmatter を追加できる。
+- [x] YAML が壊れている場合は warning を出して更新しない。
 
 ---
 
@@ -796,10 +796,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] available themes を Quick Pick で表示できる。
-- [ ] theme 選択時に active Markdown の frontmatter を更新できる。
-- [ ] 更新後に Preview と Theme Manager が refresh される。
-- [ ] theme が存在しない場合は選択肢に出さない。
+- [x] available themes を Quick Pick で表示できる。
+- [x] theme 選択時に active Markdown の frontmatter を更新できる。
+- [x] 更新後に Preview と Theme Manager が refresh される。
+- [x] theme が存在しない場合は選択肢に出さない。
 
 ---
 
@@ -851,26 +851,26 @@ bundled default theme を複製し、現在の workspace に編集可能な work
 
 Acceptance criteria:
 
-- [ ] Command Palette から `md-hinagata: Create Theme from Default` を実行できる。
-- [ ] Theme Manager の Actions から同じ command を実行できる。
-- [ ] trusted workspace でのみ実行できる。
-- [ ] untrusted workspace では workspace theme 作成を行わず warning を表示する。
-- [ ] workspace folder がない場合は分かりやすい message を表示する。
-- [ ] multi-root workspace では作成先 workspace folder を Quick Pick で選べる。
-- [ ] themeId を Quick Input で入力できる。
-- [ ] 空、whitespace、絶対 path、`/`、`\`、`.`、`..`、`default`、表示名を作れない記号のみの値を themeId として拒否できる。
-- [ ] 既存の `.md-hinagata/themes/{themeId}` がある場合は上書きせず error を表示する。
-- [ ] bundled `default` theme の file set を複製できる。
-- [ ] 生成後の `theme.json` は `id: {themeId}` に更新される。
-- [ ] 生成後の `theme.json` は themeId から作った表示名を `name` に設定する。
-- [ ] `version`, `schemaVersion`, `entryCss`, `templates` は default theme と互換の値を保持する。
-- [ ] active Markdown document がある場合、作成後に `hinagata.theme` を `{themeId}` へ更新できる。
-- [ ] active Markdown document がない場合でも theme 作成は成功する。
-- [ ] 作成後に新 theme の `theme.json` を VS Code 標準エディタで開ける。
-- [ ] 作成後に Preview と Theme Manager が refresh される。
-- [ ] unit test で themeId validation、collision、manifest rewrite、active Markdown 更新を確認できる。
-- [ ] e2e test で command 登録、workspace theme 作成、active Markdown 更新、生成 HTML 反映を確認できる。
-- [ ] README または docs にコマンドの使い方を記載する。
+- [x] Command Palette から `md-hinagata: Create Theme from Default` を実行できる。
+- [x] Theme Manager の Actions から同じ command を実行できる。
+- [x] trusted workspace でのみ実行できる。
+- [x] untrusted workspace では workspace theme 作成を行わず warning を表示する。
+- [x] workspace folder がない場合は分かりやすい message を表示する。
+- [x] multi-root workspace では作成先 workspace folder を Quick Pick で選べる。
+- [x] themeId を Quick Input で入力できる。
+- [x] 空、whitespace、絶対 path、`/`、`\`、`.`、`..`、`default`、表示名を作れない記号のみの値を themeId として拒否できる。
+- [x] 既存の `.md-hinagata/themes/{themeId}` がある場合は上書きせず error を表示する。
+- [x] bundled `default` theme の file set を複製できる。
+- [x] 生成後の `theme.json` は `id: {themeId}` に更新される。
+- [x] 生成後の `theme.json` は themeId から作った表示名を `name` に設定する。
+- [x] `version`, `schemaVersion`, `entryCss`, `templates` は default theme と互換の値を保持する。
+- [x] active Markdown document がある場合、作成後に `hinagata.theme` を `{themeId}` へ更新できる。
+- [x] active Markdown document がない場合でも theme 作成は成功する。
+- [x] 作成後に新 theme の `theme.json` を VS Code 標準エディタで開ける。
+- [x] 作成後に Preview と Theme Manager が refresh される。
+- [x] unit test で themeId validation、collision、manifest rewrite、active Markdown 更新を確認できる。
+- [x] e2e test で command 登録、workspace theme 作成、active Markdown 更新、生成 HTML 反映を確認できる。
+- [x] README または docs にコマンドの使い方を記載する。
 
 Out of scope:
 
@@ -892,10 +892,10 @@ Out of scope:
 
 Acceptance criteria:
 
-- [ ] `onDidChangeTextDocument` で active Markdown の変更を検知できる。
-- [ ] debounce して transform を実行できる。
-- [ ] Preview Panel に HTML と CSS を送れる。
-- [ ] Theme Manager に diagnostics を送れる。
+- [x] `onDidChangeTextDocument` で active Markdown の変更を検知できる。
+- [x] debounce して transform を実行できる。
+- [x] Preview Panel に HTML と CSS を送れる。
+- [x] Theme Manager に diagnostics を送れる。
 
 ---
 
@@ -916,10 +916,10 @@ templates/*.hbs
 
 Acceptance criteria:
 
-- [ ] 使用中 theme の file 保存時に再変換できる。
-- [ ] 未使用 theme の保存では不要な再変換を避けられる。
-- [ ] template 保存後に Preview が更新される。
-- [ ] styles.css 保存後に Preview の見た目が更新される。
+- [x] 使用中 theme の file 保存時に再変換できる。
+- [x] 未使用 theme の保存では不要な再変換を避けられる。
+- [x] template 保存後に Preview が更新される。
+- [x] styles.css 保存後に Preview の見た目が更新される。
 
 ---
 
@@ -932,10 +932,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] 最新の generated HTML を clipboard にコピーできる。
-- [ ] HTML が未生成の場合は変換してからコピーできる。
-- [ ] コピー成功時に VS Code notification を出せる。
-- [ ] エラー時に分かりやすい message を出せる。
+- [x] 最新の generated HTML を clipboard にコピーできる。
+- [x] HTML が未生成の場合は変換してからコピーできる。
+- [x] コピー成功時に VS Code notification を出せる。
+- [x] エラー時に分かりやすい message を出せる。
 
 ---
 
@@ -959,10 +959,10 @@ Current Document
 
 Acceptance criteria:
 
-- [ ] active Markdown の theme id を表示できる。
-- [ ] resolved theme id を表示できる。
-- [ ] fallback が発生している場合に分かる。
-- [ ] Markdown file が active でない場合に empty state を表示できる。
+- [x] active Markdown の theme id を表示できる。
+- [x] resolved theme id を表示できる。
+- [x] fallback が発生している場合に分かる。
+- [x] Markdown file が active でない場合に empty state を表示できる。
 
 ---
 
@@ -990,10 +990,10 @@ Templates
 
 Acceptance criteria:
 
-- [ ] 現在 theme の template 一覧を表示できる。
-- [ ] `theme.json` をクリックして VS Code editor で開ける。
-- [ ] `styles.css` をクリックして VS Code editor で開ける。
-- [ ] template をクリックして VS Code editor で開ける。
+- [x] 現在 theme の template 一覧を表示できる。
+- [x] `theme.json` をクリックして VS Code editor で開ける。
+- [x] `styles.css` をクリックして VS Code editor で開ける。
+- [x] template をクリックして VS Code editor で開ける。
 
 ---
 
@@ -1018,7 +1018,7 @@ Acceptance criteria:
 - [ ] 左パネルから Open Preview を実行できる。
 - [ ] 左パネルから Select Theme を実行できる。
 - [ ] 左パネルから Copy Generated HTML を実行できる。
-- [ ] 左パネルから Create Theme from Default を実行できる。
+- [x] 左パネルから Create Theme from Default を実行できる。
 
 ---
 
@@ -1041,10 +1041,10 @@ Template render error
 
 Acceptance criteria:
 
-- [ ] diagnostics がない場合に `No issues` を表示できる。
-- [ ] warning と error を区別して表示できる。
-- [ ] message が読みやすい。
-- [ ] refresh 後に diagnostics が更新される。
+- [x] diagnostics がない場合に `No issues` を表示できる。
+- [x] warning と error を区別して表示できる。
+- [x] message が読みやすい。
+- [x] refresh 後に diagnostics が更新される。
 
 ---
 
@@ -1069,9 +1069,9 @@ pub struct Diagnostic {
 
 Acceptance criteria:
 
-- [ ] severity は `error`, `warning`, `info` を表現できる。
-- [ ] code は stable な string として扱える。
-- [ ] VS Code 側で表示しやすい JSON になる。
+- [x] severity は `error`, `warning`, `info` を表現できる。
+- [x] code は stable な string として扱える。
+- [x] VS Code 側で表示しやすい JSON になる。
 
 ---
 
@@ -1094,10 +1094,10 @@ TEMPLATE_RENDER_ERROR
 
 Acceptance criteria:
 
-- [ ] Unknown theme 時に diagnostic が返る。
-- [ ] Missing template 時に diagnostic が返る。
-- [ ] Invalid frontmatter 時に diagnostic が返る。
-- [ ] Template render error 時に diagnostic が返る。
+- [x] Unknown theme 時に diagnostic が返る。
+- [x] Missing template 時に diagnostic が返る。
+- [x] Invalid frontmatter 時に diagnostic が返る。
+- [x] Template render error 時に diagnostic が返る。
 
 ---
 
@@ -1112,7 +1112,7 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] diagnosticsService の interface がある。
+- [x] diagnosticsService の interface がある。
 - [ ] 将来 `DiagnosticCollection` に接続できる設計になっている。
 
 ---
@@ -1128,10 +1128,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] Preview Webview に CSP meta tag がある。
-- [ ] Theme Manager Webview に CSP meta tag がある。
-- [ ] script nonce を使う。
-- [ ] 不要な external resource を許可しない。
+- [x] Preview Webview に CSP meta tag がある。
+- [x] Theme Manager Webview に CSP meta tag がある。
+- [x] script nonce を使う。
+- [x] 不要な external resource を許可しない。
 
 ---
 
@@ -1144,9 +1144,9 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] Markdown 内 raw HTML は default で無効化または escape される。
-- [ ] raw HTML を無効化した場合に unexpected な script が Preview に出ない。
-- [ ] 将来 option で有効化できる余地がある。
+- [x] Markdown 内 raw HTML は default で無効化または escape される。
+- [x] raw HTML を無効化した場合に unexpected な script が Preview に出ない。
+- [x] 将来 option で有効化できる余地がある。
 
 ---
 
@@ -1159,10 +1159,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] untrusted workspace では workspace theme の利用を制限できる。
-- [ ] bundled theme は untrusted workspace でも利用できる。
-- [ ] Theme Manager に制限状態を表示できる。
-- [ ] package.json に Workspace Trust capability を設定する。
+- [x] untrusted workspace では workspace theme の利用を制限できる。
+- [x] bundled theme は untrusted workspace でも利用できる。
+- [x] Theme Manager に制限状態を表示できる。
+- [x] package.json に Workspace Trust capability を設定する。
 
 ---
 
@@ -1176,11 +1176,11 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] md-hinagata の目的が説明されている。
-- [ ] frontmatter の例がある。
-- [ ] theme.json の例がある。
-- [ ] 開発手順がある。
-- [ ] `0.x.x preview` であることが明記されている。
+- [x] md-hinagata の目的が説明されている。
+- [x] frontmatter の例がある。
+- [x] theme.json の例がある。
+- [x] 開発手順がある。
+- [x] `0.x.x preview` であることが明記されている。
 
 ---
 
@@ -1200,9 +1200,9 @@ docs/tasks.ja.md
 
 Acceptance criteria:
 
-- [ ] 要件定義が MVP scope と一致している。
-- [ ] 設計ドキュメントが現在の directory structure と一致している。
-- [ ] タスク一覧が GitHub Issue 化しやすい粒度になっている。
+- [x] 要件定義が MVP scope と一致している。
+- [x] 設計ドキュメントが現在の directory structure と一致している。
+- [x] タスク一覧が GitHub Issue 化しやすい粒度になっている。
 
 ---
 
@@ -1215,10 +1215,10 @@ Acceptance criteria:
 
 Acceptance criteria:
 
-- [ ] VSIX を生成できる。
-- [ ] 手元の VS Code に install できる。
-- [ ] example Markdown で Preview と Copy HTML が動作する。
-- [ ] release note draft がある。
+- [x] VSIX を生成できる。
+- [x] 手元の VS Code に install できる。
+- [x] example Markdown で Preview と Copy HTML が動作する。
+- [x] release note draft がある。
 
 ---
 
@@ -1228,10 +1228,10 @@ Acceptance criteria:
 
 ### 5.1 `0.1.1` 候補
 
-- [ ] Preview update の debounce を調整する。
+- [x] Preview update の debounce を調整する。
 - [ ] active editor 切り替え時の state bug を修正する。
 - [ ] Windows path と POSIX path の差分を吸収する。
-- [ ] theme file watcher の過剰発火を抑える。
+- [x] theme file watcher の過剰発火を抑える。
 - [ ] README の install 手順を改善する。
 - [ ] Transform error の表示を改善する。
 
@@ -1240,8 +1240,8 @@ Acceptance criteria:
 - [ ] Webview CSP を強化する。
 - [ ] Missing template warning の message を改善する。
 - [ ] Invalid frontmatter 時の説明を改善する。
-- [ ] Theme Manager の empty state を改善する。
-- [ ] Copy HTML 成功 notification を改善する。
+- [x] Theme Manager の empty state を改善する。
+- [x] Copy HTML 成功 notification を改善する。
 
 ### 5.3 `0.1.3` 候補
 
