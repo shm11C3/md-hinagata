@@ -29,13 +29,22 @@ interface ExtensionManifest {
   engines: {
     vscode: string;
   };
+  license: string;
   main: string;
+  scripts: Record<string, string>;
+}
+
+interface RootPackage {
   scripts: Record<string, string>;
 }
 
 const manifest = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf8"),
 ) as ExtensionManifest;
+
+const rootPackage = JSON.parse(
+  readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+) as RootPackage;
 
 describe("extension manifest", () => {
   it("targets the current VS Code API baseline", () => {
@@ -49,6 +58,16 @@ describe("extension manifest", () => {
     );
     expect(manifest.scripts.format).toBe(
       "pnpm --workspace-root exec biome format --write apps/vscode-extension",
+    );
+  });
+
+  it("syncs Marketplace license files before VSCE packaging", () => {
+    expect(manifest.license).toBe("MIT OR Apache-2.0");
+    expect(manifest.scripts["vscode:prepublish"]).toBe(
+      "pnpm --workspace-root run prepare:vscode-extension-package",
+    );
+    expect(rootPackage.scripts["prepare:vscode-extension-package"]).toBe(
+      "node scripts/sync-vscode-extension-license.mjs",
     );
   });
 

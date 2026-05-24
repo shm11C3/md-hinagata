@@ -2,9 +2,9 @@
   "name": "md-hinagata-vscode-extension",
   "displayName": "md-hinagata",
   "publisher": "Shm11C3",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
-  "description": "VS Code extension for md-hinagata.",
+  "description": "Convert Markdown into theme-controlled HTML fragments in VS Code.",
   "license": "MIT OR Apache-2.0",
   "icon": "resources/md-hinagata.png",
   "repository": {
@@ -83,6 +83,7 @@
     "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
     "lint": "pnpm --workspace-root exec biome check apps/vscode-extension",
     "test": "vitest run",
+    "vscode:prepublish": "pnpm --workspace-root run prepare:vscode-extension-package",
     "test:e2e": "pnpm run build && pnpm run test:e2e:build && node --experimental-strip-types ./test/e2e/run.ts",
     "test:e2e:build": "node --experimental-strip-types ./test/e2e/esbuild.config.ts"
   },
