@@ -1,9 +1,3 @@
----
-hinagata:
-  theme: default
-  output: fragment
----
-
 # Automate the Extension Changelog from Release Preparation PRs
 
 Accepted: Extension changelog generation is driven by VS Code extension release preparation pull requests that bump `apps/vscode-extension/package.json`. Pull request labels are the source of truth for changelog categorization, and a repository-owned GitHub API script updates only the latest version entry in `apps/vscode-extension/CHANGELOG.md`.

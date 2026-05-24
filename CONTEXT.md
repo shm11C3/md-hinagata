@@ -1,9 +1,3 @@
----
-hinagata:
-  theme: default
-  output: fragment
----
-
 # md-hinagata Context
 
 md-hinagata is a Markdown-to-HTML authoring context centered on applying named themes to Markdown documents. The language here keeps theme, template, and generated output concepts distinct.

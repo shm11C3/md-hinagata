@@ -1,9 +1,3 @@
----
-hinagata:
-  theme: default
-  output: fragment
----
-
 # md-hinagata タスク一覧
 
 > Target: `0.x.x` development  
