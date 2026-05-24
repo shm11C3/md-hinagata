@@ -954,6 +954,7 @@ Acceptance criteria:
 Current Document
   Theme: default
   Output: fragment
+  CSS: style-tag
   Status: Ready
 ```
 
@@ -961,6 +962,7 @@ Acceptance criteria:
 
 - [x] active Markdown の theme id を表示できる。
 - [x] resolved theme id を表示できる。
+- [ ] resolved CSS output mode を表示できる。
 - [x] fallback が発生している場合に分かる。
 - [x] Markdown file が active でない場合に empty state を表示できる。
 
@@ -1280,6 +1282,9 @@ Acceptance criteria:
 - [ ] `Open Generated HTML` panel を追加する。
 - [ ] `Export HTML Fragment` command を追加する。
 - [ ] `Export Full HTML` command を追加する。
+- [ ] Rust core に CSS output mode contract を追加し、`none`, `separate`, `style-tag` を実装する。
+- [ ] Rust core に `cssMode: inline` の CSS inlining を別 issue / PR として実装する。
+- [ ] VS Code extension と docs を CSS output modes に合わせて更新し、Theme Manager に resolved CSS output mode を表示する。
 - [ ] `document.hbs` を使った full HTML export を検討する。
 
 ### Markdown elements
