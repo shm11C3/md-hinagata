@@ -42,6 +42,14 @@ _Avoid_: Theme merge, overwrite prompt
 The HTML fragment produced from Markdown after a **Theme** has been applied.
 _Avoid_: Preview HTML, export page
 
+**Output Mode**:
+The document-level choice of the shape of **Generated HTML**, such as a fragment rather than a full document.
+_Avoid_: CSS mode, copy mode
+
+**CSS Output Mode**:
+The document-level choice of how Theme CSS is carried with or kept apart from **Generated HTML**.
+_Avoid_: Output mode, preview styling
+
 **Extension Changelog**:
 The versioned release history shown for the VS Code extension package and Marketplace listing.
 _Avoid_: Repository changelog, commit log, release notes dump

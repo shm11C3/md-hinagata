@@ -384,6 +384,7 @@ Theme Manager は、現在の Markdown 文書に対するテーマ状態を表�
 Current Document
   Theme: default
   Output: fragment
+  CSS: style-tag
 
 Theme Files
   theme.json
@@ -446,6 +447,7 @@ type ThemeManagerState = {
   frontmatter?: {
     theme?: string;
     output?: string;
+    cssMode?: string;
   };
   resolvedTheme?: {
     id: string;
@@ -453,6 +455,7 @@ type ThemeManagerState = {
     version: string;
     source: "workspace" | "bundled";
   };
+  resolvedCssMode?: "none" | "separate" | "style-tag" | "inline";
   templates: Array<{
     key: string;
     path: string;
@@ -499,6 +502,7 @@ Webview 側では以下のように描画する。
 
 Preview は `TransformResponse.css` を別の `<style>` として注入しない。
 theme CSS は Rust core が `TransformResponse.html` 内に組み込む。
+CSS output mode は Rust core が適用する。VS Code extension は generated HTML を Copy 専用に後処理しない。
 
 #### 4.5.3 更新タイミング
 
@@ -623,6 +627,7 @@ type DocumentState = {
   markdown?: string;
   frontmatter?: FrontmatterState;
   resolvedThemeId?: string;
+  resolvedCssMode?: "none" | "separate" | "style-tag" | "inline";
   generatedHtml?: string;
   css?: string;
   diagnostics: Diagnostic[];
@@ -692,6 +697,7 @@ type TransformResponse = {
   html: string;
   css?: string;
   resolvedThemeId: string;
+  resolvedCssMode: "none" | "separate" | "style-tag" | "inline";
   frontmatter?: ParsedFrontmatter;
   diagnostics: Diagnostic[];
 };
@@ -711,6 +717,7 @@ pub struct TransformResponse {
     pub html: String,
     pub css: Option<String>,
     pub resolved_theme_id: String,
+    pub resolved_css_mode: CssOutputMode,
     pub frontmatter: Option<ParsedFrontmatter>,
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -785,6 +792,7 @@ return response
 - Markdown 先頭の YAML frontmatter を抽出する。
 - `hinagata.theme` を読む。
 - `hinagata.output` を読む。
+- `hinagata.cssMode` を読む。
 - frontmatter を除いた Markdown body を返す。
 
 #### `markdown.rs`
@@ -1209,6 +1217,61 @@ full
   document.hbs を使い、完整 HTML document を返す。
 ```
 
+### 8.5 CSS output mode
+
+`0.2.0` では `hinagata.cssMode` で CSS output mode を選ぶ。省略時は `style-tag` とし、`0.1.1` の Generated HTML と Copy Generated HTML の互換性を保つ。
+`cssMode` は frontmatter の値だけで決まり、`0.2.0` では VS Code setting や command argument で上書きしない。
+`Copy HTML with Style Tag` や `Copy HTML with Inlined CSS` のような一時出力 command は、`0.2.0` の初期実装には含めない。
+未対応または不正な `cssMode` は warning diagnostic を返し、`style-tag` として扱う。
+
+```txt
+none
+  TransformResponse.html は document root を含むが CSS は含めず、TransformResponse.css も返さない。
+
+separate
+  HTML と CSS を分けて返す。TransformResponse.html は document root を含むが CSS は含めず、TransformResponse.css に CSS を残す。
+
+style-tag
+  CSS を <style> tag として Generated HTML に含める。
+
+inline
+  CSS を各 HTML 要素の style 属性へ展開した Generated HTML を返す。TransformResponse.css は返さない。
+```
+
+`inline` で表現できない CSS rule や selector は warning diagnostic を返し、変換は継続する。対応できる declaration だけを `style` 属性へ適用し、unsupported CSS を silent drop しない。
+
+`0.2.0` の inline selector 対応範囲は以下に限定する。
+
+```txt
+Supported:
+  p
+  .article-body
+  #intro
+  p.article-body
+  h2#intro
+  .mh-document p
+  h1, h2
+  existing style attribute merge
+
+Warning:
+  pseudo class / pseudo element
+  attribute selector
+  child / sibling combinator
+  @media / @supports / @keyframes
+  external import
+  CSS variable resolution
+  shorthand expansion normalization
+```
+
+Inline declaration conflicts follow a small CSS cascade model:
+
+```txt
+1. Higher specificity wins.
+2. If specificity is equal, the later declaration in theme CSS wins.
+3. Existing style attributes in generated HTML are stronger than theme CSS and are preserved.
+4. !important declarations are stronger than normal declarations, but do not override existing style attribute declarations marked !important.
+```
+
 ---
 
 ## 9. Preview 設計
@@ -1252,6 +1315,7 @@ TransformResponse.html
 Theme CSS は Rust core が `TransformResponse.html` 内の `<style>` tag として組み込む。
 Preview と Copy Generated HTML は同じ `DocumentState.generatedHtml` を使い、Preview-only styling context を持たない。
 Preview は active generated HTML に含まれる `<style>` tag と `style` 属性を CSP で許可し、Copy Generated HTML と同じ自己完結 fragment の見た目を確認できるようにする。
+`cssMode: inline` も同じ flow を使い、Copy command 専用の後処理ではなく `TransformResponse.html` の生成形式として扱う。
 
 現在の状態が stale の場合は、copy 前に再変換する。
 
@@ -1520,6 +1584,7 @@ Copy Generated HTML が正しい HTML をコピーする
 - user theme paths。
 - full HTML export。
 - Open Generated HTML。
+- CSS output modes（`none`, `separate`, `style-tag`, `inline`）。
 - JSON Schema 補完。
 - sanitize policy 強化。
 

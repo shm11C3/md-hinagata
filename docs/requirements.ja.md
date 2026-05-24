@@ -262,6 +262,10 @@ Body text.
 |---|---|---:|---:|---|
 | `hinagata.theme` | string | `default` | no | 使用する theme ID。 |
 | `hinagata.output` | string | `fragment` | no | 出力形式。`0.1.0` では実質 `fragment` のみ。 |
+| `hinagata.cssMode` | string | `style-tag` | no | CSS output mode。`0.2.0` では `none`、`separate`、`style-tag`、`inline` を扱う。 |
+
+`hinagata.cssMode` は document frontmatter を source of truth とする。`0.2.0` では VS Code setting や command argument による一時的な上書きは行わない。
+未対応または不正な `hinagata.cssMode` は warning diagnostic を返し、`style-tag` として扱う。
 
 ### 5.3 テーマ解決の優先順位
 
@@ -456,6 +460,8 @@ Markdown 本文の編集は VS Code 標準エディタに任せる。独自 Mark
 
 `Open Current Theme` と `Validate Current Theme` は `0.2.0` 以降の Theme Manager / diagnostics 強化で扱う。
 
+`0.2.0` の初期 CSS output modes 対応では、`Copy Generated HTML` だけを提供する。`Copy HTML with Style Tag` や `Copy HTML with Inlined CSS` のような一時出力 command は追加しない。
+
 ### 7.3 Theme Manager sidebar
 
 左パネルは Theme Manager / Inspector として使う。
@@ -466,6 +472,7 @@ Markdown 本文の編集は VS Code 標準エディタに任せる。独自 Mark
 Current Document
   Theme: default
   Output: fragment
+  CSS: style-tag
 
 Theme Files
   theme.json
@@ -519,6 +526,14 @@ Preview は以下の場合に更新される。
 Preview は `TransformResponse.html` をそのまま表示する。Preview 専用に `TransformResponse.css` を別注入してはならない。`Copy Generated HTML` も同じ `TransformResponse.html` を clipboard にコピーする。
 Preview Webview は、active generated HTML に含まれる `<style>` tag と `style` 属性を反映できる CSP にする。
 
+`0.2.0` の CSS output modes でもこの契約を維持する。`cssMode: inline` は Copy command 専用の後処理ではなく、Preview と Copy が共有する generated HTML の出力形式として扱う。
+`cssMode: separate` では `TransformResponse.html` に document root を含めるが `<style>` tag は含めず、CSS は `TransformResponse.css` に残す。
+`cssMode: none` では `TransformResponse.html` に document root を含めるが CSS は含めず、`TransformResponse.css` も返さない。
+`cssMode: inline` では CSS を `style` 属性へ展開した `TransformResponse.html` を返し、`TransformResponse.css` は返さない。
+`cssMode: inline` で inline 化できない CSS rule や selector は silent drop せず warning diagnostic を返す。変換全体は失敗させず、inline 化できる declaration だけを適用する。
+`0.2.0` の inline 対応範囲は、type selector、class selector、id selector、compound selector、descendant selector、複数 selector group、既存 `style` 属性との merge に限定する。pseudo selector、attribute selector、child/sibling combinator、`@media`、`@supports`、`@keyframes`、external import、CSS variable 解決、shorthand expansion の正規化は warning 対象とする。
+inline declaration の衝突は specificity、同一 specificity の後勝ち、既存 `style` 属性優先、`!important` 優先で解決する。既存 `style` 属性の `!important` は theme CSS で上書きしない。
+
 `0.2.0` 以降で `Open Generated HTML` panel を追加する。
 
 ---
@@ -534,6 +549,7 @@ Rust core は以下を担当する。
 - Theme manifest と template の受け取り。
 - Markdown 要素ごとの template 適用。
 - HTML fragment の生成。
+- CSS output mode の適用。
 - diagnostics の生成。
 
 Rust core は以下を担当しない。
@@ -568,10 +584,18 @@ type TransformOptions = {
   allowRawHtml?: boolean;
 };
 
+type ParsedFrontmatter = {
+  theme?: string;
+  output?: string;
+  cssMode?: string;
+};
+
 type TransformResponse = {
   html: string;
   css?: string;
   resolvedThemeId: string;
+  resolvedCssMode: "none" | "separate" | "style-tag" | "inline";
+  frontmatter?: ParsedFrontmatter;
   diagnostics: Diagnostic[];
 };
 
@@ -804,6 +828,7 @@ project/
 - Theme validation 強化。
 - VS Code Problems 連携。
 - `Open Generated HTML` panel。
+- CSS output modes（`none`、`separate`、`style-tag`、`inline`）。
 - `Create Missing Template`。
 - `Open theme.json` / `Open styles.css` の明確化。
 - User theme paths。
@@ -843,7 +868,6 @@ project/
 - `inner_html` を使う template に対する safety warning をどう設計するか。
 - Full HTML export を `0.2.0` に入れるか。
 - `output: fragment` 以外の output mode をいつ追加するか。
-- CSS を各要素の `style=""` 属性へ展開する inline output mode をいつ追加するか。
 - syntax highlight を Rust core 側で行うか、Preview 側で行うか。
 
 ---
