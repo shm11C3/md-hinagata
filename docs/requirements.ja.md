@@ -1,9 +1,3 @@
----
-hinagata:
-  theme: default
-  output: fragment
----
-
 # md-hinagata 要件定義
 
 > Initial target: `0.1.0` MVP
