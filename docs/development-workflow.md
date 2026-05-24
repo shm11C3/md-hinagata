@@ -125,6 +125,9 @@ Use `pnpm` for TypeScript and workspace-level tasks. Use `cargo` directly for Ru
 
 Run `pnpm run build:wasm` when the WASM bridge, Rust transform path, preview runtime integration, or example launch path is involved.
 
+Run `pnpm run bench` before and after changes that are justified by measured
+extension performance improvements.
+
 ## 8. Agent Checklist
 
 Before changing code:

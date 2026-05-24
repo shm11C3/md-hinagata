@@ -81,6 +81,7 @@
     }
   },
   "scripts": {
+    "bench": "vitest bench",
     "build": "node --experimental-strip-types ./esbuild.config.ts",
     "check": "tsc --noEmit",
     "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
