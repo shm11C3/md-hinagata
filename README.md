@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata
 
 [English](README.md) | [日本語](README.ja.md)
@@ -194,6 +200,7 @@ The `0.1.0` MVP is intentionally small.
 - Handlebars-based theme templates.
 - Bundled `default` theme.
 - Workspace themes under `.md-hinagata/themes/{themeId}`.
+- Create Theme from Default command.
 - Preview updates when Markdown changes.
 - Preview updates when theme files are saved.
 - Copy Generated HTML command.
@@ -403,9 +410,10 @@ Run the VS Code Extension Host E2E smoke test:
 pnpm run test:e2e
 ```
 
-This launches VS Code with the local extension, opens `examples/basic`, verifies
-the contributed commands, and runs Preview plus Copy Generated HTML against
-`sample.md`. On Linux CI this command runs under `xvfb`.
+This copies `examples/basic` into a temporary workspace, launches VS Code with
+the local extension, verifies the contributed commands, and runs Preview, Copy
+Generated HTML, and Create Theme from Default against `sample.md`. On Linux CI
+this command runs under `xvfb`.
 
 ### Extension Development Host
 

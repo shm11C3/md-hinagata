@@ -1,5 +1,6 @@
 export const COMMAND_IDS = {
   copyGeneratedHtml: "md-hinagata.copyGeneratedHtml",
+  createThemeFromDefault: "md-hinagata.createThemeFromDefault",
   openThemeFile: "md-hinagata.openThemeFile",
   openPreview: "md-hinagata.openPreview",
   selectTheme: "md-hinagata.selectTheme",

@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata Testing Policy
 
 > Target: `0.x.x` development  
@@ -162,6 +168,8 @@ To run the VS Code Extension Host E2E smoke test:
 pnpm run test:e2e
 ```
 
-This builds the WASM bridge, builds the extension bundle, launches VS Code
-against `examples/basic`, opens `sample.md`, verifies the contributed commands,
-and runs the Preview and Copy HTML commands without packaging a VSIX.
+This builds the WASM bridge, builds the extension bundle, copies
+`examples/basic` into a temporary workspace, launches VS Code against that
+workspace, opens `sample.md`, verifies the contributed commands, and runs the
+Preview, Copy HTML, and Create Theme from Default commands without packaging a
+VSIX.

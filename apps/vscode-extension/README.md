@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata
 
 md-hinagata is a VS Code extension for turning Markdown into theme-controlled HTML fragments.
@@ -39,10 +45,16 @@ Then run one of the md-hinagata commands from the Command Palette.
 | `md-hinagata: Open Preview` | Opens the themed HTML preview beside the current Markdown editor. |
 | `md-hinagata: Copy Generated HTML` | Copies the generated HTML fragment for the current Markdown document. |
 | `md-hinagata: Select Theme` | Updates the current Markdown document's `hinagata.theme` frontmatter. |
+| `md-hinagata: Create Theme from Default` | Copies the bundled default theme into the current workspace and opens the new `theme.json`. |
 
 ## Workspace Themes
 
 Workspace themes live under `.md-hinagata/themes/{themeId}`:
+
+Use `md-hinagata: Create Theme from Default` to create an editable workspace
+theme with the expected file set. In trusted workspaces, the command also
+updates the active Markdown document to use the new theme when a Markdown editor
+is active.
 
 ```txt
 .md-hinagata/

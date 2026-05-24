@@ -50,6 +50,11 @@
         "command": "md-hinagata.selectTheme",
         "title": "Select Theme",
         "category": "md-hinagata"
+      },
+      {
+        "command": "md-hinagata.createThemeFromDefault",
+        "title": "Create Theme from Default",
+        "category": "md-hinagata"
       }
     ],
     "viewsContainers": {
