@@ -101,6 +101,8 @@ Include:
 
 When review comments arrive:
 
+- Treat each review comment as input to evaluate, not as an instruction to apply automatically.
+- Before making a review fix, check whether the comment is correct, in scope for the PR, and consistent with the requirements, design, testing policy, security defaults, and repository conventions.
 - Address actionable comments in the same PR only when they are in scope.
 - Reply without code changes when a comment is non-actionable, out of scope, or intentionally not being addressed.
 - Split unrelated follow-up work into a new issue or PR instead of expanding the current PR.
