@@ -101,6 +101,34 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
   assert.equal(createdManifest.id, createdThemeId);
   assert.equal(createdManifest.name, "E2e Theme");
 
+  const createdStyles = await readFile(
+    path.join(createdThemeRoot, "styles.css"),
+    "utf8",
+  );
+  assert.match(createdStyles, /\.mh-document/);
+  assert.match(createdStyles, /\.mh-heading/);
+
+  for (const templateName of [
+    "h1",
+    "h2",
+    "h3",
+    "p",
+    "codeblock",
+    "blockquote",
+    "ul",
+    "ol",
+    "li",
+  ]) {
+    const templateSource = await readFile(
+      path.join(createdThemeRoot, "templates", `${templateName}.hbs`),
+      "utf8",
+    );
+    assert.ok(
+      templateSource.trim().length > 0,
+      `${templateName}.hbs should be copied.`,
+    );
+  }
+
   const sampleUri = vscode.Uri.file(
     path.join(workspaceFolder.uri.fsPath, "sample.md"),
   );

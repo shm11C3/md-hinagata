@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata Testing Policy
 
 > Target: `0.x.x` development  

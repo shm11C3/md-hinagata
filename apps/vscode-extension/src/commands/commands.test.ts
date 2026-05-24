@@ -8,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DocumentStateService } from "../services/documentStateService.js";
@@ -702,9 +703,22 @@ describe("extension commands", () => {
     expect(validateCreatableThemeId(" default")).toBe(
       "Theme ID must not contain whitespace.",
     );
-    expect(validateCreatableThemeId("../theme")).toBe(
-      "Theme ID must be a non-empty name, not a path.",
-    );
+
+    for (const invalidPathLikeThemeId of [
+      "",
+      ".",
+      "..",
+      "/",
+      "\\",
+      "../theme",
+      "/etc/passwd",
+      "C:\\Windows",
+    ]) {
+      expect(validateCreatableThemeId(invalidPathLikeThemeId)).toBe(
+        "Theme ID must be a non-empty name, not a path.",
+      );
+    }
+
     expect(validateCreatableThemeId("default")).toBe(
       "Theme ID 'default' is reserved.",
     );
@@ -762,15 +776,25 @@ describe("extension commands", () => {
     );
     const manifest = JSON.parse(
       await readFile(path.join(themeRoot, "theme.json"), "utf8"),
-    ) as { id: string; name: string; templates: Record<string, string> };
+    ) as {
+      entryCss: string;
+      id: string;
+      name: string;
+      schemaVersion: string;
+      templates: Record<string, string>;
+      version: string;
+    };
 
     expect(manifest).toMatchObject({
+      entryCss: "styles.css",
       id: "company-blog",
       name: "Company Blog",
+      schemaVersion: "0.1",
       templates: {
         h1: "templates/h1.hbs",
         codeblock: "templates/codeblock.hbs",
       },
+      version: "0.1.0",
     });
     await expect(
       readFile(path.join(themeRoot, "templates", "h1.hbs"), "utf8"),
@@ -889,6 +913,109 @@ describe("extension commands", () => {
     expect(messages).toEqual([
       "warning:Theme was created, but the active document could not be updated: Frontmatter could not be parsed safely.",
       "info:Created md-hinagata theme 'kept-theme'.",
+    ]);
+  });
+
+  it("keeps the created theme when active Markdown replacement fails", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const documentStateService = new DocumentStateService();
+    const messages: string[] = [];
+    let refreshCount = 0;
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "replace-error",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        document: {
+          getText: () => "# Title\n",
+          replaceText: async () => {
+            throw new Error("Editor rejected the change.");
+          },
+        },
+        documentStateService,
+        fileOpener: {
+          open: () => {},
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          refreshCount += 1;
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBe("replace-error");
+
+    await expect(
+      readFile(
+        path.join(
+          workspaceRoot,
+          ".md-hinagata",
+          "themes",
+          "replace-error",
+          "theme.json",
+        ),
+        "utf8",
+      ),
+    ).resolves.toContain('"id": "replace-error"');
+    expect(documentStateService.getCurrentTheme()).toBe("default");
+    expect(refreshCount).toBe(0);
+    expect(messages).toEqual([
+      "warning:Theme was created, but the active document could not be updated: Editor rejected the change.",
+      "info:Created md-hinagata theme 'replace-error'.",
+    ]);
+  });
+
+  it("warns when preview refresh fails after updating active Markdown", async () => {
+    const defaultThemeRoot = await writeDefaultThemeFixture(
+      path.join(testRoot, "bundled", "default"),
+    );
+    const workspaceRoot = path.join(testRoot, "workspace");
+    const documentStateService = new DocumentStateService();
+    const editableDocument = createEditableDocument("# Title\n");
+    const messages: string[] = [];
+
+    await expect(
+      createThemeFromDefault({
+        args: {
+          themeId: "refresh-warning",
+        },
+        defaultThemeRoots: [path.dirname(defaultThemeRoot)],
+        document: editableDocument.document,
+        documentStateService,
+        fileOpener: {
+          open: () => {},
+        },
+        notifier: createMessageRecorder(messages),
+        picker: createFailingCreateThemePicker(),
+        refreshActiveDocument: async () => {
+          throw new Error("Preview unavailable.");
+        },
+        workspaceFolders: [
+          {
+            uri: createUri(workspaceRoot),
+          },
+        ],
+        workspaceTrustService: new WorkspaceTrustService(() => true),
+      }),
+    ).resolves.toBe("refresh-warning");
+
+    expect(editableDocument.getText()).toBe(
+      "---\nhinagata:\n  theme: refresh-warning\n---\n\n# Title\n",
+    );
+    expect(documentStateService.getCurrentTheme()).toBe("refresh-warning");
+    expect(messages).toEqual([
+      "warning:Theme was created, but the preview could not be refreshed: Preview unavailable.",
+      "info:Created md-hinagata theme 'refresh-warning'.",
     ]);
   });
 
@@ -1124,9 +1251,10 @@ function createFailingCreateThemePicker() {
 }
 
 function createUri(filePath: string) {
+  const fileUri = pathToFileURL(filePath);
   return {
     fsPath: filePath,
-    toString: () => `file://${filePath}`,
+    toString: () => fileUri.toString(),
   };
 }
 

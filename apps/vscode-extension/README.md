@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata
 
 md-hinagata is a VS Code extension for turning Markdown into theme-controlled HTML fragments.

@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata 要件定義
 
 > Initial target: `0.1.0` MVP
@@ -486,7 +492,7 @@ Actions
   Open Preview
   Copy Generated HTML
   Select Theme
-  Validate Theme
+  Create Theme from Default
 ```
 
 Template item をクリックした場合、左パネル内で編集するのではなく、VS Code 標準エディタで該当 `.hbs` ファイルを開く。
@@ -798,7 +804,6 @@ project/
 - Theme validation 強化。
 - VS Code Problems 連携。
 - `Open Generated HTML` panel。
-- `Create Theme from Default`。
 - `Create Missing Template`。
 - `Open theme.json` / `Open styles.css` の明確化。
 - User theme paths。

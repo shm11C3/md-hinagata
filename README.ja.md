@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata
 
 [English](README.md) | [日本語](README.ja.md)

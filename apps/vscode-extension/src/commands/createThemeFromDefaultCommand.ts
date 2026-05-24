@@ -391,9 +391,16 @@ async function updateActiveThemeSelection(options: {
     return;
   }
 
-  const didUpdate = await options.document.replaceText(
-    updatedFrontmatter.source,
-  );
+  let didUpdate: boolean;
+  try {
+    didUpdate = await options.document.replaceText(updatedFrontmatter.source);
+  } catch (error) {
+    options.notifier.showWarningMessage(
+      `Theme was created, but the active document could not be updated: ${getErrorMessage(error)}`,
+    );
+    return;
+  }
+
   if (!didUpdate) {
     options.notifier.showWarningMessage(
       "Theme was created, but the active document could not be updated.",
@@ -402,7 +409,13 @@ async function updateActiveThemeSelection(options: {
   }
 
   options.documentStateService.setCurrentTheme(options.themeId);
-  await options.refreshActiveDocument();
+  try {
+    await options.refreshActiveDocument();
+  } catch (error) {
+    options.notifier.showWarningMessage(
+      `Theme was created, but the preview could not be refreshed: ${getErrorMessage(error)}`,
+    );
+  }
 }
 
 async function openCreatedThemeManifest(

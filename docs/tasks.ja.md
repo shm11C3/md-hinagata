@@ -1,3 +1,9 @@
+---
+hinagata:
+  theme: default
+  output: fragment
+---
+
 # md-hinagata タスク一覧
 
 > Target: `0.x.x` development  
@@ -1010,6 +1016,7 @@ Actions:
 Open Preview
 Select Theme
 Copy Generated HTML
+Create Theme from Default
 ```
 
 Acceptance criteria:
@@ -1017,6 +1024,7 @@ Acceptance criteria:
 - [ ] 左パネルから Open Preview を実行できる。
 - [ ] 左パネルから Select Theme を実行できる。
 - [ ] 左パネルから Copy Generated HTML を実行できる。
+- [ ] 左パネルから Create Theme from Default を実行できる。
 
 ---
 
