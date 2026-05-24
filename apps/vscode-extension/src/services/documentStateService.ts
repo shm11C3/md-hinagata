@@ -3,6 +3,7 @@ import type { Disposable } from "vscode";
 import type { DiagnosticMessage } from "./diagnosticsService.js";
 import type { ThemeFileReference } from "./themeResolver.js";
 import type {
+  CssOutputMode,
   ParsedFrontmatter,
   TransformDiagnostic,
   TransformResponse,
@@ -36,6 +37,7 @@ export interface DocumentState {
   isStale: boolean;
   lastTransformedAt?: number;
   markdown?: string;
+  resolvedCssMode?: CssOutputMode;
   resolvedThemeId?: string;
   status: DocumentStateStatus;
   uri?: string;
@@ -82,6 +84,7 @@ export class DocumentStateService {
       isStale: true,
       lastTransformedAt: undefined,
       markdown: document.markdown,
+      resolvedCssMode: undefined,
       resolvedThemeId: undefined,
       status: "active",
       uri: document.uri,
@@ -136,6 +139,7 @@ export class DocumentStateService {
       generatedHtml: result.html,
       isStale: false,
       lastTransformedAt: options.transformedAt ?? Date.now(),
+      resolvedCssMode: result.resolvedCssMode,
       resolvedThemeId: result.resolvedThemeId,
     };
     this.notify();

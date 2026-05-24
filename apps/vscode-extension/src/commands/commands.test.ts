@@ -158,6 +158,45 @@ describe("extension commands", () => {
     expect(messages).toEqual(["info:Generated HTML copied."]);
   });
 
+  it("copies inline generated html without css-specific post-processing", async () => {
+    const documentStateService = new DocumentStateService();
+    const writes: string[] = [];
+    const messages: string[] = [];
+    const generatedHtml = [
+      '<main class="mh-document">',
+      '<p style="color: red;">Hello</p>',
+      "</main>",
+    ].join("\n");
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  cssMode: inline\n---\nHello",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [],
+      html: generatedHtml,
+      resolvedCssMode: "inline",
+      resolvedThemeId: "default",
+    });
+
+    await expect(
+      copyGeneratedHtml({
+        clipboard: {
+          writeText: (value) => {
+            writes.push(value);
+          },
+        },
+        documentStateService,
+        notifier: createMessageRecorder(messages),
+        refreshActiveDocument: async () => documentStateService.getState(),
+      }),
+    ).resolves.toBe(true);
+
+    expect(writes).toEqual([generatedHtml]);
+    expect(writes[0]).not.toContain("<style>");
+    expect(messages).toEqual(["info:Generated HTML copied."]);
+  });
+
   it("refreshes stale generated html before copying", async () => {
     const documentStateService = new DocumentStateService();
     const writes: string[] = [];

@@ -100,7 +100,10 @@ describe("ThemeEditorViewProvider", () => {
     );
     expect(view.webview.html).toContain("<dt>Output</dt><dd>fragment</dd>");
     expect(view.webview.html).toContain(
-      "<dt>Generated HTML</dt><dd>fragment with theme CSS</dd>",
+      "<dt>CSS Output Mode</dt><dd>style-tag</dd>",
+    );
+    expect(view.webview.html).toContain(
+      "<dt>Generated HTML</dt><dd>fragment with style tag</dd>",
     );
     expect(view.webview.html).toContain("Fallback: basic -> default");
     expect(view.webview.html).toContain("Theme Files");
@@ -166,6 +169,60 @@ describe("ThemeEditorViewProvider", () => {
     );
     expect(view.webview.html).toContain(
       "<dt>Workspace trust</dt><dd>untrusted</dd>",
+    );
+
+    provider.dispose();
+  });
+
+  it("renders invalid requested css output mode with resolved fallback", () => {
+    const documentStateService = new DocumentStateService();
+    const diagnosticsService = new DiagnosticsService();
+    const provider = new ThemeEditorViewProvider(
+      documentStateService,
+      diagnosticsService,
+      new WorkspaceTrustService(() => true),
+    );
+    const view = {
+      webview: {
+        cspSource: "vscode-resource:",
+        html: "",
+        options: {},
+      },
+    } as vscode.WebviewView;
+
+    provider.resolveWebviewView(view);
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  cssMode: unsupported\n---\n# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [
+        {
+          code: "unsupported-css-mode",
+          message:
+            "Unsupported hinagata.cssMode 'unsupported'; falling back to 'style-tag'.",
+          severity: "warning",
+          source: "frontmatter",
+        },
+      ],
+      frontmatter: {
+        cssMode: "unsupported",
+      },
+      html: "<h1>Title</h1>",
+      resolvedCssMode: "style-tag",
+      resolvedThemeId: "default",
+    });
+
+    expect(view.webview.html).toContain(
+      "<dt>CSS Output Mode</dt><dd>unsupported -&gt; style-tag</dd>",
+    );
+    expect(view.webview.html).toContain(
+      "<dt>Generated HTML</dt><dd>fragment with style tag</dd>",
+    );
+    expect(view.webview.html).toContain("unsupported-css-mode");
+    expect(view.webview.html).toContain(
+      "Unsupported hinagata.cssMode &#39;unsupported&#39;; falling back to &#39;style-tag&#39;.",
     );
 
     provider.dispose();

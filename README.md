@@ -80,6 +80,15 @@ For `0.1.0`, `hinagata.output: fragment` produces a self-contained HTML fragment
 
 The Preview webview renders the same generated HTML that `md-hinagata: Copy Generated HTML` copies. Preview does not apply theme CSS through a separate Preview-only path.
 
+For `0.2.0`, `hinagata.cssMode` controls how theme CSS is represented in the generated HTML. The frontmatter value is the source of truth:
+
+| Mode | Output |
+|---|---|
+| `style-tag` | Includes theme CSS in a `<style>` tag before the document root. This is the default. |
+| `inline` | Expands supported theme CSS into `style` attributes and omits separate CSS. |
+| `separate` | Returns document HTML and keeps CSS separate for callers that need it. |
+| `none` | Returns document HTML without theme CSS. |
+
 ## Core ideas
 
 ### Theme selection belongs to the document

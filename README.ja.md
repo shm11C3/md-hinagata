@@ -76,6 +76,15 @@ This action cannot be undone.
 
 Preview webviewは、`md-hinagata: Copy Generated HTML` がコピーする生成HTMLと同じHTMLを表示します。Preview専用の別経路でテーマCSSを適用することはしません。
 
+`0.2.0` では、`hinagata.cssMode` がテーマCSSの出力形式を制御します。この値はフロントマターをsource of truthとします。
+
+| Mode | Output |
+|---|---|
+| `style-tag` | テーマCSSを `<style>` タグとしてdocument rootの前に含めます。デフォルトです。 |
+| `inline` | 対応範囲内のテーマCSSを `style` 属性へ展開し、別CSSは返しません。 |
+| `separate` | document HTMLとCSSを分けて返します。 |
+| `none` | テーマCSSなしのdocument HTMLを返します。 |
+
 ## コア・アイディア
 
 ### テーマの選択はドキュメントに属する

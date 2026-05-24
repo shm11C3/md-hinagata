@@ -136,6 +136,7 @@ describe("extension services", () => {
     expect(state.css).toBeUndefined();
     expect(state.frontmatter).toBeUndefined();
     expect(state.lastTransformedAt).toBeUndefined();
+    expect(state.resolvedCssMode).toBeUndefined();
     expect(state.resolvedThemeId).toBeUndefined();
   });
 
@@ -232,6 +233,7 @@ describe("extension services", () => {
       currentTheme: "basic",
       generatedHtml: "<h1>Title</h1>",
       isStale: false,
+      resolvedCssMode: "style-tag",
       lastTransformedAt: 100,
       resolvedThemeId: "basic",
     });
