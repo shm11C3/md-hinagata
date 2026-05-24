@@ -1254,7 +1254,12 @@ Warning:
   @media / @supports / @keyframes
   external import
   CSS variable resolution
-  shorthand expansion normalization
+
+Supported without normalization:
+  shorthand declarations such as margin, padding, border
+
+Ignored:
+  CSS comments
 ```
 
 Inline declaration conflicts follow a small CSS cascade model:

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     frontmatter::parse_frontmatter,
+    inline_css::inline_theme_css,
     markdown::{parse_markdown_with_options, MarkdownOptions},
     renderer::render_blocks,
     theme::resolve_theme,
@@ -76,7 +77,12 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     );
     let css = theme.and_then(|theme| theme.css.clone());
     let rendered_html = render_blocks(&blocks, theme, &mut diagnostics);
-    let output = compose_generated_output(&rendered_html, css.as_deref(), resolved_css_mode);
+    let output = compose_generated_output(
+        &rendered_html,
+        css.as_deref(),
+        resolved_css_mode,
+        &mut diagnostics,
+    );
 
     Ok(TransformResponse {
         html: output.html,
@@ -107,10 +113,7 @@ fn resolve_css_output_mode(
         "none" => CssOutputMode::None,
         "separate" => CssOutputMode::Separate,
         "style-tag" => CssOutputMode::StyleTag,
-        "inline" => {
-            diagnostics.push(unsupported_css_mode_diagnostic(css_mode));
-            CssOutputMode::StyleTag
-        }
+        "inline" => CssOutputMode::Inline,
         unsupported_css_mode => {
             diagnostics.push(unsupported_css_mode_diagnostic(unsupported_css_mode));
             CssOutputMode::StyleTag
@@ -130,6 +133,7 @@ fn compose_generated_output(
     rendered_html: &str,
     css: Option<&str>,
     css_mode: CssOutputMode,
+    diagnostics: &mut Vec<Diagnostic>,
 ) -> GeneratedOutput {
     match css_mode {
         CssOutputMode::None => GeneratedOutput {
@@ -140,10 +144,17 @@ fn compose_generated_output(
             html: wrap_document_html(rendered_html),
             css: css.map(str::to_owned),
         },
-        CssOutputMode::StyleTag | CssOutputMode::Inline => GeneratedOutput {
+        CssOutputMode::StyleTag => GeneratedOutput {
             html: compose_style_tag_html(rendered_html, css),
             css: css.map(str::to_owned),
         },
+        CssOutputMode::Inline => {
+            let document_html = wrap_document_html(rendered_html);
+            GeneratedOutput {
+                html: inline_theme_css(&document_html, css, diagnostics),
+                css: None,
+            }
+        }
     }
 }
 
@@ -717,7 +728,7 @@ mod tests {
     }
 
     #[test]
-    fn transform_warns_and_falls_back_for_inline_css_mode_until_supported() {
+    fn transform_css_mode_inline_applies_type_selector_styles() {
         let request = TransformRequest {
             markdown: [
                 "---",
@@ -725,13 +736,13 @@ mod tests {
                 "  cssMode: inline",
                 "---",
                 "",
-                "# Title",
+                "Body text.",
             ]
             .join("\n"),
             themes: vec![theme_package(
                 "default",
-                Some(".mh-document { color: red; }"),
-                [("h1", "<h1>{{text}}</h1>")],
+                Some("p { color: red; }"),
+                [("p", "<p>{{{inner_html}}}</p>")],
             )],
             default_theme_id: Some("default".to_owned()),
             options: TransformOptions::default(),
@@ -739,10 +750,636 @@ mod tests {
 
         let response = transform(request).expect("transform should return a response");
 
-        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(response.resolved_css_mode, CssOutputMode::Inline);
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"color: red;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(response.css, None);
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_applies_document_root_styles() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document { color: red; }"),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\" style=\"color: red;\">",
+                "<p>Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(response.css, None);
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_applies_class_selector_styles() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".lead { color: blue; }"),
+                [("p", "<p class=\"lead\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p class=\"lead\" style=\"color: blue;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(response.css, None);
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_applies_descendant_selector_styles() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".mh-document p { margin: 0; }"),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_applies_id_compound_and_selector_group_styles() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "# Intro",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some("#intro, p.lead { color: green; }"),
+                [
+                    ("h1", "<h1 id=\"{{id}}\">{{{inner_html}}}</h1>"),
+                    ("p", "<p class=\"lead\">{{{inner_html}}}</p>"),
+                ],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<h1 id=\"intro\" style=\"color: green;\">Intro</h1>",
+                "<p class=\"lead\" style=\"color: green;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_uses_specificity_then_later_declaration_order() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(
+                    [
+                        "p { color: red; margin: 1rem; }",
+                        ".article { color: blue; margin: 2rem; }",
+                        ".article { margin: 0; }",
+                    ]
+                    .join("\n")
+                    .as_str(),
+                ),
+                [("p", "<p class=\"article\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p class=\"article\" style=\"color: blue; margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_important_theme_declarations_beat_normal_theme_declarations() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some("p { color: red !important; } .article { color: blue; }"),
+                [("p", "<p class=\"article\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p class=\"article\" style=\"color: red !important;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_merges_and_preserves_existing_style_attributes() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(".article { color: blue; padding: 0 !important; margin: 0; }"),
+                [(
+                    "p",
+                    "<p class=\"article\" style=\"color: black; padding: 1rem !important;\">{{{inner_html}}}</p>",
+                )],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p class=\"article\" style=\"color: black; padding: 1rem !important; margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_preserves_existing_style_variables() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some("p { color: blue; margin: 0; }"),
+                [(
+                    "p",
+                    "<p style=\"--brand: red; color: var(--brand);\">{{{inner_html}}}</p>",
+                )],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"--brand: red; color: var(--brand); margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_inserts_style_before_self_closing_slash() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "<img class=\"hero\" src=\"hero.png\" />",
+            ]
+            .join("\n"),
+            themes: vec![theme_package("default", Some(".hero { width: 100%; }"), [])],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions {
+                allow_raw_html: Some(true),
+                sanitize: None,
+            },
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<img class=\"hero\" src=\"hero.png\" style=\"width: 100%;\" />",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_ignores_css_comments() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(
+                    [
+                        "/* layout rule */",
+                        "p { color: red; }",
+                        ".lead { /* keep declaration comments silent */ margin: 0; }",
+                    ]
+                    .join("\n")
+                    .as_str(),
+                ),
+                [("p", "<p class=\"lead\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p class=\"lead\" style=\"color: red; margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_preserves_quoted_declaration_values() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some("p { content: \"a: b; c\"; color: red; }"),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"content: &quot;a: b; c&quot;; color: red;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_warns_for_unsupported_css_and_applies_supported_rules() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(
+                    [
+                        "p { color: red; }",
+                        "p:hover { color: blue; }",
+                        "@media screen { p { margin: 0; } }",
+                    ]
+                    .join("\n")
+                    .as_str(),
+                ),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"color: red;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
         assert!(response.diagnostics.iter().any(|diagnostic| {
-            diagnostic.code == UNSUPPORTED_CSS_MODE
-                && diagnostic.source == Some(DiagnosticSource::Frontmatter)
+            diagnostic.code == "unsupported-inline-css"
+                && diagnostic.source == Some(DiagnosticSource::Theme)
+        }));
+    }
+
+    #[test]
+    fn transform_css_mode_inline_without_theme_css_returns_document_html_without_response_css() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_css_mode, CssOutputMode::Inline);
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p>Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert_eq!(response.css, None);
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_css_mode_inline_warns_for_external_import_and_keeps_following_supported_rules() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(
+                    ["@import url(\"theme.css\");", "p { color: red; }"]
+                        .join("\n")
+                        .as_str(),
+                ),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"color: red;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == "unsupported-inline-css"
+                && diagnostic.source == Some(DiagnosticSource::Theme)
+        }));
+    }
+
+    #[test]
+    fn transform_css_mode_inline_warns_for_at_rule_and_keeps_following_rules() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some(
+                    ["@media screen { p { margin: 0; } }", "p { color: red; }"]
+                        .join("\n")
+                        .as_str(),
+                ),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"color: red;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == "unsupported-inline-css"
+                && diagnostic.source == Some(DiagnosticSource::Theme)
+        }));
+    }
+
+    #[test]
+    fn transform_css_mode_inline_warns_for_css_variables_and_keeps_supported_declarations() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  cssMode: inline",
+                "---",
+                "",
+                "Body text.",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                Some("p { color: var(--brand); margin: 0; }"),
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<main class=\"mh-document\">",
+                "<p style=\"margin: 0;\">Body text.</p>",
+                "</main>",
+            ]
+            .join("\n"),
+        );
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == "unsupported-inline-css"
+                && diagnostic.source == Some(DiagnosticSource::Theme)
         }));
     }
 

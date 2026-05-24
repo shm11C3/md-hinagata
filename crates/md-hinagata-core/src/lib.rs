@@ -1,6 +1,7 @@
 pub mod diagnostics;
 pub mod error;
 pub mod frontmatter;
+mod inline_css;
 pub mod markdown;
 pub mod renderer;
 pub mod template;
@@ -10,6 +11,7 @@ pub mod transform;
 pub use diagnostics::{
     Diagnostic, DiagnosticRange, DiagnosticSeverity, DiagnosticSource, INVALID_FRONTMATTER,
     MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR, UNKNOWN_THEME, UNSUPPORTED_CSS_MODE,
+    UNSUPPORTED_INLINE_CSS,
 };
 pub use error::{CoreError, Result};
 pub use frontmatter::{parse_frontmatter, ParsedFrontmatter, ParsedMarkdown};

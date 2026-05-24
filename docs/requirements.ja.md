@@ -525,7 +525,7 @@ Preview Webview は、active generated HTML に含まれる `<style>` tag と `s
 `cssMode: none` では `TransformResponse.html` に document root を含めるが CSS は含めず、`TransformResponse.css` も返さない。
 `cssMode: inline` では CSS を `style` 属性へ展開した `TransformResponse.html` を返し、`TransformResponse.css` は返さない。
 `cssMode: inline` で inline 化できない CSS rule や selector は silent drop せず warning diagnostic を返す。変換全体は失敗させず、inline 化できる declaration だけを適用する。
-`0.2.0` の inline 対応範囲は、type selector、class selector、id selector、compound selector、descendant selector、複数 selector group、既存 `style` 属性との merge に限定する。pseudo selector、attribute selector、child/sibling combinator、`@media`、`@supports`、`@keyframes`、external import、CSS variable 解決、shorthand expansion の正規化は warning 対象とする。
+`0.2.0` の inline 対応範囲は、type selector、class selector、id selector、compound selector、descendant selector、複数 selector group、既存 `style` 属性との merge に限定する。pseudo selector、attribute selector、child/sibling combinator、`@media`、`@supports`、`@keyframes`、external import、CSS variable 解決は warning 対象とする。`margin`、`padding`、`border` などの shorthand declaration は展開・正規化せず、そのまま `style` 属性へ保持する。CSS comments は diagnostic なしで無視する。
 inline declaration の衝突は specificity、同一 specificity の後勝ち、既存 `style` 属性優先、`!important` 優先で解決する。既存 `style` 属性の `!important` は theme CSS で上書きしない。
 
 `0.2.0` 以降で `Open Generated HTML` panel を追加する。
