@@ -4,6 +4,9 @@ out/
 coverage/
 *.tsbuildinfo
 apps/vscode-extension/.vscode-test/
+apps/vscode-extension/LICENSE
+apps/vscode-extension/LICENSE-APACHE
+apps/vscode-extension/LICENSE-MIT
 apps/vscode-extension/wasm/
 
 target/

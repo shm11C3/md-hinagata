@@ -64,6 +64,11 @@ minor が偶数なら stable、奇数なら pre-release として公開する。
 そのため workflow は `vsce` の npm/yarn 依存検出を避けるために
 `--no-dependencies` を付けて publish する。
 
+VS Code Marketplace 用の license file は repository root の `LICENSE`、
+`LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。
+`apps/vscode-extension` 配下の同名 file は publish/package 直前に
+`pnpm run prepare:vscode-extension-package` で同期する生成物であり、commit しない。
+
 ## 3. Tag Rule
 
 tag は stable / pre-release ともに同じ形式で切る。

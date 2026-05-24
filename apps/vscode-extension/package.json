@@ -83,6 +83,7 @@
     "format": "pnpm --workspace-root exec biome format --write apps/vscode-extension",
     "lint": "pnpm --workspace-root exec biome check apps/vscode-extension",
     "test": "vitest run",
+    "vscode:prepublish": "pnpm --workspace-root run prepare:vscode-extension-package",
     "test:e2e": "pnpm run build && pnpm run test:e2e:build && node --experimental-strip-types ./test/e2e/run.ts",
     "test:e2e:build": "node --experimental-strip-types ./test/e2e/esbuild.config.ts"
   },

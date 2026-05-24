@@ -212,6 +212,9 @@ jobs:
           run_script_if_present build:wasm
           run_script_if_present build
 
+      - name: Prepare extension package assets
+        run: pnpm run prepare:vscode-extension-package
+
       - name: Publish to VS Code Marketplace
         working-directory: ${{ env.EXTENSION_DIR }}
         env:
