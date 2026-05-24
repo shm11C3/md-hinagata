@@ -71,8 +71,8 @@ describe("extension manifest", () => {
     );
   });
 
-  it("relies on VS Code contribution activation events", () => {
-    expect(manifest.activationEvents).toBeUndefined();
+  it("activates for Markdown documents so frontmatter completion can register", () => {
+    expect(manifest.activationEvents).toEqual(["onLanguage:markdown"]);
   });
 
   it("contributes the public command ids", () => {

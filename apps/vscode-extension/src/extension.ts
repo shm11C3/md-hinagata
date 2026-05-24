@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import { registerCommands } from "./commands/index.js";
+import { registerFrontmatterCompletionProvider } from "./frontmatter/frontmatterCompletionProvider.js";
 import {
   PREVIEW_PANEL_TITLE,
   PREVIEW_PANEL_VIEW_TYPE,
@@ -67,6 +68,10 @@ export function activate(context: vscode.ExtensionContext): void {
     documentStateService,
     documentTransformService,
     previewPanel,
+    themeResolver,
+    workspaceTrustService,
+  });
+  registerFrontmatterCompletionProvider(context, {
     themeResolver,
     workspaceTrustService,
   });

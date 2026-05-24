@@ -32,6 +32,14 @@ _Avoid_: Current skin, preview theme
 A case where **Theme Creation** would create a **Workspace Theme** with an ID that already exists in the target workspace.
 _Avoid_: Theme merge, overwrite prompt
 
+**Document Frontmatter**:
+The document-level metadata at the beginning of a Markdown document that holds md-hinagata choices under the `hinagata` namespace.
+_Avoid_: Front-matter, YAML header
+
+**Frontmatter Schema**:
+The supported shape of md-hinagata-specific choices inside **Document Frontmatter**.
+_Avoid_: Theme schema, YAML header format
+
 **Generated HTML**:
 The HTML fragment produced from Markdown after a **Theme** has been applied.
 _Avoid_: Preview HTML, export page

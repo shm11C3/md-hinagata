@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/frontmatter.schema.json",
+  "title": "md-hinagata frontmatter",
+  "description": "Draft JSON Schema for md-hinagata keys inside Markdown frontmatter.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "hinagata": {
+      "type": "object",
+      "description": "md-hinagata document-level transformation choices.",
+      "additionalProperties": false,
+      "properties": {
+        "theme": {
+          "type": "string",
+          "description": "Theme ID used to transform this Markdown document.",
+          "default": "default",
+          "minLength": 1
+        },
+        "output": {
+          "type": "string",
+          "description": "Generated HTML output shape.",
+          "default": "fragment",
+          "enum": ["fragment"]
+        },
+        "cssMode": {
+          "type": "string",
+          "description": "How theme CSS is represented in Generated HTML.",
+          "default": "style-tag",
+          "enum": ["style-tag", "inline", "separate", "none"]
+        }
+      }
+    }
+  }
+}

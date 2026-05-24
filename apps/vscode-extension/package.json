@@ -28,6 +28,9 @@
     "vscode": "^1.120.0"
   },
   "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
