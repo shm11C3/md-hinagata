@@ -2,6 +2,12 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.1.4
+
+### Maintenance
+
+- Fix VS Code extension packaging assets. ([#114](https://github.com/shm11C3/md-hinagata/pull/114))
+
 ## 0.1.3
 
 ### Documentation
