@@ -2,6 +2,23 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.1.3
+
+### Documentation
+
+- Record syntax highlighting fallback decision. ([#108](https://github.com/shm11C3/md-hinagata/pull/108))
+- Add example workspace samples. ([#109](https://github.com/shm11C3/md-hinagata/pull/109))
+- Refresh README content for 0.2.0 preparation. ([#110](https://github.com/shm11C3/md-hinagata/pull/110))
+- Update README to remove old VS Code layout details. ([#112](https://github.com/shm11C3/md-hinagata/pull/112))
+
+### Maintenance
+
+- Fix VS Code extension license packaging. ([#99](https://github.com/shm11C3/md-hinagata/pull/99))
+- Update edition to 2024 in Cargo.toml. ([#96](https://github.com/shm11C3/md-hinagata/pull/96))
+- Add frontmatter completion. ([#100](https://github.com/shm11C3/md-hinagata/pull/100))
+- Add release extension build. ([#102](https://github.com/shm11C3/md-hinagata/pull/102))
+- Add performance benchmarks. ([#101](https://github.com/shm11C3/md-hinagata/pull/101))
+
 ## 0.1.2
 
 ### Added
