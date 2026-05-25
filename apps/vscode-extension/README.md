@@ -35,6 +35,19 @@ Then run one of the md-hinagata commands from the Command Palette.
 
 In Markdown frontmatter, VS Code completion suggests the `hinagata` block, supported child keys, fixed `output` / `cssMode` values, and selectable theme IDs.
 
+## Examples
+
+Open the repository's [`examples/basic`](../../examples/basic) folder as a VS Code workspace, trust the workspace, then open one of these Markdown files and run `md-hinagata: Open Preview`.
+
+| Sample | Theme | What it shows |
+|---|---|---|
+| [`sample.md`](../../examples/basic/sample.md) | `basic` | Minimal fixture used by automated HTML snapshot tests. |
+| [`knowledge-base.md`](../../examples/basic/knowledge-base.md) | `docs-clean` | Runbook-style knowledge base content with steps, lists, quotes, and code. |
+| [`product-update.md`](../../examples/basic/product-update.md) | `release-note` | Release note formatting for highlights, fixes, and migration notes. |
+| [`editorial-article.md`](../../examples/basic/editorial-article.md) | `editorial` | Article-style output with long-form typography. |
+
+The sample workspace themes are under [`examples/basic/.md-hinagata/themes`](../../examples/basic/.md-hinagata/themes).
+
 ## CSS Output Mode
 
 Set `hinagata.cssMode` in document frontmatter to choose how theme CSS is represented. The document frontmatter is the source of truth; the extension does not add separate copy commands for each mode.

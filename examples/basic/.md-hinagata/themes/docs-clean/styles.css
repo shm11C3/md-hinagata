@@ -1,0 +1,85 @@
+.mh-document {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 36px;
+  color: #1b1f24;
+  background: #ffffff;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  line-height: 1.65;
+}
+
+.docs-hero {
+  margin: 0 0 28px;
+  padding: 0 0 20px;
+  border-bottom: 2px solid #d0d7de;
+}
+
+.docs-kicker {
+  margin: 0 0 8px;
+  color: #57606a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.docs-heading {
+  color: #0b1220;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
+.docs-heading--h1 {
+  margin: 0;
+  font-size: 2.1rem;
+}
+
+.docs-heading--h2 {
+  margin: 2em 0 0.65em;
+  font-size: 1.45rem;
+}
+
+.docs-heading--h3 {
+  margin: 1.5em 0 0.5em;
+  color: #334155;
+  font-size: 1.1rem;
+}
+
+.docs-paragraph {
+  margin: 0 0 1em;
+}
+
+.docs-note {
+  margin: 1.2em 0;
+  padding: 0.8em 1em;
+  border-left: 4px solid #2563eb;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.docs-list {
+  margin: 0 0 1.1em 1.4em;
+  padding: 0;
+}
+
+.docs-list-item {
+  margin: 0.32em 0;
+  padding-left: 0.15em;
+}
+
+.docs-codeblock {
+  overflow-x: auto;
+  margin: 1.2em 0;
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+}
+
+.docs-codeblock code {
+  color: #0f172a;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92rem;
+}
