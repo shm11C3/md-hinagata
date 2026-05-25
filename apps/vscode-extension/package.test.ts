@@ -29,6 +29,7 @@ interface ExtensionManifest {
   engines: {
     vscode: string;
   };
+  files: string[];
   license: string;
   main: string;
   scripts: Record<string, string>;
@@ -77,8 +78,31 @@ describe("extension manifest", () => {
       "pnpm --workspace-root run prepare:vscode-extension-package",
     );
     expect(rootPackage.scripts["prepare:vscode-extension-package"]).toBe(
-      "node scripts/sync-vscode-extension-license.mjs",
+      "node scripts/prepare-vscode-extension-package.mjs",
     );
+  });
+
+  it("packages only runtime VS Code extension assets", () => {
+    expect(manifest.files).toEqual([
+      "CHANGELOG.md",
+      "LICENSE",
+      "LICENSE-APACHE",
+      "LICENSE-MIT",
+      "README.md",
+      "dist/extension.js",
+      "package.json",
+      "resources/md-hinagata.png",
+      "resources/md-hinagata.svg",
+      "themes/**",
+      "wasm/md_hinagata_wasm.js",
+      "wasm/md_hinagata_wasm_bg.wasm",
+      "wasm/package.json",
+    ]);
+
+    expect(manifest.files).not.toContain("src/**");
+    expect(manifest.files).not.toContain("test/**");
+    expect(manifest.files).not.toContain("dist/**/*.map");
+    expect(manifest.files).not.toContain("wasm/**/*.d.ts");
   });
 
   it("activates for Markdown documents so frontmatter completion can register", () => {
