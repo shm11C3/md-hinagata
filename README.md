@@ -241,27 +241,8 @@ Not included:
 
 ## VS Code experience
 
-The intended layout:
+<img width="3594" height="2078" alt="image" src="https://github.com/user-attachments/assets/bd54a18e-bcd6-4da3-b709-1024555a4ffe" />
 
-```txt
-+----------------------+--------------------------+
-| Theme Manager        | Themed Preview           |
-|                      |                          |
-| Current Document     | Generated themed HTML    |
-| Theme: company-blog  | rendered in Webview      |
-|                      |                          |
-| Theme Files          |                          |
-| - theme.json         |                          |
-| - styles.css         |                          |
-|                      |                          |
-| Templates            |                          |
-| - h1.hbs             |                          |
-| - h2.hbs             |                          |
-| - p.hbs              |                          |
-+----------------------+--------------------------+
-| VS Code Markdown editor remains the source editor |
-+---------------------------------------------------+
-```
 
 The left sidebar is a Theme Manager and Inspector. Template files are opened in the normal VS Code editor, so editing, diff, search, formatting, and Git workflow stay native to VS Code.
 
