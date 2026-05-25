@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/shm11C3/md-hinagata/main/schemas/theme.schema.json",
+  "schemaVersion": "0.1",
+  "id": "editorial",
+  "name": "Editorial",
+  "version": "0.1.0",
+  "entryCss": "styles.css",
+  "templates": {
+    "h1": "templates/h1.hbs",
+    "h2": "templates/h2.hbs",
+    "h3": "templates/h3.hbs",
+    "p": "templates/p.hbs",
+    "codeblock": "templates/codeblock.hbs",
+    "blockquote": "templates/blockquote.hbs",
+    "ul": "templates/ul.hbs",
+    "ol": "templates/ol.hbs",
+    "li": "templates/li.hbs"
+  }
+}

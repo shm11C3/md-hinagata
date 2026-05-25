@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 use md_hinagata_core::{
-    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, ThemePackage, ThemeSource,
+    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, ThemeManifest, ThemePackage, ThemeSource,
     TransformOptions, TransformRequest, UNKNOWN_THEME, transform,
 };
 
@@ -38,6 +38,62 @@ fn transforms_basic_example_to_expected_html() {
     assert_eq!(response.html, expected_html.trim_end());
     assert_eq!(response.css.as_deref(), Some(expected_css.as_str()));
     assert!(response.diagnostics.is_empty());
+}
+
+#[test]
+fn transforms_additional_example_samples_without_diagnostics() {
+    for (markdown_path, theme_id, expected_marker) in [
+        (
+            "examples/basic/knowledge-base.md",
+            "docs-clean",
+            "docs-heading--h1",
+        ),
+        (
+            "examples/basic/product-update.md",
+            "release-note",
+            "release-heading--h1",
+        ),
+        (
+            "examples/basic/editorial-article.md",
+            "editorial",
+            "editorial-title",
+        ),
+    ] {
+        let response = transform(TransformRequest {
+            markdown: read_repo_file(markdown_path),
+            themes: vec![example_workspace_theme(theme_id)],
+            default_theme_id: Some(theme_id.to_owned()),
+            options: TransformOptions::default(),
+        })
+        .expect("transform should succeed");
+
+        assert_eq!(response.resolved_theme_id, theme_id);
+        assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(
+            response
+                .frontmatter
+                .as_ref()
+                .and_then(|frontmatter| frontmatter.theme.as_deref()),
+            Some(theme_id),
+        );
+        assert!(
+            response.html.contains(expected_marker),
+            "{markdown_path} should render theme-specific HTML",
+        );
+        assert!(
+            response.html.contains("<main class=\"mh-document\">"),
+            "{markdown_path} should include the document wrapper",
+        );
+        assert!(
+            response.css.as_deref().is_some_and(|css| !css.is_empty()),
+            "{theme_id} should include theme CSS",
+        );
+        assert!(
+            response.diagnostics.is_empty(),
+            "{markdown_path} diagnostics: {:?}",
+            response.diagnostics,
+        );
+    }
 }
 
 #[test]
@@ -128,6 +184,34 @@ fn basic_example_theme() -> ThemePackage {
         })
         .collect(),
         manifest: None,
+    }
+}
+
+fn example_workspace_theme(theme_id: &str) -> ThemePackage {
+    let theme_root = format!("examples/basic/.md-hinagata/themes/{theme_id}");
+    let manifest: ThemeManifest =
+        serde_json::from_str(&read_repo_file(format!("{theme_root}/theme.json")))
+            .expect("example theme manifest should be valid JSON");
+    let templates = manifest
+        .templates
+        .iter()
+        .map(|(key, path)| {
+            (
+                key.to_owned(),
+                read_repo_file(format!("{theme_root}/{path}")),
+            )
+        })
+        .collect();
+    let css = read_repo_file(format!("{theme_root}/{}", manifest.entry_css));
+
+    ThemePackage {
+        id: manifest.id.clone(),
+        name: manifest.name.clone(),
+        version: manifest.version.clone(),
+        source: Some(ThemeSource::Workspace),
+        css: Some(css),
+        templates,
+        manifest: Some(manifest),
     }
 }
 

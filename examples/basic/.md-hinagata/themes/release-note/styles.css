@@ -1,0 +1,90 @@
+.mh-document {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 34px;
+  color: #172033;
+  background: #fffdf7;
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  line-height: 1.6;
+}
+
+.release-hero {
+  margin: 0 0 26px;
+  padding: 22px;
+  border: 1px solid #f4c430;
+  border-radius: 8px;
+  background: #fff7d6;
+}
+
+.release-label {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.release-heading {
+  color: #111827;
+  font-weight: 760;
+  line-height: 1.22;
+}
+
+.release-heading--h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.release-heading--h2 {
+  margin: 1.8em 0 0.65em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.35rem;
+}
+
+.release-heading--h3 {
+  margin: 1.45em 0 0.5em;
+  color: #0f766e;
+  font-size: 1.05rem;
+}
+
+.release-paragraph {
+  margin: 0 0 1em;
+}
+
+.release-callout {
+  margin: 1.2em 0;
+  padding: 0.9em 1em;
+  border-left: 4px solid #f97316;
+  background: #ffedd5;
+  color: #7c2d12;
+}
+
+.release-list {
+  margin: 0 0 1em 1.45em;
+  padding: 0;
+}
+
+.release-list-item {
+  margin: 0.35em 0;
+}
+
+.release-codeblock {
+  overflow-x: auto;
+  margin: 1.2em 0;
+  padding: 16px;
+  border-radius: 8px;
+  background: #111827;
+}
+
+.release-codeblock code {
+  color: #e5e7eb;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92rem;
+}
