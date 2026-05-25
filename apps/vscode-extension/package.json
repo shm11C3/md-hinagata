@@ -23,6 +23,21 @@
     "handlebars",
     "theme"
   ],
+  "files": [
+    "CHANGELOG.md",
+    "LICENSE",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md",
+    "dist/extension.js",
+    "package.json",
+    "resources/md-hinagata.png",
+    "resources/md-hinagata.svg",
+    "themes/**",
+    "wasm/md_hinagata_wasm.js",
+    "wasm/md_hinagata_wasm_bg.wasm",
+    "wasm/package.json"
+  ],
   "type": "module",
   "engines": {
     "vscode": "^1.120.0"
