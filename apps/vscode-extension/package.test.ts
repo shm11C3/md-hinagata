@@ -56,6 +56,10 @@ describe("extension manifest", () => {
     expect(manifest.scripts.build).toBe(
       "node --experimental-strip-types ./esbuild.config.ts",
     );
+    expect(manifest.scripts.bench).toBe("vitest bench");
+    expect(rootPackage.scripts.bench).toBe(
+      "pnpm --filter ./apps/vscode-extension run bench",
+    );
     expect(manifest.scripts["build:release"]).toBe(
       "node --experimental-strip-types ./esbuild.config.ts --release",
     );

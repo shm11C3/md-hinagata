@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import * as vscode from "vscode";
@@ -11,11 +11,16 @@ const COMMAND_IDS = [
   "md-hinagata.createThemeFromDefault",
 ] as const;
 
+const PREVIEW_PANEL_TITLE = "md-hinagata Preview";
+const E2E_PERFORMANCE_SECTION_COUNT = 400;
+const E2E_PREVIEW_UPDATE_LIMIT_MS = 5_000;
+
 export async function run(): Promise<void> {
   await activateExtension();
   await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
+  await assertLargePreviewUpdatePerformance();
   await assertCreateThemeFromDefaultCommandRuns();
 }
 
@@ -62,9 +67,10 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   assert.ok(workspaceFolder, "E2E test workspace should be open.");
 
   await vscode.commands.executeCommand("md-hinagata.openPreview");
-  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
 
-  const generatedHtml = await vscode.env.clipboard.readText();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
   const expectedHtml = await readFile(
     path.join(workspaceFolder.uri.fsPath, "expected.html"),
     "utf8",
@@ -137,10 +143,141 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
 
   await openBasicSample();
   await vscode.commands.executeCommand("md-hinagata.openPreview");
-  await vscode.commands.executeCommand("md-hinagata.copyGeneratedHtml");
-  const generatedHtml = await vscode.env.clipboard.readText();
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
   assert.match(generatedHtml, /mh-heading--h1/);
   assert.match(generatedHtml, /mh-codeblock/);
+}
+
+async function assertLargePreviewUpdatePerformance(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  const largeSampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "large-preview-e2e.md"),
+  );
+  await writeFile(
+    largeSampleUri.fsPath,
+    createLargeMarkdown(E2E_PERFORMANCE_SECTION_COUNT),
+    "utf8",
+  );
+  const document = await vscode.workspace.openTextDocument(largeSampleUri);
+  await vscode.window.showTextDocument(document);
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await vscode.window.showTextDocument(document);
+
+  const startedAt = performance.now();
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  const elapsedMs = performance.now() - startedAt;
+
+  console.log(
+    `md-hinagata E2E preview update: ${elapsedMs.toFixed(2)}ms for ${E2E_PERFORMANCE_SECTION_COUNT} sections`,
+  );
+  assert.ok(
+    elapsedMs < E2E_PREVIEW_UPDATE_LIMIT_MS,
+    `large preview update should complete under ${E2E_PREVIEW_UPDATE_LIMIT_MS}ms; observed ${elapsedMs.toFixed(2)}ms`,
+  );
+
+  await vscode.window.showTextDocument(document);
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  assert.match(generatedHtml, /Large benchmark document/);
+  assert.match(generatedHtml, /Section 400/);
+}
+
+async function copyActiveMarkdownGeneratedHtml(): Promise<string> {
+  const copied = await vscode.commands.executeCommand<boolean>(
+    "md-hinagata.copyGeneratedHtml",
+  );
+  assert.equal(copied, true, "copyGeneratedHtml should report success.");
+  return vscode.env.clipboard.readText();
+}
+
+async function closePreviewTabs(title: string): Promise<void> {
+  const previewTabs = getTabs(title);
+  if (previewTabs.length === 0) {
+    return;
+  }
+
+  await vscode.window.tabGroups.close(previewTabs, true);
+  await waitForPreviewTabsClosed(title);
+}
+
+async function waitForPreviewTab(title: string): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (hasTab(title)) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail(`Preview tab '${title}' was not visible.`);
+}
+
+async function waitForPreviewTabsClosed(title: string): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (!hasTab(title)) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail(`Preview tab '${title}' was still visible.`);
+}
+
+function hasTab(title: string): boolean {
+  return getTabs(title).length > 0;
+}
+
+function getTabs(title: string): vscode.Tab[] {
+  return vscode.window.tabGroups.all.flatMap((group) =>
+    group.tabs.filter((tab) => tab.label === title),
+  );
+}
+
+function delay(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
+
+function createLargeMarkdown(sectionCount: number): string {
+  const parts = [
+    "---",
+    "hinagata:",
+    "  theme: default",
+    "  output: fragment",
+    "---",
+    "",
+    "# Large benchmark document",
+  ];
+
+  for (let index = 1; index <= sectionCount; index += 1) {
+    parts.push(
+      "",
+      `## Section ${index}`,
+      "",
+      `Paragraph ${index} keeps **strong text**, \`inline code\`, and enough words to exercise Markdown parsing and template rendering across a larger document.`,
+      "",
+      "> A short quoted note that remains inside the generated fragment.",
+      "",
+      "- First unordered item",
+      "- Second unordered item with **inline emphasis**",
+      "- Third unordered item with `code`",
+      "",
+      "```ts",
+      `const section${index} = "benchmark";`,
+      `console.log(section${index});`,
+      "```",
+    );
+  }
+
+  return parts.join("\n");
 }
 
 function normalizeGeneratedHtml(value: string): string {

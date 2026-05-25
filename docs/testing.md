@@ -175,3 +175,47 @@ This builds the WASM bridge, builds the extension bundle, copies
 workspace, opens `sample.md`, verifies the contributed commands, and runs the
 Preview, Copy HTML, and Create Theme from Default commands without packaging a
 VSIX.
+
+## 5. Benchmarks
+
+Use benchmarks when changing refresh, theme resolution, transform, or packaging
+performance. Benchmarks are not part of the default CI test set because results
+depend on the local machine.
+
+Run the VS Code extension benchmarks from the repository root:
+
+```bash
+pnpm run bench
+```
+
+The extension benchmark suite includes:
+
+- theme resolution and active Markdown refresh paths.
+- large Markdown transform through the WASM bridge when
+  `apps/vscode-extension/wasm/md_hinagata_wasm.js` is present.
+- large Markdown scaling for 100, 400, and 1000 generated sections.
+- `hinagata.cssMode: inline` transform cost for 400 and 1000 generated sections.
+- Preview Webview HTML regeneration for a visible preview panel.
+
+The large Markdown and Preview fixtures are generated in memory. The 400-section
+Markdown fixture is about 160 KB and the 400-section generated HTML fixture is
+about 220 KB. Run `pnpm run build:wasm` before `pnpm run bench` when the WASM
+benchmark is needed and the local `wasm/` artifact is missing.
+
+The VS Code Extension Host E2E smoke test also records one real VS Code Preview
+update measurement for a generated 400-section Markdown document. Because
+Preview Webviews keep scripts disabled, this E2E timing measures command
+execution through Webview HTML assignment and Preview tab visibility, not a
+Chromium paint-complete callback from inside the Webview.
+
+For before/after comparisons, save a baseline before the change and compare
+after the change. Adjust the output path for your OS; for example, use `/tmp`
+on macOS/Linux or `%TEMP%` on Windows.
+
+```bash
+pnpm --filter ./apps/vscode-extension run bench -- --outputJson /tmp/md-hinagata-bench-before.json
+pnpm --filter ./apps/vscode-extension run bench -- --compare /tmp/md-hinagata-bench-before.json
+```
+
+Record the benchmark command and notable before/after results in the PR when a
+change is justified by performance.
