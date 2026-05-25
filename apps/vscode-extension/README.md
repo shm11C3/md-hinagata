@@ -4,6 +4,10 @@ md-hinagata is a VS Code extension for turning Markdown into theme-controlled HT
 
 It is for writers and teams who want to keep authoring in Markdown while controlling the final HTML structure with theme templates. A Markdown document selects its theme through frontmatter, md-hinagata renders the themed preview in VS Code, and the generated HTML can be copied for use in a CMS, design system, internal wiki, knowledge base, or other publishing workflow.
 
+## Demo
+
+![md-hinagata demo](https://raw.githubusercontent.com/shm11C3/md-hinagata/main/assets/video/demo.gif)
+
 ## Features
 
 - Edit Markdown with the standard VS Code editor.
@@ -90,7 +94,7 @@ A theme manifest looks like this:
   "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "entryCss": "styles.css",
   "templates": {
     "h1": "templates/h1.hbs",
@@ -120,7 +124,10 @@ Workspace themes are loaded only in trusted workspaces. In untrusted workspaces,
 
 ## Current Scope
 
-md-hinagata is in early `0.x.x` development. The `0.1.0` flow focuses on Markdown headings, paragraphs, code blocks, blockquotes, lists, themed preview, and copying HTML fragments.
+md-hinagata is in early `0.x.x` development. The current pre-release line
+focuses on Markdown headings, paragraphs, code blocks, blockquotes, lists,
+themed preview, CSS output modes, workspace themes, and copying HTML fragments.
+The next release target is `0.2.0`, the first stable Marketplace release.
 
 The current extension is not a CMS publisher, static site generator, WYSIWYG editor, or full Markdown preview replacement.
 

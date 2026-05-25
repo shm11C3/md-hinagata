@@ -23,9 +23,12 @@ Markdown + frontmatter + theme templates
 
 ## Status
 
-md-hinagata is planned as a `0.x.x` project.
+md-hinagata is in early `0.x.x` development.
 
-The first target is `0.1.0`, a vertical-slice MVP that proves the core experience:
+The current VS Code extension line is `0.1.x` pre-release. The next release
+target is `0.2.0`, the first stable Marketplace release.
+
+The implemented core flow is:
 
 ```txt
 Write Markdown
@@ -72,13 +75,17 @@ can become this HTML, depending on the selected theme:
 
 The theme is not only CSS. A theme is a package of templates, styles, metadata, and output rules.
 
-### MVP output contract
+### Generated HTML and CSS modes
 
-For `0.1.0`, `hinagata.output: fragment` produces a self-contained HTML fragment. When a resolved theme provides `entryCss`, the generated HTML includes that CSS in a `<style>` tag followed by the themed document root and rendered Markdown content.
+`hinagata.output: fragment` produces an HTML fragment. By default, when a
+resolved theme provides `entryCss`, the generated HTML includes that CSS in a
+`<style>` tag followed by the themed document root and rendered Markdown
+content.
 
 The Preview webview renders the same generated HTML that `md-hinagata: Copy Generated HTML` copies. Preview does not apply theme CSS through a separate Preview-only path.
 
-For `0.2.0`, `hinagata.cssMode` controls how theme CSS is represented in the generated HTML. The frontmatter value is the source of truth:
+`hinagata.cssMode` controls how theme CSS is represented in the generated HTML.
+The frontmatter value is the source of truth:
 
 | Mode | Output |
 |---|---|
@@ -107,7 +114,7 @@ Body text.
 
 This keeps the output reproducible. The document itself knows how it should be transformed.
 
-The draft `0.1` frontmatter JSON Schema is tracked at [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json). The VS Code extension offers completions for `hinagata` keys inside leading Markdown frontmatter; `hinagata.theme` values come from the same selectable theme set as `md-hinagata: Select Theme`.
+The current draft frontmatter JSON Schema is tracked at [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json). The VS Code extension offers completions for `hinagata` keys inside leading Markdown frontmatter; `hinagata.theme` values come from the same selectable theme set as `md-hinagata: Select Theme`.
 
 ### Themes are template packages
 
@@ -139,7 +146,7 @@ A `theme.json` file describes the theme:
   "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "entryCss": "styles.css",
   "templates": {
     "h1": "templates/h1.hbs",
@@ -155,7 +162,7 @@ A `theme.json` file describes the theme:
 }
 ```
 
-The draft `0.1` JSON Schema is tracked at [`schemas/theme.schema.json`](schemas/theme.schema.json).
+The current draft theme JSON Schema is tracked at [`schemas/theme.schema.json`](schemas/theme.schema.json).
 
 ### Templates use Handlebars
 
@@ -188,11 +195,7 @@ Recommended convention:
   Escaped raw source text.
 ```
 
-## Planned MVP: v0.1.0
-
-The `0.1.0` MVP is intentionally small.
-
-### Included in 0.1.0
+## Current scope
 
 - VS Code extension.
 - Standard VS Code Markdown editor.
@@ -208,8 +211,9 @@ The `0.1.0` MVP is intentionally small.
 - Preview updates when theme files are saved.
 - Copy Generated HTML command.
 - Basic diagnostics for unknown themes and missing templates.
+- CSS output modes through `hinagata.cssMode`.
 
-Initial Markdown block support:
+Markdown block support:
 
 ```txt
 h1
@@ -223,7 +227,7 @@ ol
 li
 ```
 
-### Not included in 0.1.0
+Not included:
 
 - WYSIWYG editing.
 - CLI.
@@ -263,18 +267,19 @@ The left sidebar is a Theme Manager and Inspector. Template files are opened in 
 
 ## Theme resolution
 
-For `0.1.0`, theme resolution is planned as:
+Theme resolution order:
 
 ```txt
-1. workspace/.md-hinagata/themes/{themeId}
+1. workspace/.md-hinagata/themes/{themeId}, in trusted workspaces
 2. bundled themes/{themeId}
 ```
 
-Future versions may add user-level theme paths and importable theme packages.
+In untrusted workspaces, workspace theme loading is disabled while bundled
+themes, preview, and copy behavior remain available.
 
 ## Repository structure
 
-Planned structure for the MVP:
+Top-level structure:
 
 ```txt
 md-hinagata/
@@ -286,74 +291,20 @@ md-hinagata/
 
   apps/
     vscode-extension/
-      package.json
-      tsconfig.json
-      esbuild.config.ts
-      src/
-        extension.ts
-        commands/
-          openPreviewCommand.ts
-          copyGeneratedHtmlCommand.ts
-          selectThemeCommand.ts
-        panels/
-          previewPanel.ts
-        views/
-          themeEditorViewProvider.ts
-        services/
-          transformService.ts
-          themeResolver.ts
-          documentStateService.ts
-        frontmatter/
-          updateFrontmatter.ts
-        utils/
-          webviewHtml.ts
-          debounce.ts
-      media/
-        preview/
-        theme-editor/
-      resources/
-        md-hinagata.svg
 
   crates/
     md-hinagata-core/
-      Cargo.toml
-      src/
-        lib.rs
-        transform.rs
-        frontmatter.rs
-        theme.rs
-        template.rs
-        renderer.rs
-        diagnostics.rs
-
     md-hinagata-wasm/
-      Cargo.toml
-      src/
-        lib.rs
 
   themes/
     default/
-      theme.json
-      styles.css
-      templates/
-        h1.hbs
-        h2.hbs
-        h3.hbs
-        p.hbs
-        codeblock.hbs
-        blockquote.hbs
-        ul.hbs
-        ol.hbs
-        li.hbs
 
   examples/
     basic/
-      sample.md
-      expected.html
 
   schemas/
-    theme.schema.json
-    frontmatter.schema.json
+
+  docs/
 ```
 
 ## Development setup
@@ -436,7 +387,7 @@ In the Extension Development Host:
 
 ## Rust core
 
-The Rust core is not used because VS Code editing needs Rust. VS Code already handles editing well.
+The Rust core is not used for editing. VS Code already handles editing well.
 
 Rust is used for the transformation engine:
 
@@ -466,37 +417,25 @@ Rust core:
 
 md-hinagata handles Markdown, HTML, CSS, and templates, so security is part of the design.
 
-Planned defaults:
+Current defaults:
 
 - Raw HTML is disabled by default.
 - Workspace themes are allowed only in trusted workspaces.
 - Webview CSP is required.
-- Webview local resource roots are restricted.
-- Theme package import will validate file paths and file sizes.
-- Generated preview HTML will be sanitized or sandboxed.
+- Webview local resource access is restricted to extension-controlled resources.
+- Preview HTML is rendered in a VS Code Webview rather than a general browser page.
 
 ## Roadmap
 
-### 0.1.x
-
-MVP stabilization.
-
-- Improve preview update reliability.
-- Improve diagnostics.
-- Improve theme file watching.
-- Improve README and examples.
-
 ### 0.2.x
 
-Theme authoring improvements.
+Stable release hardening and theme authoring improvements.
 
-- Create Theme from Default.
-- Duplicate Theme.
-- Create Missing Template.
-- Template variable inspector.
-- Better theme validation.
-- JSON Schema integration.
-- Table support.
+- Stabilize CSS output modes.
+- Improve theme validation and diagnostics.
+- Improve JSON Schema integration.
+- Improve workspace theme authoring.
+- Improve README, examples, and Marketplace metadata.
 
 ### 0.3.x
 
@@ -507,6 +446,7 @@ Tooling and export.
 - Batch export.
 - Open Generated HTML.
 - Full HTML export.
+- Table support.
 
 ### Later
 

@@ -8,6 +8,7 @@ apps/vscode-extension/LICENSE
 apps/vscode-extension/LICENSE-APACHE
 apps/vscode-extension/LICENSE-MIT
 apps/vscode-extension/wasm/
+assets/video/*.mov
 
 target/
 
