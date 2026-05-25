@@ -58,6 +58,10 @@ test("syncs Marketplace licenses and bundled themes into the extension package",
       "mit license\n",
     );
     assert.equal(
+      readFileSync(path.join(extensionDir, "LICENSE-APACHE"), "utf8"),
+      "apache license\n",
+    );
+    assert.equal(
       readFileSync(
         path.join(extensionDir, "themes", "default", "theme.json"),
         "utf8",
