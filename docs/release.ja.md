@@ -67,7 +67,8 @@ release build は `pnpm run build:release` を使い、extension bundle を mini
 
 VS Code Marketplace 用の license file は repository root の `LICENSE`、
 `LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。
-`apps/vscode-extension` 配下の同名 file は publish/package 直前に
+同梱 theme も repository root の `themes/` を source of truth とする。
+`apps/vscode-extension` 配下の同名 file と `themes/` は publish/package 直前に
 `pnpm run prepare:vscode-extension-package` で同期する生成物であり、commit しない。
 
 ## 3. Tag Rule
