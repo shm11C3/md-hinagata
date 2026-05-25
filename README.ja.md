@@ -6,9 +6,11 @@
   <img src="assets/logo/hinagata-logo.svg" alt="md-hinagata logo" width="200" />
 </div>
 
-高い自由度でテーマ変更が可能なMarkdown to HTML変換VSCode拡張です。
+hinagata (md-hinagata) は高い自由度でテーマ変更が可能なMarkdown to HTML変換VSCode拡張です。
 
 md-hinagataは、VS Code拡張機能とRust製の変換エンジンを組み合わせ、Markdownをテーマ制御されたHTMLへと変換します。「Markdownでコンテンツを書き、テーマを選び編集し、結果をプレビュー・生成されたHTMLをコピーする」といったワークフローを好むユーザー向けに設計されています。
+
+https://github.com/user-attachments/assets/1ecaf17f-6629-4ef9-b44e-d71d5adefbf1
 
 md-hinagataは単なるMarkdownビュワーではありません。その核心となる目的は、最終的なHTML構造を自在に制御することにあります。
 
@@ -21,9 +23,11 @@ Markdown + フロントマター + テーマテンプレート
 
 ## ステータス
 
-md-hinagataは現在、`0.x.x` プロジェクトとして計画されています。
+md-hinagataは現在、`0.x.x` 系として開発中です。
 
-最初の目標は `0.1.0` です。これはコアとなる体験を実証するバーティカルスライスなMVP（実用最小限の製品）となります。
+現在のVS Code拡張機能は `0.1.x` pre-release 系です。次のリリース目標は、VS Code Marketplaceで最初のstable releaseとなる `0.2.0` です。
+
+実装済みの中心的な流れは以下です。
 
 ```txt
 Markdownを記述
@@ -60,30 +64,26 @@ This action cannot be undone.
 選択されたテーマによって、以下のようなHTMLに変換されます。
 
 ```html
-<h2 id="notice" class="article-heading article-heading--level2">
-  Notice
-</h2>
-<p class="article-body">
-  This action cannot be undone.
-</p>
+<h2 id="notice" class="article-heading article-heading--level2">Notice</h2>
+<p class="article-body">This action cannot be undone.</p>
 ```
 
 ここで言う「テーマ」とはCSSだけを指すのではありません。テンプレート、スタイル、メタデータ、そして出力ルールのパッケージを指します。
 
-### MVPの出力契約
+### 生成HTMLとCSS出力モード
 
-`0.1.0` では、`hinagata.output: fragment` は自己完結したHTMLフラグメントを生成します。解決されたテーマが `entryCss` を持つ場合、生成HTMLには `<style>` タグとしてそのCSSが含まれ、その後にテーマ適用済みのdocument rootとMarkdown本文の変換結果が続きます。
+`hinagata.output: fragment` はHTMLフラグメントを生成します。デフォルトでは、解決されたテーマが `entryCss` を持つ場合、生成HTMLには `<style>` タグとしてそのCSSが含まれ、その後にテーマ適用済みのdocument rootとMarkdown本文の変換結果が続きます。
 
 Preview webviewは、`md-hinagata: Copy Generated HTML` がコピーする生成HTMLと同じHTMLを表示します。Preview専用の別経路でテーマCSSを適用することはしません。
 
-`0.2.0` では、`hinagata.cssMode` がテーマCSSの出力形式を制御します。この値はフロントマターをsource of truthとします。
+`hinagata.cssMode` がテーマCSSの出力形式を制御します。この値はフロントマターの値を正とします。
 
-| Mode | Output |
-|---|---|
+| Mode        | Output                                                                        |
+| ----------- | ----------------------------------------------------------------------------- |
 | `style-tag` | テーマCSSを `<style>` タグとしてdocument rootの前に含めます。デフォルトです。 |
-| `inline` | 対応範囲内のテーマCSSを `style` 属性へ展開し、別CSSは返しません。 |
-| `separate` | document HTMLとCSSを分けて返します。 |
-| `none` | テーマCSSなしのdocument HTMLを返します。 |
+| `inline`    | 対応範囲内のテーマCSSを `style` 属性へ展開し、別CSSは返しません。             |
+| `separate`  | document HTMLとCSSを分けて返します。                                          |
+| `none`      | テーマCSSなしのdocument HTMLを返します。                                      |
 
 ## コア・アイディア
 
@@ -105,7 +105,7 @@ hinagata:
 
 これにより、出力の再現性が保たれます。ドキュメント自体が、自分がどのように変換されるべきかを知っている状態になります。
 
-`0.1` のフロントマターJSON Schemaは [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) で管理します。VS Code拡張はMarkdown先頭のフロントマター内で `hinagata` key の補完を提供し、`hinagata.theme` の値候補には `md-hinagata: Select Theme` と同じ選択可能テーマを使います。
+現在のドラフト版フロントマターJSON Schemaは [`schemas/frontmatter.schema.json`](schemas/frontmatter.schema.json) で管理します。VS Code拡張はMarkdown先頭のフロントマター内で `hinagata` key の補完を提供し、`hinagata.theme` の値候補には `md-hinagata: Select Theme` と同じ選択可能テーマを使います。
 
 ### テーマはテンプレートのパッケージである
 
@@ -137,7 +137,7 @@ hinagata:
   "schemaVersion": "0.1",
   "id": "company-blog",
   "name": "Company Blog",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "entryCss": "styles.css",
   "templates": {
     "h1": "templates/h1.hbs",
@@ -153,7 +153,7 @@ hinagata:
 }
 ```
 
-`0.1` のドラフトJSON Schemaは [`schemas/theme.schema.json`](schemas/theme.schema.json) で管理します。
+現在のドラフト版テーマJSON Schemaは [`schemas/theme.schema.json`](schemas/theme.schema.json) で管理します。
 
 ### テンプレートにはHandlebarsを使用
 
@@ -186,11 +186,7 @@ hinagata:
   エスケープされた生のソーステキスト。
 ```
 
-## 計画中のMVP: v0.1.0
-
-`0.1.0` MVPは、意図的に小規模に抑えられています。
-
-### 0.1.0 に含まれる機能
+## 現在のスコープ
 
 - VS Code拡張機能。
 - 標準的なVS Code Markdownエディタ。
@@ -206,14 +202,15 @@ hinagata:
 - テーマファイル保存時のプレビュー更新。
 - 生成されたHTMLのコピーコマンド。
 - 未知のテーマや不足しているテンプレートに対する基本的な診断（Diagnostics）。
+- `hinagata.cssMode` によるCSS出力モード。
 
-初期サポートされるMarkdownブロック：
+サポートされるMarkdownブロック：
 
 ```txt
 h1, h2, h3, p, codeblock, blockquote, ul, ol, li
 ```
 
-### 0.1.0 に含まれない機能
+含まれない機能：
 
 - WYSIWYG編集。
 - CLI。
@@ -253,20 +250,44 @@ h1, h2, h3, p, codeblock, blockquote, ul, ol, li
 
 ## テーマの解決順序
 
-`0.1.0` では、テーマの解決順序は以下のように計画されています。
+テーマの解決順序は以下です。
 
 ```txt
-1. ワークスペース/.md-hinagata/themes/{themeId}
+1. ワークスペース/.md-hinagata/themes/{themeId}（信頼されたワークスペースのみ）
 2. 同梱テーマ/{themeId}
 ```
 
-将来のバージョンでは、ユーザーレベルのテーマパスや、インポート可能なテーマパッケージが追加される可能性があります。
+信頼されていないワークスペースでは、ワークスペーステーマの読み込みは無効になります。同梱テーマ、プレビュー、コピー機能は利用できます。
 
 ## リポジトリ構造
 
-MVPに向けた計画構造：
+トップレベル構成：
 
-（※ディレクトリ構造はソースコードの定義に従います。各ファイル・ディレクトリ名の翻訳は省略します）
+```txt
+md-hinagata/
+  package.json
+  pnpm-workspace.yaml
+  Cargo.toml
+  README.md
+  README.ja.md
+
+  apps/
+    vscode-extension/
+
+  crates/
+    md-hinagata-core/
+    md-hinagata-wasm/
+
+  themes/
+    default/
+
+  examples/
+    basic/
+
+  schemas/
+
+  docs/
+```
 
 ## 開発セットアップ
 
@@ -345,7 +366,7 @@ VS Codeでリポジトリのルートを開き、F5キーを押すか、「実�
 
 ## Rustコア
 
-VS Codeの編集機能にRustは使用していません。編集そのものはVS Codeが優れているためです。
+編集機能にはRustを使用していません。編集そのものはVS Codeが担います。
 
 Rustは以下の変換エンジンに使用されます。
 
@@ -375,37 +396,25 @@ Rustコア:
 
 md-hinagataはMarkdown、HTML、CSS、およびテンプレートを扱うため、セキュリティを考慮した設計になっています。
 
-計画されているデフォルト設定：
+現在のデフォルト設定：
 
 - 生のHTML（Raw HTML）はデフォルトで無効。
 - ワークスペーステーマは信頼されたワークスペースでのみ許可。
 - WebviewのCSP（コンテンツセキュリティポリシー）を必須化。
-- Webviewのローカルリソースルートを制限。
-- テーマパッケージのインポート時にファイルパスとファイルサイズを検証。
-- 生成されたプレビューHTMLはサニタイズまたはサンドボックス化。
+- Webviewのローカルリソースアクセスは拡張機能が管理するリソースに制限。
+- プレビューHTMLは一般的なブラウザページではなく、VS Code Webview内で表示。
 
 ## ロードマップ
 
-### 0.1.x
-
-MVPの安定化。
-
-- プレビュー更新の信頼性向上。
-- 診断機能の改善。
-- テーマファイルのウォッチ機能の改善。
-- READMEとサンプルの改善。
-
 ### 0.2.x
 
-テーマ作成体験の向上。
+`0.2.0` stable releaseに向けた品質向上とテーマ作成体験の改善。
 
-- デフォルトからテーマを作成。
-- テーマの複製。
-- 不足しているテンプレートの作成。
-- テンプレート変数のインスペクター。
-- テーマ検証の強化。
-- JSON Schemaの統合。
-- テーブル（表）のサポート。
+- CSS出力モードの安定化。
+- テーマ検証と診断機能の改善。
+- JSON Schema連携の改善。
+- ワークスペーステーマ作成体験の改善。
+- README、サンプル、Marketplaceメタデータの改善。
 
 ### 0.3.x
 
@@ -416,6 +425,7 @@ MVPの安定化。
 - 一括エクスポート。
 - 生成されたHTMLを開く。
 - 完全なHTMLエクスポート。
+- テーブル（表）のサポート。
 
 ### 0.4.x 以降
 
