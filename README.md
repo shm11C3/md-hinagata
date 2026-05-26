@@ -440,7 +440,11 @@ Tooling and export.
 
 ## License
 
-md-hinagata is licensed under MIT OR Apache-2.0.
+md-hinagata is licensed under your choice of either:
 
-User-authored content and generated HTML are not claimed by the tool license.
-See [LICENSE](./LICENSE) for details.
+- [MIT](./LICENSE-MIT)
+- [Apache-2.0](./LICENSE-APACHE)
+
+Unless otherwise noted, code, bundled themes, and examples are licensed under
+MIT OR Apache-2.0. User-authored content and generated HTML are not claimed by
+the tool license. See [Licensing](./docs/licensing.md) for scope details.

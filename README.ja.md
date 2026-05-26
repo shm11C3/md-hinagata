@@ -418,7 +418,12 @@ md-hinagataはMarkdown、HTML、CSS、およびテンプレートを扱うため
 
 ## ライセンス
 
-md-hinagataは MIT または Apache-2.0 ライセンスの下で提供されています。
+md-hinagataは以下のいずれかを選択して利用できます。
 
-ユーザーが作成したコンテンツおよび生成されたHTMLに対して、ツールのライセンスは権利を主張しません。
-詳細は [LICENSE](./LICENSE) を参照してください。
+- [MIT](./LICENSE-MIT)
+- [Apache-2.0](./LICENSE-APACHE)
+
+特に明記されていない限り、コード、同梱テーマ、examples は MIT OR Apache-2.0
+の下で提供されます。ユーザーが作成したコンテンツおよび生成されたHTMLに対して、
+ツールのライセンスは権利を主張しません。適用範囲の詳細は
+[Licensing](./docs/licensing.md) を参照してください。

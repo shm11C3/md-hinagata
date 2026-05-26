@@ -25,7 +25,6 @@ test("syncs Marketplace licenses and bundled themes into the extension package",
     });
     mkdirSync(path.join(extensionDir, "themes"), { recursive: true });
 
-    writeFileSync(path.join(temporaryRoot, "LICENSE"), "primary license\n");
     writeFileSync(path.join(temporaryRoot, "LICENSE-MIT"), "mit license\n");
     writeFileSync(
       path.join(temporaryRoot, "LICENSE-APACHE"),
@@ -49,10 +48,6 @@ test("syncs Marketplace licenses and bundled themes into the extension package",
       packageRepoRoot: temporaryRoot,
     });
 
-    assert.equal(
-      readFileSync(path.join(extensionDir, "LICENSE"), "utf8"),
-      "primary license\n",
-    );
     assert.equal(
       readFileSync(path.join(extensionDir, "LICENSE-MIT"), "utf8"),
       "mit license\n",
