@@ -2,6 +2,12 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.1
+
+### Maintenance
+
+- Keep Marketplace publish validation aligned with the supported VS Code engine. ([#122](https://github.com/shm11C3/md-hinagata/pull/122))
+
 ## 0.2.0
 
 ### Maintenance
