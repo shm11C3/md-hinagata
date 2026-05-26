@@ -26,6 +26,7 @@ interface ExtensionManifest {
       activitybar: Array<{ icon: string; id: string; title: string }>;
     };
   };
+  devDependencies: Record<string, string>;
   engines: {
     vscode: string;
   };
@@ -50,6 +51,18 @@ const rootPackage = JSON.parse(
 describe("extension manifest", () => {
   it("declares the minimum supported VS Code version", () => {
     expect(manifest.engines.vscode).toBe("^1.95.0");
+  });
+
+  it("keeps VS Code API typings aligned with the supported engine", () => {
+    const minimumSupportedVscode = manifest.engines.vscode.replace(/^\^/, "");
+
+    expect(manifest.devDependencies["@types/vscode"]).toBe(
+      minimumSupportedVscode,
+    );
+  });
+
+  it("pins the VSCE CLI used by the publish workflow", () => {
+    expect(manifest.devDependencies["@vscode/vsce"]).toBe("3.9.1");
   });
 
   it("points to the bundled extension entrypoint", () => {
