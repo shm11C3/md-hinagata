@@ -54,8 +54,8 @@ channel は minor version の偶奇で決める。
 
 | Channel | Minor version | Examples | Publish command |
 |---|---:|---|---|
-| stable | even | `0.2.0`, `0.2.1`, `0.4.0` | `pnpm exec vsce publish --no-dependencies` |
-| pre-release | odd | `0.1.0`, `0.1.1`, `0.3.0`, `0.5.0` | `pnpm exec vsce publish --no-dependencies --pre-release` |
+| stable | even | `0.2.0`, `0.2.1`, `0.4.0` | `pnpm exec vsce publish --no-dependencies --skip-duplicate` |
+| pre-release | odd | `0.1.0`, `0.1.1`, `0.3.0`, `0.5.0` | `pnpm exec vsce publish --no-dependencies --skip-duplicate --pre-release` |
 
 GitHub Actions workflow は `apps/vscode-extension/package.json` の `version` を読み取り、
 minor が偶数なら stable、奇数なら pre-release として公開する。
@@ -63,6 +63,8 @@ minor が偶数なら stable、奇数なら pre-release として公開する。
 この repository は pnpm workspace を使い、extension は publish 前に release build として bundle する。
 そのため workflow は `vsce` の npm/yarn 依存検出を避けるために
 `--no-dependencies` を付けて publish する。
+Marketplace API の timeout 後に server side で公開が完了している可能性があるため、
+workflow は `--skip-duplicate` も付け、短い retry を行う。
 publish workflow は `apps/vscode-extension` の devDependencies に固定された
 VSCE CLI を `pnpm exec vsce` で実行する。
 release build は `pnpm run build:release` を使い、extension bundle を minify し、source map を同梱しない。
@@ -267,6 +269,7 @@ workflow は主に以下の場合に失敗する。
 - `publisher` が未設定である。
 - `VSCE_PAT` が未設定、期限切れ、または Marketplace Manage scope を持っていない。
 - checks、tests、build、publish のいずれかが失敗した。
+- VS Code Marketplace API が timeout し、workflow retry 後も完了確認できなかった。
 - release preparation PR に必要な changelog labels がない、または矛盾している。
 - release preparation PR が fork から作成されている。
 - 公開対象 version と同じ tag が既に存在している。

@@ -225,10 +225,22 @@ jobs:
           VSCE_ARGS: ${{ steps.version.outputs.vsce_args }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          VSCE_PUBLISH_ARGS=(--no-dependencies)
+          VSCE_PUBLISH_ARGS=(--no-dependencies --skip-duplicate)
 
           if [ -n "$VSCE_ARGS" ]; then
             VSCE_PUBLISH_ARGS+=("$VSCE_ARGS")
           fi
 
-          pnpm exec vsce publish "${VSCE_PUBLISH_ARGS[@]}"
+          for attempt in 1 2 3; do
+            if pnpm exec vsce publish "${VSCE_PUBLISH_ARGS[@]}"; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "VSCE publish failed after $attempt attempts."
+              exit 1
+            fi
+
+            echo "VSCE publish attempt $attempt failed. Retrying after 30 seconds..."
+            sleep 30
+          done
