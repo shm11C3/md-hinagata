@@ -9,3 +9,10 @@ reviews:
       - "github-actions[bot]"
 
   request_changes_workflow: true
+
+  path_instructions:
+    - path: "**/*.md"
+      instructions: |
+        Do not require `hinagata` YAML frontmatter for repository documentation.
+        The `hinagata` frontmatter namespace and defaults (`hinagata.theme: default`, `hinagata.output: fragment`) apply only to Markdown that is transformed by md-hinagata, such as user content or intentional transform fixtures.
+        For README, docs, changelog, licensing, and agent instruction Markdown, review clarity, accuracy, links, and scope instead of suggesting frontmatter.

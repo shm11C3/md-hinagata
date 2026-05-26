@@ -51,13 +51,17 @@ Rust core crate: md-hinagata-core
 Rust WASM crate: md-hinagata-wasm
 ```
 
-Document-level theme selection uses:
+Document-level theme selection for Markdown transformed by md-hinagata uses:
 
 ```yaml
 hinagata:
   theme: default
   output: fragment
 ```
+
+Repository documentation Markdown, including README, docs, changelog,
+licensing, and agent instruction files, does not need `hinagata` frontmatter
+unless it is intentionally serving as a transform fixture.
 
 ## Before Finishing
 
