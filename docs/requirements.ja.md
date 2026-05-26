@@ -127,6 +127,10 @@ md-hinagata は、コード、同梱テーマ、ユーザー作成テーマ、ex
 | Examples | まずは `MIT OR Apache-2.0`。将来 `CC0-1.0` も検討する。 |
 | Generated HTML | tool license は生成 HTML の所有権を主張しない。 |
 
+詳細な適用範囲は `docs/licensing.md` に記載する。`docs/licensing.md` は
+`LICENSE-MIT` / `LICENSE-APACHE` の条件を変更せず、repository 内の対象ごとの
+適用範囲を説明する補助文書とする。
+
 ---
 
 ## 4. `0.1.0` MVP スコープ

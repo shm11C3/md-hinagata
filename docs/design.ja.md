@@ -140,7 +140,8 @@ md-hinagata/
   Cargo.toml
   README.md
   README.ja.md
-  LICENSE
+  LICENSE-MIT
+  LICENSE-APACHE
 
   apps/
     vscode-extension/

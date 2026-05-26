@@ -65,7 +65,7 @@ minor が偶数なら stable、奇数なら pre-release として公開する。
 `--no-dependencies` を付けて publish する。
 release build は `pnpm run build:release` を使い、extension bundle を minify し、source map を同梱しない。
 
-VS Code Marketplace 用の license file は repository root の `LICENSE`、
+VS Code Marketplace 用の license file は repository root の
 `LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。
 同梱 theme も repository root の `themes/` を source of truth とする。
 `apps/vscode-extension` 配下の同名 file と `themes/` は publish/package 直前に
