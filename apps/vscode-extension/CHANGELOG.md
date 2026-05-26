@@ -4,10 +4,6 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 
 ## 0.2.0
 
-### Fixed
-
-- Scope CodeRabbit frontmatter guidance. ([#119](https://github.com/shm11C3/md-hinagata/pull/119))
-
 ### Maintenance
 
 - Update display name and description in package.json for clarity. ([#116](https://github.com/shm11C3/md-hinagata/pull/116))
