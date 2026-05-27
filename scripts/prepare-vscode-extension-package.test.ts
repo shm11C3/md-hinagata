@@ -49,6 +49,18 @@ test("syncs Marketplace licenses and bundled themes into the extension package",
     });
 
     assert.equal(
+      readFileSync(path.join(extensionDir, "LICENSE"), "utf8"),
+      `md-hinagata is licensed under either of:
+
+- Apache License, Version 2.0
+  See LICENSE-APACHE.
+- MIT License
+  See LICENSE-MIT.
+
+at your option.
+`,
+    );
+    assert.equal(
       readFileSync(path.join(extensionDir, "LICENSE-MIT"), "utf8"),
       "mit license\n",
     );

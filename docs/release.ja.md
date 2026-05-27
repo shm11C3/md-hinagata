@@ -66,9 +66,10 @@ minor が偶数なら stable、奇数なら pre-release として公開する。
 release build は `pnpm run build:release` を使い、extension bundle を minify し、source map を同梱しない。
 
 VS Code Marketplace 用の license file は repository root の
-`LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。
+`LICENSE-MIT`、`LICENSE-APACHE` を source of truth とする。package 直前に
+Marketplace が標準 license file として認識できる `LICENSE` notice も生成する。
 同梱 theme も repository root の `themes/` を source of truth とする。
-`apps/vscode-extension` 配下の同名 file と `themes/` は publish/package 直前に
+`apps/vscode-extension` 配下の license file と `themes/` は publish/package 直前に
 `pnpm run prepare:vscode-extension-package` で同期する生成物であり、commit しない。
 
 ## 3. Tag Rule

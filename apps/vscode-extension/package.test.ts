@@ -90,6 +90,7 @@ describe("extension manifest", () => {
   it("packages only runtime VS Code extension assets", () => {
     expect(manifest.files).toEqual([
       "CHANGELOG.md",
+      "LICENSE",
       "LICENSE-APACHE",
       "LICENSE-MIT",
       "README.md",

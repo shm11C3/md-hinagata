@@ -1,4 +1,11 @@
-import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +14,15 @@ const repoRoot = path.resolve(scriptDir, "..");
 const extensionDir = path.join(repoRoot, "apps", "vscode-extension");
 const licenseFiles = ["LICENSE-MIT", "LICENSE-APACHE"];
 const generatedAssetDirectories = ["themes"];
+const marketplaceLicenseNotice = `md-hinagata is licensed under either of:
+
+- Apache License, Version 2.0
+  See LICENSE-APACHE.
+- MIT License
+  See LICENSE-MIT.
+
+at your option.
+`;
 
 export function prepareVscodeExtensionPackage({
   packageExtensionDir = extensionDir,
@@ -15,6 +31,11 @@ export function prepareVscodeExtensionPackage({
   if (!existsSync(packageExtensionDir)) {
     fail(`Extension directory not found: ${packageExtensionDir}`);
   }
+
+  writeFileSync(
+    path.join(packageExtensionDir, "LICENSE"),
+    marketplaceLicenseNotice,
+  );
 
   for (const filename of licenseFiles) {
     const source = path.join(packageRepoRoot, filename);
