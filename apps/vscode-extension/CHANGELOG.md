@@ -2,6 +2,12 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.0
+
+### Maintenance
+
+- Revert changes to VS Code API typings and engine requirements. ([#129](https://github.com/shm11C3/md-hinagata/pull/129))
+
 ## 0.1.5
 
 ### Maintenance
