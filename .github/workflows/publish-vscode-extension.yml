@@ -222,6 +222,7 @@ jobs:
       - name: Publish to VS Code Marketplace
         working-directory: ${{ env.EXTENSION_DIR }}
         env:
+          NPM_CONFIG_YES: "true"
           VSCE_ARGS: ${{ steps.version.outputs.vsce_args }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
@@ -231,4 +232,4 @@ jobs:
             VSCE_PUBLISH_ARGS+=("$VSCE_ARGS")
           fi
 
-          pnpm exec vsce publish "${VSCE_PUBLISH_ARGS[@]}"
+          npx @vscode/vsce publish "${VSCE_PUBLISH_ARGS[@]}"
