@@ -226,10 +226,50 @@ jobs:
           VSCE_ARGS: ${{ steps.version.outputs.vsce_args }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          EXTENSION_ID="$(node -p "const manifest = require('./package.json'); `${manifest.publisher}.${manifest.name}`")"
           VSCE_PUBLISH_ARGS=(--no-dependencies)
 
           if [ -n "$VSCE_ARGS" ]; then
             VSCE_PUBLISH_ARGS+=("$VSCE_ARGS")
           fi
 
-          npx @vscode/vsce publish "${VSCE_PUBLISH_ARGS[@]}"
+          MAX_ATTEMPTS=3
+          LAST_STATUS=0
+
+          for ATTEMPT in $(seq 1 "$MAX_ATTEMPTS"); do
+            echo "Publishing ${EXTENSION_ID} ${PACKAGE_VERSION} (attempt ${ATTEMPT}/${MAX_ATTEMPTS})..."
+
+            if npx @vscode/vsce publish "${VSCE_PUBLISH_ARGS[@]}"; then
+              exit 0
+            fi
+
+            LAST_STATUS=$?
+            echo "::warning::VSCE publish attempt ${ATTEMPT} failed with exit code ${LAST_STATUS}."
+
+            VSCE_SHOW_JSON="${RUNNER_TEMP}/vsce-show-${ATTEMPT}.json"
+            if npx @vscode/vsce show "$EXTENSION_ID" --json > "$VSCE_SHOW_JSON"; then
+              if VSCE_SHOW_JSON="$VSCE_SHOW_JSON" PACKAGE_VERSION="$PACKAGE_VERSION" node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+
+          const extension = JSON.parse(readFileSync(process.env.VSCE_SHOW_JSON, "utf8"));
+          const publishedVersion = extension.versions?.find(
+            ({ version }) => version === process.env.PACKAGE_VERSION,
+          );
+
+          if (!publishedVersion) {
+            process.exit(1);
+          }
+          NODE
+              then
+                echo "Marketplace already lists ${EXTENSION_ID} ${PACKAGE_VERSION}; treating the timed-out publish as successful."
+                exit 0
+              fi
+            fi
+
+            if [ "$ATTEMPT" -lt "$MAX_ATTEMPTS" ]; then
+              sleep 30
+            fi
+          done
+
+          exit "$LAST_STATUS"
