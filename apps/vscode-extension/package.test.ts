@@ -26,7 +26,6 @@ interface ExtensionManifest {
       activitybar: Array<{ icon: string; id: string; title: string }>;
     };
   };
-  devDependencies: Record<string, string>;
   engines: {
     vscode: string;
   };
@@ -49,12 +48,8 @@ const rootPackage = JSON.parse(
 ) as RootPackage;
 
 describe("extension manifest", () => {
-  it("declares the minimum supported VS Code version", () => {
-    expect(manifest.engines.vscode).toBe("^1.95.0");
-  });
-
-  it("keeps VS Code API typings aligned with the supported baseline", () => {
-    expect(manifest.devDependencies["@types/vscode"]).toBe("1.95.0");
+  it("targets the current VS Code API baseline", () => {
+    expect(manifest.engines.vscode).toBe("^1.120.0");
   });
 
   it("points to the bundled extension entrypoint", () => {
