@@ -3,7 +3,7 @@
   "displayName": "md-hinagata: Markdown to HTML Templates",
   "description": "Generate CMS-ready HTML fragments from Markdown using editable Handlebars themes.",
   "publisher": "Shm11C3",
-  "version": "0.2.1",
+  "version": "0.1.4",
   "private": true,
   "license": "MIT OR Apache-2.0",
   "icon": "resources/md-hinagata.png",
@@ -120,9 +120,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.19.19",
-    "@types/vscode": "1.95.0",
+    "@types/vscode": "^1.120.0",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "3.9.1",
     "esbuild": "^0.28.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.6"

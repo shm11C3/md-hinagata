@@ -2,20 +2,6 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
-## 0.2.1
-
-### Maintenance
-
-- Keep Marketplace publish validation aligned with the supported VS Code engine. ([#122](https://github.com/shm11C3/md-hinagata/pull/122))
-
-## 0.2.0
-
-### Maintenance
-
-- Update display name and description in package.json for clarity. ([#116](https://github.com/shm11C3/md-hinagata/pull/116))
-- Lower VS Code engine requirement. ([#117](https://github.com/shm11C3/md-hinagata/pull/117))
-- Clarify repository license files and generated output licensing scope. ([#118](https://github.com/shm11C3/md-hinagata/pull/118))
-
 ## 0.1.4
 
 ### Maintenance
