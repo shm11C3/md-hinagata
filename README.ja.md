@@ -8,7 +8,7 @@
 
 <div align="center">
 
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Shm11C3.md-hinagata-vscode-extension?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version/Shm11C3.md-hinagata-vscode-extension.svg?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
 
 </div>
 
