@@ -6,6 +6,12 @@
   <img src="assets/logo/hinagata-logo.svg" alt="md-hinagata logo" width="200" />
 </div>
 
+<div align="center">
+
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version/Shm11C3.md-hinagata-vscode-extension.svg?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
+
+</div>
+
 hinagata (md-hinagata) は高い自由度でテーマ変更が可能なMarkdown to HTML変換VSCode拡張です。
 
 md-hinagataは、VS Code拡張機能とRust製の変換エンジンを組み合わせ、Markdownをテーマ制御されたHTMLへと変換します。「Markdownでコンテンツを書き、テーマを選び編集し、結果をプレビュー・生成されたHTMLをコピーする」といったワークフローを好むユーザー向けに設計されています。

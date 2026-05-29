@@ -6,6 +6,12 @@
   <img src="assets/logo/hinagata-logo.svg" alt="md-hinagata logo" width="200" />
 </div>
 
+<div align="center">
+
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version/Shm11C3.md-hinagata-vscode-extension.svg?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
+
+</div>
+
 Themeable Markdown to HTML Studio for VS Code.
 
 md-hinagata is a VS Code extension and Rust-powered transformation engine for turning Markdown into theme-controlled HTML. It is designed for people who want to write content in Markdown, choose an output theme from frontmatter, edit the theme templates, preview the result, and copy the generated HTML fragment.
