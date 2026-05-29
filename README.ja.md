@@ -9,7 +9,6 @@
 <div align="center">
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Shm11C3.md-hinagata-vscode-extension?label=VS%20Code%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
-[![Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Shm11C3.md-hinagata-vscode-extension?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=Shm11C3.md-hinagata-vscode-extension)
 
 </div>
 
