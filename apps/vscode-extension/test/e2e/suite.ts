@@ -108,7 +108,9 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
   await openBasicSample();
 
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /\.basic-heading/,
+  });
   const expectedHtml = await readFile(
     path.join(workspaceFolder.uri.fsPath, "expected.html"),
     "utf8",
@@ -158,7 +160,9 @@ async function assertThemeStateFollowsSwitchedMarkdownFiles(): Promise<void> {
   await waitForSingleVisibleMarkdownEditor(basicUri.fsPath);
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
-  const basicHtml = await copyActiveMarkdownGeneratedHtml();
+  const basicHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /basic-heading--h1/,
+  });
   assert.match(basicHtml, /basic-heading--h1/);
   assert.doesNotMatch(basicHtml, /release-heading--h1/);
 
@@ -167,7 +171,9 @@ async function assertThemeStateFollowsSwitchedMarkdownFiles(): Promise<void> {
   await waitForSingleVisibleMarkdownEditor(releaseUri.fsPath);
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
-  const releaseHtml = await copyActiveMarkdownGeneratedHtml();
+  const releaseHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /release-heading--h1/,
+  });
   assert.match(releaseHtml, /release-heading--h1/);
   assert.doesNotMatch(releaseHtml, /basic-heading--h1/);
 
@@ -176,7 +182,9 @@ async function assertThemeStateFollowsSwitchedMarkdownFiles(): Promise<void> {
     "docs-clean",
   );
   assert.equal(selectedTheme, "docs-clean");
-  const selectedHtml = await copyActiveMarkdownGeneratedHtml();
+  const selectedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /docs-heading--h1/,
+  });
   assert.match(selectedHtml, /docs-heading--h1/);
 
   const basicDocument = await vscode.workspace.openTextDocument(basicUri);
@@ -189,7 +197,9 @@ async function assertThemeStateFollowsSwitchedMarkdownFiles(): Promise<void> {
   await waitForSingleVisibleMarkdownEditor(basicUri.fsPath);
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
-  const switchedBackHtml = await copyActiveMarkdownGeneratedHtml();
+  const switchedBackHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /basic-heading--h1/,
+  });
   assert.match(switchedBackHtml, /basic-heading--h1/);
   assert.doesNotMatch(switchedBackHtml, /docs-heading--h1/);
 
@@ -390,7 +400,9 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
   await openBasicSample();
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /mh-heading--h1/,
+  });
   assert.match(generatedHtml, /mh-heading--h1/);
   assert.match(generatedHtml, /mh-codeblock/);
 }
@@ -426,17 +438,39 @@ async function assertLargePreviewUpdatePerformance(): Promise<void> {
   );
 
   await vscode.window.showTextDocument(document);
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /Section 400/,
+  });
   assert.match(generatedHtml, /Large benchmark document/);
   assert.match(generatedHtml, /Section 400/);
 }
 
-async function copyActiveMarkdownGeneratedHtml(): Promise<string> {
-  const copied = await vscode.commands.executeCommand<boolean>(
-    "md-hinagata.copyGeneratedHtml",
-  );
-  assert.equal(copied, true, "copyGeneratedHtml should report success.");
-  return vscode.env.clipboard.readText();
+async function copyActiveMarkdownGeneratedHtml(options: {
+  expectedPattern: RegExp;
+}): Promise<string> {
+  const deadline = Date.now() + 5_000;
+  let lastGeneratedHtml = "";
+  let lastCopied: boolean | undefined;
+
+  while (Date.now() < deadline) {
+    lastCopied = await vscode.commands.executeCommand<boolean>(
+      "md-hinagata.copyGeneratedHtml",
+    );
+    lastGeneratedHtml = await vscode.env.clipboard.readText();
+
+    if (
+      lastCopied === true &&
+      options.expectedPattern.test(lastGeneratedHtml)
+    ) {
+      return lastGeneratedHtml;
+    }
+
+    await delay(100);
+  }
+
+  assert.equal(lastCopied, true, "copyGeneratedHtml should report success.");
+  assert.match(lastGeneratedHtml, options.expectedPattern);
+  return lastGeneratedHtml;
 }
 
 async function showPlainTextDocumentBeside(fileName: string): Promise<void> {
