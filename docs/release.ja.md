@@ -112,6 +112,9 @@ Marketplace 公開前に以下を満たす。
 - `VSCE_PAT` は Marketplace Manage scope を持つ Personal Access Token にする。
 - `apps/vscode-extension/package.json` の `version` を公開対象 version に更新して commit する。
 - `version` に prerelease suffix を付けない。
+- release preparation PR の前、または package contribution / activation event /
+  VSIX 内容 / active Markdown command target に触れた場合は、
+  `pnpm run test:e2e:packaged` で packaged VSIX smoke test を実行する。
 
 publisher ID は Marketplace の publisher 作成後に確定する値を使う。
 未確定のまま推測で設定しない。
