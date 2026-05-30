@@ -74,6 +74,25 @@ fn image_src_escapes_ampersand() {
     );
 }
 
+#[test]
+fn link_title_escapes_quotes() {
+    assert_eq!(
+        render(r#"[t](https://example.com "a \"quoted\" title")"#),
+        r#"<a href="https://example.com" title="a &quot;quoted&quot; title">t</a>"#,
+    );
+}
+
+#[test]
+fn url_with_space_is_html_escaped_not_percent_encoded() {
+    // We deliberately HTML-escape href/src rather than percent-encode like
+    // comrak. A space in an angle-bracket URL is kept literally; this test
+    // locks in that intentional convention.
+    assert_eq!(
+        render("[t](<https://example.com/a b>)"),
+        r#"<a href="https://example.com/a b">t</a>"#,
+    );
+}
+
 fn render(markdown: &str) -> String {
     let response = transform(TransformRequest {
         markdown: markdown.to_owned(),
