@@ -2,6 +2,16 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.5
+
+### Fixed
+
+- Resolve workspace themes relative to the document. ([#160](https://github.com/shm11C3/md-hinagata/pull/160))
+
+### Maintenance
+
+- Raise unit coverage for core units and extension wiring. ([#159](https://github.com/shm11C3/md-hinagata/pull/159))
+
 ## 0.2.4
 
 ### Fixed
