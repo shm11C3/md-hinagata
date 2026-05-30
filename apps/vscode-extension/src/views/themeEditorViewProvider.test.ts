@@ -174,6 +174,47 @@ describe("ThemeEditorViewProvider", () => {
     provider.dispose();
   });
 
+  it("distinguishes an unspecified theme from the resolved default theme", () => {
+    const documentStateService = new DocumentStateService();
+    const diagnosticsService = new DiagnosticsService();
+    const provider = new ThemeEditorViewProvider(
+      documentStateService,
+      diagnosticsService,
+      new WorkspaceTrustService(() => true),
+    );
+    const view = {
+      webview: {
+        cspSource: "vscode-resource:",
+        html: "",
+        options: {},
+      },
+    } as vscode.WebviewView;
+
+    provider.resolveWebviewView(view);
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [],
+      frontmatter: {
+        output: "fragment",
+      },
+      html: "<h1>Title</h1>",
+      resolvedCssMode: "style-tag",
+      resolvedThemeId: "default",
+    });
+
+    expect(view.webview.html).toContain("<dt>Theme</dt><dd>Not specified</dd>");
+    expect(view.webview.html).toContain(
+      "<dt>Resolved Theme</dt><dd>default</dd>",
+    );
+    expect(view.webview.html).not.toContain("Fallback:");
+
+    provider.dispose();
+  });
+
   it("renders invalid requested css output mode with resolved fallback", () => {
     const documentStateService = new DocumentStateService();
     const diagnosticsService = new DiagnosticsService();

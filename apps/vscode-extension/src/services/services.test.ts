@@ -409,6 +409,116 @@ describe("extension services", () => {
     });
   });
 
+  it("resolves the default theme for documents without hinagata.theme regardless of history", async () => {
+    const documentStateService = new DocumentStateService();
+    const themePackages: Record<
+      string,
+      {
+        id: string;
+        name: string;
+        templates: Record<string, never>;
+        version: string;
+      }
+    > = {
+      "theme-a": {
+        id: "theme-a",
+        name: "Theme A",
+        templates: {},
+        version: "0.1.0",
+      },
+      "theme-b": {
+        id: "theme-b",
+        name: "Theme B",
+        templates: {},
+        version: "0.1.0",
+      },
+      default: {
+        id: "default",
+        name: "Default",
+        templates: {},
+        version: "0.1.0",
+      },
+    };
+    const readFrontmatterTheme = (markdown: string): string | undefined =>
+      /theme:\s*(\S+)/.exec(markdown)?.[1];
+    const requestedDefaultThemeIds: string[] = [];
+    const documentTransformService = new DocumentTransformService(
+      documentStateService,
+      {
+        resolveTheme: async (themeId) => ({
+          diagnostics: [],
+          theme: {
+            files: [],
+            rootPath: `/themes/${themeId}`,
+            source: themeId === "default" ? "bundled" : "workspace",
+            themePackage: themePackages[themeId] ?? themePackages.default,
+          },
+        }),
+      },
+      {
+        transform: async (request) => {
+          requestedDefaultThemeIds.push(request.defaultThemeId ?? "");
+          const frontmatterTheme = readFrontmatterTheme(request.markdown);
+          const availableThemeIds = new Set(
+            request.themes.map((theme) => theme.id),
+          );
+          const resolvedThemeId =
+            frontmatterTheme !== undefined &&
+            availableThemeIds.has(frontmatterTheme)
+              ? frontmatterTheme
+              : (request.defaultThemeId ?? "default");
+          return {
+            diagnostics: [],
+            frontmatter:
+              frontmatterTheme === undefined ? {} : { theme: frontmatterTheme },
+            html: `<p>${resolvedThemeId}</p>`,
+            resolvedCssMode: "style-tag",
+            resolvedThemeId,
+          };
+        },
+      },
+      new WorkspaceTrustService(() => true),
+    );
+
+    const refreshWith = async (
+      markdown: string,
+      uri: string,
+    ): Promise<string | undefined> => {
+      documentStateService.setActiveDocument({
+        languageId: "markdown",
+        markdown,
+        uri,
+      });
+      const state = await documentTransformService.refreshActiveDocument();
+      return state.resolvedThemeId;
+    };
+
+    const themedA = await refreshWith(
+      "---\nhinagata:\n  theme: theme-a\n---\n# A",
+      "file:///a.md",
+    );
+    expect(themedA).toBe("theme-a");
+
+    const themeless1 = await refreshWith("# C", "file:///c.md");
+    expect(themeless1).toBe("default");
+
+    const themedB = await refreshWith(
+      "---\nhinagata:\n  theme: theme-b\n---\n# B",
+      "file:///b.md",
+    );
+    expect(themedB).toBe("theme-b");
+
+    const themeless2 = await refreshWith("# C", "file:///c.md");
+    expect(themeless2).toBe("default");
+
+    // The fallback theme passed to every transform stays the bundled default,
+    // so theme-less documents never inherit the previously active theme.
+    expect(requestedDefaultThemeIds.length).toBeGreaterThan(0);
+    expect(
+      requestedDefaultThemeIds.every((themeId) => themeId === "default"),
+    ).toBe(true);
+  });
+
   it("does not apply a refresh result after the active document changes", async () => {
     const documentStateService = new DocumentStateService();
     let completeTransform: ((response: TransformResponse) => void) | undefined;

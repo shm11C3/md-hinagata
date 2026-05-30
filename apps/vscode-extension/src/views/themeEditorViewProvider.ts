@@ -100,22 +100,24 @@ function renderCurrentDocument(
     ].join("");
   }
 
-  const requestedTheme = state.frontmatter?.theme ?? state.currentTheme;
+  const requestedThemeId = readThemeId(state.frontmatter?.theme);
+  const themeLabel = requestedThemeId ?? "Not specified";
   const resolvedTheme = state.resolvedThemeId ?? "Not resolved";
   const output = state.frontmatter?.output ?? "fragment";
   const cssOutputMode = getCssOutputModeLabel(state);
   const generatedHtmlContract = getGeneratedHtmlContract(state);
   const fallbackHtml =
+    requestedThemeId !== undefined &&
     state.resolvedThemeId !== undefined &&
-    requestedTheme !== state.resolvedThemeId
-      ? `<p class="mh-fallback">Fallback: ${escapeHtml(requestedTheme)} -> ${escapeHtml(state.resolvedThemeId)}</p>`
+    requestedThemeId !== state.resolvedThemeId
+      ? `<p class="mh-fallback">Fallback: ${escapeHtml(requestedThemeId)} -> ${escapeHtml(state.resolvedThemeId)}</p>`
       : "";
 
   return [
     '<section class="mh-section">',
     "<h2>Current Document</h2>",
     '<dl class="mh-definition-list">',
-    renderDefinition("Theme", requestedTheme),
+    renderDefinition("Theme", themeLabel),
     renderDefinition("Resolved Theme", resolvedTheme),
     renderDefinition("Output", output),
     renderDefinition("CSS Output Mode", cssOutputMode),
@@ -128,6 +130,14 @@ function renderCurrentDocument(
     fallbackHtml,
     "</section>",
   ].join("");
+}
+
+function readThemeId(themeId: string | undefined): string | undefined {
+  if (themeId === undefined || themeId.length === 0) {
+    return undefined;
+  }
+
+  return themeId;
 }
 
 function getCssOutputModeLabel(state: DocumentState): string {

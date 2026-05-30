@@ -52,7 +52,10 @@ export class DocumentTransformService {
       uri: state.uri,
     };
     const refreshSequence = ++this.#refreshSequence;
-    const defaultThemeId = readThemeId(state.currentTheme) ?? DEFAULT_THEME_ID;
+    // A document without `hinagata.theme` must always resolve to the bundled
+    // default theme. Deriving this from `state.currentTheme` would leak the
+    // previously active document's theme into theme-less documents (#111).
+    const defaultThemeId = DEFAULT_THEME_ID;
     const candidateThemeIds = uniqueThemeIds([
       defaultThemeId,
       DEFAULT_THEME_ID,
