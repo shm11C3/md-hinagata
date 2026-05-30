@@ -50,6 +50,20 @@ const themeResolver = {
   ],
 };
 
+function createDocument(options: {
+  languageId?: string;
+  text: string;
+  uri: string;
+}) {
+  return {
+    getText: () => options.text,
+    languageId: options.languageId ?? "markdown",
+    uri: {
+      toString: () => options.uri,
+    },
+  };
+}
+
 describe("extension commands", () => {
   let testRoot: string;
 
@@ -416,7 +430,44 @@ describe("extension commands", () => {
     ).toBeUndefined();
   });
 
-  it("opens the stored Markdown document when no Markdown editor is active", async () => {
+  it("uses active Markdown before single visible Markdown and stored fallback", async () => {
+    const documentStateService = new DocumentStateService();
+    const activeDocument = createDocument({
+      text: "# Active",
+      uri: "file:///active.md",
+    });
+    const visibleDocument = createDocument({
+      text: "# Visible",
+      uri: "file:///visible.md",
+    });
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Stored",
+      uri: "file:///stored.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        {
+          activeTextEditor: { document: activeDocument },
+          visibleTextEditors: [
+            { document: activeDocument },
+            { document: visibleDocument },
+          ],
+        },
+        documentStateService,
+        {
+          openTextDocument: async () => {
+            throw new Error(
+              "stored fallback should not open before active Markdown",
+            );
+          },
+        },
+      ),
+    ).resolves.toBe(activeDocument);
+  });
+
+  it("uses stored Markdown fallback only when active and visible Markdown targets are absent", async () => {
     const documentStateService = new DocumentStateService();
     const document = {
       getText: () => "# Title",
@@ -568,13 +619,10 @@ describe("extension commands", () => {
 
   it("uses stored Markdown state when visible Markdown documents are ambiguous", async () => {
     const documentStateService = new DocumentStateService();
-    const storedDocument = {
-      getText: () => "# Stored",
-      languageId: "markdown",
-      uri: {
-        toString: () => "file:///stored.md",
-      },
-    };
+    const storedDocument = createDocument({
+      text: "# Stored",
+      uri: "file:///stored.md",
+    });
     documentStateService.setActiveDocument({
       languageId: "markdown",
       markdown: "# Stored",
