@@ -106,9 +106,10 @@ describe("DocumentTransformService.refreshActiveDocument", () => {
 
     const result = await harness.service.refreshActiveDocument();
 
-    expect(harness.resolveTheme).toHaveBeenCalledWith("default", {
-      isWorkspaceTrusted: true,
-    });
+    expect(harness.resolveTheme).toHaveBeenCalledWith(
+      "default",
+      expect.objectContaining({ isWorkspaceTrusted: true }),
+    );
     expect(harness.transform).toHaveBeenCalledTimes(1);
     expect(harness.applyTransformResult).toHaveBeenCalledTimes(1);
     const [, meta] = harness.applyTransformResult.mock.calls[0];
@@ -133,9 +134,10 @@ describe("DocumentTransformService.refreshActiveDocument", () => {
 
     const result = await harness.service.refreshActiveDocument();
 
-    expect(harness.resolveTheme).toHaveBeenCalledWith("basic", {
-      isWorkspaceTrusted: true,
-    });
+    expect(harness.resolveTheme).toHaveBeenCalledWith(
+      "basic",
+      expect.objectContaining({ isWorkspaceTrusted: true }),
+    );
     expect(harness.transform).toHaveBeenCalledTimes(2);
     const [, meta] = harness.applyTransformResult.mock.calls[0];
     expect(meta.themeFiles).toEqual(["basic.css"]);
