@@ -2,6 +2,18 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.4
+
+### Fixed
+
+- Fix preview and theme commands to follow the single visible Markdown file after switching documents. ([#153](https://github.com/shm11C3/md-hinagata/pull/153))
+
+### Maintenance
+
+- Add Markdown command target selection coverage. ([#154](https://github.com/shm11C3/md-hinagata/pull/154))
+- Add local coverage reporting. ([#157](https://github.com/shm11C3/md-hinagata/pull/157))
+- Add packaged VSIX smoke E2E coverage. ([#156](https://github.com/shm11C3/md-hinagata/pull/156))
+
 ## 0.2.3
 
 ### Fixed
