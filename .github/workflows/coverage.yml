@@ -1,0 +1,93 @@
+name: Coverage
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  workflow_dispatch:
+
+permissions: read-all
+
+concurrency:
+  group: coverage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust Coverage
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          components: ""
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Run Rust tests with coverage
+        run: cargo llvm-cov --workspace --no-report
+
+      - name: Generate Rust coverage report
+        id: coverage-report
+        shell: bash
+        run: |
+          {
+            echo 'REPORT<<EOF'
+            cargo llvm-cov report
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Report Rust coverage
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
+        with:
+          header: rust-coverage
+          message: |
+            ## Rust Coverage Report
+
+            <details>
+            <summary>Coverage details</summary>
+
+            ```txt
+            ${{ steps.coverage-report.outputs.REPORT }}
+            ```
+
+            </details>
+
+  vitest:
+    name: Vitest Coverage
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Run Vitest coverage
+        run: pnpm run test:coverage:vitest
+
+      - name: Report Vitest coverage
+        if: github.event_name == 'pull_request'
+        uses: davelosert/vitest-coverage-report-action@02f3c2e641286b7fa308cd3e430783103ce6103b # v2.12.0
+        with:
+          json-summary-path: target/vitest-coverage/vscode-extension/coverage-summary.json

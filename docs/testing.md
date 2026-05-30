@@ -187,6 +187,9 @@ Rust coverage uses `cargo llvm-cov --workspace --summary-only`, so it requires
 provider for the VS Code extension source files under `src/**/*.ts`; benchmark
 files are excluded from coverage totals.
 
+Pull requests from branches in this repository also run the `Coverage` workflow.
+The workflow posts sticky PR comments for Rust coverage and Vitest coverage.
+
 ## 5. Benchmarks
 
 Use benchmarks when changing refresh, theme resolution, transform, or packaging

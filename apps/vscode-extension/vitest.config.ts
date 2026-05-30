@@ -6,7 +6,8 @@ export default defineConfig({
       exclude: ["src/**/*.bench.ts"],
       include: ["src/**/*.ts"],
       provider: "v8",
-      reporter: ["text"],
+      reporter: ["text", "json-summary"],
+      reportsDirectory: "../../target/vitest-coverage/vscode-extension",
     },
   },
 });
