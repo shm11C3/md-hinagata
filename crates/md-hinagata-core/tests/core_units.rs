@@ -6,7 +6,9 @@ use std::collections::BTreeMap;
 
 use md_hinagata_core::error::CoreError;
 use md_hinagata_core::theme::{find_theme, resolve_theme};
-use md_hinagata_core::{Diagnostic, ParsedMarkdown, ThemeManifest, ThemePackage, parse_frontmatter};
+use md_hinagata_core::{
+    Diagnostic, ParsedMarkdown, ThemeManifest, ThemePackage, parse_frontmatter,
+};
 
 fn theme(id: &str) -> ThemePackage {
     ThemePackage {
@@ -69,7 +71,12 @@ fn resolve_theme_falls_back_to_first_theme_when_default_is_missing() {
     let themes = [theme("default"), theme("basic")];
     let mut diagnostics: Vec<Diagnostic> = Vec::new();
 
-    let resolved = resolve_theme(&themes, Some("unknown"), Some("also-missing"), &mut diagnostics);
+    let resolved = resolve_theme(
+        &themes,
+        Some("unknown"),
+        Some("also-missing"),
+        &mut diagnostics,
+    );
 
     assert_eq!(resolved.map(|theme| theme.id.as_str()), Some("default"));
     assert_eq!(diagnostics.len(), 2);
@@ -122,7 +129,8 @@ fn theme_manifest_equality_is_structural() {
 
 #[test]
 fn frontmatter_parses_hinagata_namespace_with_body() {
-    let source = "---\nhinagata:\n  theme: basic\n  output: fragment\n  cssMode: inline\n---\n# Body\n";
+    let source =
+        "---\nhinagata:\n  theme: basic\n  output: fragment\n  cssMode: inline\n---\n# Body\n";
     let parsed = parse_frontmatter(source);
     let frontmatter = parsed.frontmatter.expect("frontmatter should be parsed");
     assert_eq!(frontmatter.theme.as_deref(), Some("basic"));
