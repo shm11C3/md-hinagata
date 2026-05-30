@@ -21,6 +21,10 @@ import {
   openCurrentMarkdownDocument,
 } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
+import {
+  registerCommandsWithApi,
+  type VscodeCommandApi,
+} from "./commandRegistration.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
 import {
   createThemeDisplayName,
@@ -76,6 +80,222 @@ describe("extension commands", () => {
     });
 
     expect(openCount).toBe(1);
+  });
+
+  it("registered Open Preview refreshes the single visible Markdown target", async () => {
+    const documentStateService = new DocumentStateService();
+    const storedMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: stored",
+      "---",
+      "# Stored",
+    ].join("\n");
+    const visibleMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: visible",
+      "---",
+      "# Visible",
+    ].join("\n");
+    const storedDocument = createMutableDocument(
+      "file:///stored.md",
+      "markdown",
+      storedMarkdown,
+    );
+    const visibleDocument = createMutableDocument(
+      "file:///visible.md",
+      "markdown",
+      visibleMarkdown,
+    );
+    const notesDocument = createMutableDocument(
+      "file:///notes.txt",
+      "plaintext",
+      "plain text",
+    );
+    const runtime = createRegisteredCommandRuntime([
+      storedDocument,
+      visibleDocument,
+      notesDocument,
+    ]);
+    const dependencies = createCommandDependencies(documentStateService);
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: storedMarkdown,
+      uri: "file:///stored.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [],
+      html: "<h1>Stored</h1>",
+      resolvedCssMode: "style-tag",
+      resolvedThemeId: "stored",
+    });
+    runtime.setActiveDocument(notesDocument);
+    runtime.setVisibleDocuments([visibleDocument, notesDocument]);
+
+    registerCommandsWithApi(
+      runtime.vscode,
+      runtime.context,
+      dependencies.value,
+    );
+
+    await runtime.execute(COMMAND_IDS.openPreview);
+
+    expect(dependencies.previewShowCount()).toBe(1);
+    expect(dependencies.refreshSnapshots).toEqual([
+      {
+        markdown: visibleMarkdown,
+        uri: "file:///visible.md",
+      },
+    ]);
+    expect(documentStateService.getState()).toMatchObject({
+      markdown: visibleMarkdown,
+      status: "active",
+      uri: "file:///visible.md",
+    });
+  });
+
+  it("registered Copy Generated HTML refreshes stale visible Markdown before copying", async () => {
+    const documentStateService = new DocumentStateService();
+    const storedMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: stored",
+      "---",
+      "# Stored",
+    ].join("\n");
+    const visibleMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: visible",
+      "---",
+      "# Visible",
+    ].join("\n");
+    const storedDocument = createMutableDocument(
+      "file:///stored.md",
+      "markdown",
+      storedMarkdown,
+    );
+    const visibleDocument = createMutableDocument(
+      "file:///visible.md",
+      "markdown",
+      visibleMarkdown,
+    );
+    const notesDocument = createMutableDocument(
+      "file:///notes.txt",
+      "plaintext",
+      "plain text",
+    );
+    const runtime = createRegisteredCommandRuntime([
+      storedDocument,
+      visibleDocument,
+      notesDocument,
+    ]);
+    const dependencies = createCommandDependencies(documentStateService);
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: storedMarkdown,
+      uri: "file:///stored.md",
+    });
+    documentStateService.applyTransformResult({
+      diagnostics: [],
+      html: "<h1>Stored</h1>",
+      resolvedCssMode: "style-tag",
+      resolvedThemeId: "stored",
+    });
+    runtime.setActiveDocument(notesDocument);
+    runtime.setVisibleDocuments([visibleDocument, notesDocument]);
+
+    registerCommandsWithApi(
+      runtime.vscode,
+      runtime.context,
+      dependencies.value,
+    );
+
+    await expect(
+      runtime.execute<boolean>(COMMAND_IDS.copyGeneratedHtml),
+    ).resolves.toBe(true);
+
+    expect(dependencies.refreshSnapshots).toEqual([
+      {
+        markdown: visibleMarkdown,
+        uri: "file:///visible.md",
+      },
+    ]);
+    expect(runtime.clipboardWrites).toEqual(["<h1>Visible</h1>"]);
+  });
+
+  it("registered Select Theme applies to the intended visible Markdown target", async () => {
+    const documentStateService = new DocumentStateService();
+    const storedMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: stored",
+      "---",
+      "# Stored",
+    ].join("\n");
+    const visibleMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: default",
+      "---",
+      "# Visible",
+    ].join("\n");
+    const storedDocument = createMutableDocument(
+      "file:///stored.md",
+      "markdown",
+      storedMarkdown,
+    );
+    const visibleDocument = createMutableDocument(
+      "file:///visible.md",
+      "markdown",
+      visibleMarkdown,
+    );
+    const notesDocument = createMutableDocument(
+      "file:///notes.txt",
+      "plaintext",
+      "plain text",
+    );
+    const runtime = createRegisteredCommandRuntime([
+      storedDocument,
+      visibleDocument,
+      notesDocument,
+    ]);
+    const dependencies = createCommandDependencies(documentStateService);
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: storedMarkdown,
+      uri: "file:///stored.md",
+    });
+    runtime.setActiveDocument(notesDocument);
+    runtime.setVisibleDocuments([visibleDocument, notesDocument]);
+
+    registerCommandsWithApi(
+      runtime.vscode,
+      runtime.context,
+      dependencies.value,
+    );
+
+    await expect(
+      runtime.execute<string | undefined>(COMMAND_IDS.selectTheme, "basic"),
+    ).resolves.toBe("basic");
+
+    const updatedVisibleMarkdown = [
+      "---",
+      "hinagata:",
+      "  theme: basic",
+      "---",
+      "# Visible",
+    ].join("\n");
+    expect(visibleDocument.getText()).toBe(updatedVisibleMarkdown);
+    expect(storedDocument.getText()).toBe(storedMarkdown);
+    expect(runtime.openedUris).toEqual([]);
+    expect(dependencies.refreshSnapshots).toEqual([
+      {
+        markdown: updatedVisibleMarkdown,
+        uri: "file:///visible.md",
+      },
+    ]);
   });
 
   it("returns the active Markdown document", () => {
@@ -306,15 +526,8 @@ describe("extension commands", () => {
     ).resolves.toBe(visibleDocument);
   });
 
-  it("prefers stored Markdown state over a visible Markdown fallback", async () => {
+  it("uses a single visible Markdown document before stored state", async () => {
     const documentStateService = new DocumentStateService();
-    const storedDocument = {
-      getText: () => "# Stored",
-      languageId: "markdown",
-      uri: {
-        toString: () => "file:///stored.md",
-      },
-    };
     const visibleDocument = {
       getText: () => "# Visible",
       languageId: "markdown",
@@ -344,10 +557,12 @@ describe("extension commands", () => {
         },
         documentStateService,
         {
-          openTextDocument: async () => storedDocument,
+          openTextDocument: async () => {
+            throw new Error("visible document should be selected first");
+          },
         },
       ),
-    ).resolves.toBe(storedDocument);
+    ).resolves.toBe(visibleDocument);
   });
 
   it("copies the latest generated html including theme css", async () => {
@@ -1540,6 +1755,241 @@ function createUri(filePath: string) {
     fsPath: filePath,
     toString: () => fileUri.toString(),
   };
+}
+
+interface MutableUri {
+  fsPath: string;
+  toString(): string;
+}
+
+interface MutableDocument {
+  getText(): string;
+  languageId: string;
+  positionAt(offset: number): number;
+  replaceText(source: string): void;
+  uri: MutableUri;
+}
+
+interface TestWorkspaceEdit {
+  replacements: TestWorkspaceReplacement[];
+}
+
+interface TestWorkspaceReplacement {
+  source: string;
+  uri: MutableUri;
+}
+
+function createMutableDocument(
+  uri: string,
+  languageId: string,
+  source: string,
+): MutableDocument {
+  let text = source;
+  return {
+    getText: () => text,
+    languageId,
+    positionAt: (offset) => offset,
+    replaceText: (nextText) => {
+      text = nextText;
+    },
+    uri: createMutableUri(uri),
+  };
+}
+
+function createMutableUri(uri: string): MutableUri {
+  const fileScheme = "file://";
+  return {
+    fsPath: uri.startsWith(fileScheme) ? uri.slice(fileScheme.length) : uri,
+    toString: () => uri,
+  };
+}
+
+function createRegisteredCommandRuntime(documents: readonly MutableDocument[]) {
+  const commandHandlers = new Map<string, (...args: unknown[]) => unknown>();
+  const documentsByUri = new Map(
+    documents.map((document) => [document.uri.toString(), document]),
+  );
+  const clipboardWrites: string[] = [];
+  const messages: string[] = [];
+  const openedUris: string[] = [];
+  const context = { subscriptions: [] };
+  const windowApi = {
+    activeTextEditor: undefined as { document: MutableDocument } | undefined,
+    showErrorMessage: (message: string) => {
+      messages.push(`error:${message}`);
+    },
+    showInformationMessage: (message: string) => {
+      messages.push(`info:${message}`);
+    },
+    showInputBox: async () => undefined,
+    showQuickPick: async () => undefined,
+    showTextDocument: async () => undefined,
+    showWarningMessage: (message: string) => {
+      messages.push(`warning:${message}`);
+    },
+    visibleTextEditors: [] as { document: MutableDocument }[],
+  };
+
+  class TestRange {
+    public constructor(
+      public readonly start: unknown,
+      public readonly end: unknown,
+    ) {}
+  }
+
+  class TestWorkspaceEditImpl implements TestWorkspaceEdit {
+    public readonly replacements: TestWorkspaceReplacement[] = [];
+
+    public replace(uri: MutableUri, _range: unknown, source: string): void {
+      this.replacements.push({ source, uri });
+    }
+  }
+
+  const vscode = {
+    commands: {
+      registerCommand: (
+        commandId: string,
+        handler: (...args: unknown[]) => unknown,
+      ) => {
+        commandHandlers.set(commandId, handler);
+        return {
+          dispose: () => {},
+        };
+      },
+    },
+    env: {
+      clipboard: {
+        writeText: async (value: string) => {
+          clipboardWrites.push(value);
+        },
+      },
+    },
+    Range: TestRange,
+    Uri: {
+      file: (filePath: string) => createMutableUri(`file://${filePath}`),
+      parse: (uri: string) => createMutableUri(uri),
+    },
+    window: windowApi,
+    workspace: {
+      applyEdit: async (edit: TestWorkspaceEdit) => {
+        for (const replacement of edit.replacements) {
+          const document = documentsByUri.get(replacement.uri.toString());
+          if (document === undefined) {
+            return false;
+          }
+
+          document.replaceText(replacement.source);
+        }
+
+        return true;
+      },
+      openTextDocument: async (uri: MutableUri) => {
+        const uriString = uri.toString();
+        openedUris.push(uriString);
+        const document = documentsByUri.get(uriString);
+        if (document === undefined) {
+          throw new Error(`No test document registered for ${uriString}.`);
+        }
+
+        return document;
+      },
+      workspaceFolders: [],
+    },
+    WorkspaceEdit: TestWorkspaceEditImpl,
+  } as unknown as VscodeCommandApi;
+
+  return {
+    clipboardWrites,
+    context,
+    execute: async <T>(commandId: string, ...args: unknown[]): Promise<T> => {
+      const handler = commandHandlers.get(commandId);
+      if (handler === undefined) {
+        throw new Error(`Command '${commandId}' was not registered.`);
+      }
+
+      return (await handler(...args)) as T;
+    },
+    messages,
+    openedUris,
+    setActiveDocument: (document: MutableDocument | undefined) => {
+      windowApi.activeTextEditor =
+        document === undefined ? undefined : { document };
+    },
+    setVisibleDocuments: (visibleDocuments: readonly MutableDocument[]) => {
+      windowApi.visibleTextEditors = visibleDocuments.map((document) => ({
+        document,
+      }));
+    },
+    vscode,
+  };
+}
+
+function createCommandDependencies(documentStateService: DocumentStateService) {
+  const refreshSnapshots: {
+    markdown: string | undefined;
+    uri: string | undefined;
+  }[] = [];
+  let previewShowCount = 0;
+
+  return {
+    previewShowCount: () => previewShowCount,
+    refreshSnapshots,
+    value: {
+      documentStateService,
+      documentTransformService: {
+        refreshActiveDocument: async () => {
+          const state = documentStateService.getState();
+          refreshSnapshots.push({
+            markdown: state.markdown,
+            uri: state.uri,
+          });
+
+          if (state.status !== "active") {
+            return state;
+          }
+
+          return documentStateService.applyTransformResult({
+            diagnostics: [],
+            html: createGeneratedHtml(state.markdown ?? ""),
+            resolvedCssMode: "style-tag",
+            resolvedThemeId: "default",
+          });
+        },
+      },
+      previewPanel: {
+        show: () => {
+          previewShowCount += 1;
+        },
+      },
+      themeResolver: {
+        canSelectTheme: (themeId: string) => themeId.length > 0,
+        getBundledThemeRoots: () => [],
+        listSelectableThemes: async () => [
+          {
+            id: "default",
+            source: "bundled" as const,
+          },
+          {
+            id: "basic",
+            source: "workspace" as const,
+          },
+        ],
+      },
+      workspaceTrustService: new WorkspaceTrustService(() => true),
+    },
+  };
+}
+
+function createGeneratedHtml(markdown: string): string {
+  if (markdown.includes("# Visible")) {
+    return "<h1>Visible</h1>";
+  }
+
+  if (markdown.includes("# Stored")) {
+    return "<h1>Stored</h1>";
+  }
+
+  return "<h1>Markdown</h1>";
 }
 
 async function writeDefaultThemeFixture(
