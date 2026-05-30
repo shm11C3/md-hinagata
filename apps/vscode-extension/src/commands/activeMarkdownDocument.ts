@@ -30,31 +30,11 @@ export interface CurrentMarkdownStateService {
   getState(): CurrentMarkdownState;
 }
 
-export interface CurrentMarkdownDocumentStateService
-  extends CurrentMarkdownStateService {
-  setActiveDocument(document: {
-    languageId: string;
-    markdown: string;
-    uri: string;
-  }): unknown;
-}
-
 export interface MarkdownDocumentOpener<
   TDocument extends TextDocumentLike = TextDocumentLike,
 > {
   openTextDocument(uri: string): Promise<TDocument>;
 }
-
-type VisibleMarkdownDocumentResolution<
-  TDocument extends TextDocumentLike = TextDocumentLike,
-> =
-  | {
-      document: TDocument;
-      kind: "single";
-    }
-  | {
-      kind: "ambiguous" | "none";
-    };
 
 export const MARKDOWN_REQUIRED_MESSAGE =
   "Open a Markdown file to use md-hinagata commands.";
@@ -89,43 +69,6 @@ export function getVisibleMarkdownDocument<
 >(
   window: Pick<ActiveWindowLike<TDocument>, "visibleTextEditors">,
 ): TDocument | undefined {
-  const resolution = resolveVisibleMarkdownDocument(window);
-  return resolution.kind === "single" ? resolution.document : undefined;
-}
-
-export function prepareCurrentMarkdownDocument<
-  TDocument extends TextDocumentLike = TextDocumentLike,
->(
-  window: Pick<
-    ActiveWindowLike<TDocument>,
-    "activeTextEditor" | "visibleTextEditors"
-  >,
-  stateService: CurrentMarkdownDocumentStateService,
-): boolean {
-  const activeDocument = getOptionalActiveMarkdownDocument(window);
-  if (activeDocument !== undefined) {
-    setCurrentMarkdownDocument(stateService, activeDocument);
-    return true;
-  }
-
-  const visibleResolution = resolveVisibleMarkdownDocument(window);
-  if (visibleResolution.kind === "single") {
-    setCurrentMarkdownDocument(stateService, visibleResolution.document);
-    return true;
-  }
-
-  if (visibleResolution.kind === "ambiguous") {
-    return false;
-  }
-
-  return hasStoredMarkdownDocument(stateService);
-}
-
-function resolveVisibleMarkdownDocument<
-  TDocument extends TextDocumentLike = TextDocumentLike,
->(
-  window: Pick<ActiveWindowLike<TDocument>, "visibleTextEditors">,
-): VisibleMarkdownDocumentResolution<TDocument> {
   const markdownDocumentsByUri = new Map<string, TDocument>();
   for (const editor of window.visibleTextEditors ?? []) {
     const document = editor.document;
@@ -136,38 +79,22 @@ function resolveVisibleMarkdownDocument<
     markdownDocumentsByUri.set(document.uri.toString(), document);
   }
 
-  if (markdownDocumentsByUri.size === 0) {
-    return { kind: "none" };
+  if (markdownDocumentsByUri.size !== 1) {
+    return undefined;
   }
 
-  if (markdownDocumentsByUri.size > 1) {
-    return { kind: "ambiguous" };
-  }
-
-  return {
-    document: [...markdownDocumentsByUri.values()][0],
-    kind: "single",
-  };
+  return [...markdownDocumentsByUri.values()][0];
 }
 
 export function hasCurrentMarkdownDocument(
   window: Pick<ActiveWindowLike, "activeTextEditor" | "visibleTextEditors">,
   stateService: CurrentMarkdownStateService,
 ): boolean {
-  if (getOptionalActiveMarkdownDocument(window) !== undefined) {
-    return true;
-  }
-
-  const visibleResolution = resolveVisibleMarkdownDocument(window);
-  if (visibleResolution.kind === "single") {
-    return true;
-  }
-
-  if (visibleResolution.kind === "ambiguous") {
-    return false;
-  }
-
-  return hasStoredMarkdownDocument(stateService);
+  return (
+    getOptionalActiveMarkdownDocument(window) !== undefined ||
+    getVisibleMarkdownDocument(window) !== undefined ||
+    hasStoredMarkdownDocument(stateService)
+  );
 }
 
 export async function openCurrentMarkdownDocument<
@@ -185,13 +112,9 @@ export async function openCurrentMarkdownDocument<
     return activeDocument;
   }
 
-  const visibleResolution = resolveVisibleMarkdownDocument(window);
-  if (visibleResolution.kind === "single") {
-    return visibleResolution.document;
-  }
-
-  if (visibleResolution.kind === "ambiguous") {
-    return undefined;
+  const visibleDocument = getVisibleMarkdownDocument(window);
+  if (visibleDocument !== undefined) {
+    return visibleDocument;
   }
 
   const state = stateService.getState();
@@ -217,21 +140,57 @@ export function hasStoredMarkdownDocument(
   return isStoredMarkdownState(stateService.getState());
 }
 
+export function prepareCurrentMarkdownDocument<
+  TDocument extends TextDocumentLike = TextDocumentLike,
+>(
+  window: Pick<
+    ActiveWindowLike<TDocument>,
+    "activeTextEditor" | "visibleTextEditors"
+  >,
+  stateService: {
+    getState(): CurrentMarkdownState;
+    setActiveDocument(document: {
+      languageId: string;
+      markdown: string;
+      uri: string;
+    }): unknown;
+  },
+): boolean {
+  const activeDocument = getOptionalActiveMarkdownDocument(window);
+  if (activeDocument !== undefined) {
+    stateService.setActiveDocument(createDocumentSnapshot(activeDocument));
+    return true;
+  }
+
+  const visibleDocument = getVisibleMarkdownDocument(window);
+  if (visibleDocument !== undefined) {
+    stateService.setActiveDocument(createDocumentSnapshot(visibleDocument));
+    return true;
+  }
+
+  if (hasStoredMarkdownDocument(stateService)) {
+    return true;
+  }
+
+  return false;
+}
+
+function createDocumentSnapshot(document: TextDocumentLike): {
+  languageId: string;
+  markdown: string;
+  uri: string;
+} {
+  return {
+    languageId: document.languageId,
+    markdown: document.getText(),
+    uri: document.uri.toString(),
+  };
+}
+
 function isStoredMarkdownState(state: CurrentMarkdownState): boolean {
   return (
     state.status === "active" &&
     state.uri !== undefined &&
     state.markdown !== undefined
   );
-}
-
-function setCurrentMarkdownDocument<TDocument extends TextDocumentLike>(
-  stateService: CurrentMarkdownDocumentStateService,
-  document: TDocument,
-): void {
-  stateService.setActiveDocument({
-    languageId: document.languageId,
-    markdown: document.getText(),
-    uri: document.uri.toString(),
-  });
 }

@@ -358,7 +358,7 @@ describe("extension commands", () => {
     ).resolves.toBe(visibleDocument);
   });
 
-  it("uses a single visible Markdown document before stored fallback", async () => {
+  it("uses the single visible Markdown document before stored state", async () => {
     const documentStateService = new DocumentStateService();
     const storedDocument = createDocument({
       text: "# Stored",
@@ -401,21 +401,12 @@ describe("extension commands", () => {
     expect(openedUris).toEqual([]);
   });
 
-  it("treats multiple visible Markdown documents as ambiguous instead of using stored fallback", async () => {
+  it("uses stored Markdown state when visible Markdown documents are ambiguous", async () => {
     const documentStateService = new DocumentStateService();
     const storedDocument = createDocument({
       text: "# Stored",
       uri: "file:///stored.md",
     });
-    const visibleOne = createDocument({
-      text: "# One",
-      uri: "file:///one.md",
-    });
-    const visibleTwo = createDocument({
-      text: "# Two",
-      uri: "file:///two.md",
-    });
-    const openedUris: string[] = [];
     documentStateService.setActiveDocument({
       languageId: "markdown",
       markdown: "# Stored",
@@ -426,48 +417,55 @@ describe("extension commands", () => {
       openCurrentMarkdownDocument(
         {
           activeTextEditor: {
-            document: createDocument({
+            document: {
+              getText: () => "plain text",
               languageId: "plaintext",
-              text: "plain text",
-              uri: "file:///notes.txt",
-            }),
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
           },
           visibleTextEditors: [
-            { document: visibleOne },
-            { document: visibleTwo },
+            {
+              document: {
+                getText: () => "# Visible 1",
+                languageId: "markdown",
+                uri: {
+                  toString: () => "file:///visible-1.md",
+                },
+              },
+            },
+            {
+              document: {
+                getText: () => "# Visible 2",
+                languageId: "markdown",
+                uri: {
+                  toString: () => "file:///visible-2.md",
+                },
+              },
+            },
           ],
         },
         documentStateService,
         {
-          openTextDocument: async (uri) => {
-            openedUris.push(uri);
-            return storedDocument;
-          },
+          openTextDocument: async () => storedDocument,
         },
       ),
-    ).resolves.toBeUndefined();
-    expect(openedUris).toEqual([]);
+    ).resolves.toBe(storedDocument);
   });
 
-  it("refreshes current Markdown state from a newly visible document before stale stored state", () => {
+  it("refreshes stored state from a single visible Markdown document", () => {
     const documentStateService = new DocumentStateService();
-    const storedMarkdown = [
-      "---",
-      "hinagata:",
-      "  theme: stored",
-      "---",
-      "# Stored",
-    ].join("\n");
-    const visibleMarkdown = [
-      "---",
-      "hinagata:",
-      "  theme: visible",
-      "---",
-      "# Visible",
-    ].join("\n");
+    const visibleDocument = {
+      getText: () => "---\nhinagata:\n  theme: basic\n---\n# Visible",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///visible.md",
+      },
+    };
     documentStateService.setActiveDocument({
       languageId: "markdown",
-      markdown: storedMarkdown,
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
       uri: "file:///stored.md",
     });
 
@@ -475,28 +473,57 @@ describe("extension commands", () => {
       prepareCurrentMarkdownDocument(
         {
           activeTextEditor: {
-            document: createDocument({
+            document: {
+              getText: () => "plain text",
               languageId: "plaintext",
-              text: "plain text",
-              uri: "file:///notes.txt",
-            }),
-          },
-          visibleTextEditors: [
-            {
-              document: createDocument({
-                text: visibleMarkdown,
-                uri: "file:///visible.md",
-              }),
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
             },
-          ],
+          },
+          visibleTextEditors: [{ document: visibleDocument }],
         },
         documentStateService,
       ),
     ).toBe(true);
+
     expect(documentStateService.getState()).toMatchObject({
-      markdown: visibleMarkdown,
+      markdown: visibleDocument.getText(),
       status: "active",
       uri: "file:///visible.md",
+    });
+  });
+
+  it("keeps stored state as a fallback when no Markdown editor is visible", () => {
+    const documentStateService = new DocumentStateService();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
+      uri: "file:///stored.md",
+    });
+
+    expect(
+      prepareCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [],
+        },
+        documentStateService,
+      ),
+    ).toBe(true);
+
+    expect(documentStateService.getState()).toMatchObject({
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
+      status: "active",
+      uri: "file:///stored.md",
     });
   });
 
