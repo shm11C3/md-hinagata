@@ -19,6 +19,7 @@
     "test:e2e": "pnpm run build:wasm && pnpm --filter md-hinagata-vscode-extension run test:e2e"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15"
+    "@biomejs/biome": "^2.4.15",
+    "binaryen": "^123.0.0"
   }
 }
