@@ -3,15 +3,17 @@
 // `vitest.config.ts`. Tests drive behavior through the exported `vscodeMock`
 // control surface and reset it with `resetVscodeMock()`.
 //
-// Exported objects carry explicit type annotations so their inferred types do
-// not leak Vitest's internal `Procedure` type into declaration output (ts2883).
-import { type Mock, vi } from "vitest";
+// Exported objects are typed with plain function signatures (not Vitest's
+// `Mock`) so the generated declarations stay portable and do not leak Vitest
+// internals (ts2883).
+import { vi } from "vitest";
 
 export interface Disposable {
   dispose: () => void;
 }
 
 type Listener<T> = (value: T) => void;
+type MockFn = (...args: unknown[]) => unknown;
 
 interface Emitter<T> {
   event: (listener: Listener<T>) => Disposable;
@@ -180,16 +182,16 @@ export function resetVscodeMock(): void {
 interface WindowMock {
   readonly activeTextEditor: unknown;
   readonly visibleTextEditors: unknown[];
-  showInformationMessage: Mock;
-  showWarningMessage: Mock;
-  showErrorMessage: Mock;
-  showQuickPick: Mock;
-  showInputBox: Mock;
-  showTextDocument: Mock;
-  createWebviewPanel: Mock;
-  registerWebviewViewProvider: Mock;
+  showInformationMessage: MockFn;
+  showWarningMessage: MockFn;
+  showErrorMessage: MockFn;
+  showQuickPick: MockFn;
+  showInputBox: MockFn;
+  showTextDocument: MockFn;
+  createWebviewPanel: MockFn;
+  registerWebviewViewProvider: (id: string, provider: unknown) => Disposable;
   onDidChangeActiveTextEditor: (listener: Listener<unknown>) => Disposable;
-  tabGroups: { all: unknown[]; close: Mock };
+  tabGroups: { all: unknown[]; close: MockFn };
 }
 
 export const window: WindowMock = {
@@ -226,8 +228,8 @@ export const window: WindowMock = {
 interface WorkspaceMock {
   readonly workspaceFolders: unknown;
   readonly isTrusted: boolean;
-  openTextDocument: Mock;
-  applyEdit: Mock;
+  openTextDocument: MockFn;
+  applyEdit: MockFn;
   onDidChangeTextDocument: (listener: Listener<unknown>) => Disposable;
   onDidSaveTextDocument: (listener: Listener<unknown>) => Disposable;
 }
@@ -248,9 +250,12 @@ export const workspace: WorkspaceMock = {
 };
 
 interface CommandsMock {
-  registerCommand: Mock;
-  executeCommand: Mock;
-  getCommands: Mock;
+  registerCommand: (
+    id: string,
+    handler: (...args: unknown[]) => unknown,
+  ) => Disposable;
+  executeCommand: MockFn;
+  getCommands: MockFn;
 }
 
 export const commands: CommandsMock = {
@@ -265,7 +270,11 @@ export const commands: CommandsMock = {
 };
 
 interface LanguagesMock {
-  registerCompletionItemProvider: Mock;
+  registerCompletionItemProvider: (
+    selector: unknown,
+    provider: unknown,
+    ...triggers: string[]
+  ) => Disposable;
 }
 
 export const languages: LanguagesMock = {
@@ -278,7 +287,10 @@ export const languages: LanguagesMock = {
 };
 
 interface EnvMock {
-  clipboard: { writeText: Mock; readText: Mock };
+  clipboard: {
+    writeText: (value: string) => Promise<void>;
+    readText: () => Promise<string>;
+  };
 }
 
 export const env: EnvMock = {
@@ -292,7 +304,7 @@ export const env: EnvMock = {
 
 interface ExtensionsMock {
   all: unknown[];
-  getExtension: Mock;
+  getExtension: MockFn;
 }
 
 export const extensions: ExtensionsMock = {

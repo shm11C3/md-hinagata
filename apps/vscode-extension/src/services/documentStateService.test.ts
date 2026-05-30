@@ -21,6 +21,7 @@ describe("DocumentStateService.applyTransformResult fallbacks", () => {
 
     expect(state.currentTheme).toBe("basic");
     expect(state.diagnostics).toEqual([]);
+    expect(state.currentThemeFiles).toEqual([]);
     expect(state.generatedHtml).toContain("Title");
   });
 

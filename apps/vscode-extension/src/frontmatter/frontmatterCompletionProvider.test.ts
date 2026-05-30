@@ -2,7 +2,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import { resetVscodeMock, vscodeMock } from "../../test/vscode.mock.js";
-import { registerFrontmatterCompletionProvider } from "./frontmatterCompletionProvider.js";
+import { WorkspaceTrustService } from "../services/workspaceTrustService.js";
+import {
+  type FrontmatterCompletionProviderDependencies,
+  registerFrontmatterCompletionProvider,
+} from "./frontmatterCompletionProvider.js";
+
+type ListSelectableThemes =
+  FrontmatterCompletionProviderDependencies["themeResolver"]["listSelectableThemes"];
+
+function createContext(): vscode.ExtensionContext {
+  return { subscriptions: [] } as unknown as vscode.ExtensionContext;
+}
+
+function buildDependencies(
+  listSelectableThemes: ListSelectableThemes,
+): FrontmatterCompletionProviderDependencies {
+  return {
+    themeResolver: { listSelectableThemes },
+    workspaceTrustService: new WorkspaceTrustService(() => true),
+  };
+}
 
 function createDocument(source: string, offset: number, line: string) {
   return {
@@ -16,11 +36,11 @@ function createToken(isCancellationRequested = false) {
   return { isCancellationRequested };
 }
 
-function registerProvider(listSelectableThemes: ReturnType<typeof vi.fn>) {
-  registerFrontmatterCompletionProvider({ subscriptions: [] } as never, {
-    themeResolver: { listSelectableThemes } as never,
-    workspaceTrustService: { isTrusted: true } as never,
-  });
+function registerProvider(listSelectableThemes: ListSelectableThemes) {
+  registerFrontmatterCompletionProvider(
+    createContext(),
+    buildDependencies(listSelectableThemes),
+  );
   const entry = vscodeMock.state.completionProviders[0];
   expect(entry).toBeDefined();
   return entry.provider as vscode.CompletionItemProvider;
@@ -32,11 +52,11 @@ describe("frontmatterCompletionProvider", () => {
   });
 
   it("registers a markdown completion provider with ':' and ' ' triggers", () => {
-    const context = { subscriptions: [] as unknown[] };
-    registerFrontmatterCompletionProvider(context as never, {
-      themeResolver: { listSelectableThemes: vi.fn(async () => []) } as never,
-      workspaceTrustService: { isTrusted: true } as never,
-    });
+    const context = createContext();
+    registerFrontmatterCompletionProvider(
+      context,
+      buildDependencies(vi.fn(async () => [])),
+    );
 
     const entry = vscodeMock.state.completionProviders[0];
     expect(entry.selector).toEqual({ language: "markdown" });
