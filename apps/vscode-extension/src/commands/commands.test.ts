@@ -196,6 +196,27 @@ describe("extension commands", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("does not throw when the stored Markdown document cannot be reopened", async () => {
+    const documentStateService = new DocumentStateService();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///missing.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+        {
+          openTextDocument: async () => {
+            throw new Error("missing document");
+          },
+        },
+      ),
+    ).resolves.toBeUndefined();
+  });
+
   it("copies the latest generated html including theme css", async () => {
     const documentStateService = new DocumentStateService();
     const writes: string[] = [];

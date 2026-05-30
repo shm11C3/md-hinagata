@@ -90,7 +90,13 @@ export async function openCurrentMarkdownDocument<
     return undefined;
   }
 
-  const storedDocument = await opener.openTextDocument(state.uri);
+  let storedDocument: TDocument;
+  try {
+    storedDocument = await opener.openTextDocument(state.uri);
+  } catch {
+    return undefined;
+  }
+
   return storedDocument.languageId === "markdown" ? storedDocument : undefined;
 }
 
