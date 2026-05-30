@@ -176,6 +176,19 @@ workspace, opens `sample.md`, verifies the contributed commands, and runs the
 Preview, Copy HTML, and Create Theme from Default commands without packaging a
 VSIX.
 
+To run the packaged VSIX smoke test used for release QA:
+
+```bash
+pnpm run test:e2e:packaged
+```
+
+This builds the WASM bridge, builds a release extension bundle, packages the
+extension with `vsce package --no-dependencies`, installs the generated VSIX
+into a clean VS Code test environment, and runs the same E2E suite against the
+installed extension. Run this before release preparation PRs and whenever
+package contributions, activation events, VSIX contents, or active Markdown
+command targeting changes.
+
 To collect local test coverage:
 
 ```bash

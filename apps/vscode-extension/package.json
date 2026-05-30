@@ -117,6 +117,7 @@
     "test:coverage": "vitest run --coverage",
     "vscode:prepublish": "pnpm --workspace-root run prepare:vscode-extension-package",
     "test:e2e": "pnpm run build && pnpm run test:e2e:build && node --experimental-strip-types ./test/e2e/run.ts",
+    "test:e2e:packaged": "pnpm run build:release && pnpm run test:e2e:build && node --experimental-strip-types ./test/e2e/run.ts --packaged",
     "test:e2e:build": "node --experimental-strip-types ./test/e2e/esbuild.config.ts"
   },
   "devDependencies": {

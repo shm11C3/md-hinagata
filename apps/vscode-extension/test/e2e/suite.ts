@@ -16,25 +16,66 @@ const E2E_PERFORMANCE_SECTION_COUNT = 400;
 const E2E_PREVIEW_UPDATE_LIMIT_MS = 5_000;
 
 export async function run(): Promise<void> {
-  await activateExtension();
+  const extension = assertExtensionInstalled();
   await openBasicSample();
+  await assertExtensionActivatedByMarkdown(extension);
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
   await assertCommandsRefreshVisibleMarkdownWhenVisibleFileChangesWithoutFocus();
+  await assertThemeStateFollowsSwitchedMarkdownFiles();
   await assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive();
   await assertCommandsUseLastMarkdownWhenNoEditorIsActive();
   await assertLargePreviewUpdatePerformance();
   await assertCreateThemeFromDefaultCommandRuns();
 }
 
-async function activateExtension(): Promise<void> {
+function assertExtensionInstalled(): vscode.Extension<unknown> {
   const extension = vscode.extensions.all.find(
     (candidate) =>
       candidate.packageJSON?.name === "md-hinagata-vscode-extension",
   );
 
   assert.ok(extension, "md-hinagata extension should be installed.");
-  await extension.activate();
+  assertPackagedExtensionSource(extension);
+  return extension;
+}
+
+function assertPackagedExtensionSource(
+  extension: vscode.Extension<unknown>,
+): void {
+  if (process.env.MD_HINAGATA_E2E_MODE !== "packaged") {
+    return;
+  }
+
+  const sourcePath = process.env.MD_HINAGATA_EXTENSION_SOURCE_PATH;
+  assert.ok(sourcePath, "packaged E2E should provide the source path.");
+  assert.notEqual(
+    path.resolve(extension.extensionPath),
+    path.resolve(sourcePath),
+    "packaged E2E should load md-hinagata from an installed VSIX, not the source extensionDevelopmentPath.",
+  );
+
+  const extensionsDir = process.env.MD_HINAGATA_E2E_EXTENSIONS_DIR;
+  assert.ok(extensionsDir, "packaged E2E should provide the extensions dir.");
+  assert.ok(
+    isWithinDirectory(extensionsDir, extension.extensionPath),
+    `packaged E2E should install md-hinagata under ${extensionsDir}; actual path was ${extension.extensionPath}.`,
+  );
+}
+
+async function assertExtensionActivatedByMarkdown(
+  extension: vscode.Extension<unknown>,
+): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (extension.isActive) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail("md-hinagata should activate after opening a Markdown document.");
 }
 
 async function openBasicSample(): Promise<void> {
@@ -44,23 +85,17 @@ async function openBasicSample(): Promise<void> {
   const sampleUri = vscode.Uri.file(
     path.join(workspaceFolder.uri.fsPath, "sample.md"),
   );
-  const document = await vscode.workspace.openTextDocument(sampleUri);
-  assert.equal(document.languageId, "markdown");
-
-  await vscode.window.showTextDocument(document);
-  assert.equal(
-    vscode.window.activeTextEditor?.document.uri.fsPath,
-    sampleUri.fsPath,
-  );
+  const document = await showMarkdownDocument(sampleUri);
+  assert.equal(document.uri.fsPath, sampleUri.fsPath);
 }
 
 async function assertCommandsRegistered(): Promise<void> {
-  const commands = await vscode.commands.getCommands(true);
+  const commands = await vscode.commands.getCommands(false);
 
   for (const commandId of COMMAND_IDS) {
     assert.ok(
       commands.includes(commandId),
-      `${commandId} should be registered.`,
+      `${commandId} should be visible as a registered command.`,
     );
   }
 }
@@ -73,7 +108,9 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
   await openBasicSample();
 
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /\.basic-heading/,
+  });
   const expectedHtml = await readFile(
     path.join(workspaceFolder.uri.fsPath, "expected.html"),
     "utf8",
@@ -85,6 +122,90 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   );
   assert.match(generatedHtml, /<style>/);
   assert.match(generatedHtml, /\.basic-heading/);
+}
+
+async function assertThemeStateFollowsSwitchedMarkdownFiles(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await waitForNoActiveTextEditor();
+  await waitForNoVisibleTextEditors();
+
+  const basicUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "e2e-switch-basic.md"),
+  );
+  const releaseUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "e2e-switch-release.md"),
+  );
+  await writeFile(
+    basicUri.fsPath,
+    createThemeSwitchMarkdown({
+      title: "Basic switch smoke",
+      themeId: "basic",
+    }),
+    "utf8",
+  );
+  await writeFile(
+    releaseUri.fsPath,
+    createThemeSwitchMarkdown({
+      title: "Release switch smoke",
+      themeId: "release-note",
+    }),
+    "utf8",
+  );
+
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await showMarkdownDocument(basicUri);
+  await waitForSingleVisibleMarkdownEditor(basicUri.fsPath);
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  const basicHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /basic-heading--h1/,
+  });
+  assert.match(basicHtml, /basic-heading--h1/);
+  assert.doesNotMatch(basicHtml, /release-heading--h1/);
+
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await showMarkdownDocument(releaseUri);
+  await waitForSingleVisibleMarkdownEditor(releaseUri.fsPath);
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  const releaseHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /release-heading--h1/,
+  });
+  assert.match(releaseHtml, /release-heading--h1/);
+  assert.doesNotMatch(releaseHtml, /basic-heading--h1/);
+
+  const selectedTheme = await vscode.commands.executeCommand<string>(
+    "md-hinagata.selectTheme",
+    "docs-clean",
+  );
+  assert.equal(selectedTheme, "docs-clean");
+  const selectedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /docs-heading--h1/,
+  });
+  assert.match(selectedHtml, /docs-heading--h1/);
+
+  const basicDocument = await vscode.workspace.openTextDocument(basicUri);
+  const releaseDocument = await vscode.workspace.openTextDocument(releaseUri);
+  assert.match(basicDocument.getText(), /theme: basic/);
+  assert.match(releaseDocument.getText(), /theme: docs-clean/);
+
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await showMarkdownDocument(basicUri);
+  await waitForSingleVisibleMarkdownEditor(basicUri.fsPath);
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+  const switchedBackHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /basic-heading--h1/,
+  });
+  assert.match(switchedBackHtml, /basic-heading--h1/);
+  assert.doesNotMatch(switchedBackHtml, /docs-heading--h1/);
+
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await waitForNoActiveTextEditor();
+  await waitForNoVisibleTextEditors();
 }
 
 async function assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive(): Promise<void> {
@@ -168,6 +289,8 @@ async function assertCommandsRefreshVisibleMarkdownWhenVisibleFileChangesWithout
 }
 
 async function assertCommandsUseLastMarkdownWhenNoEditorIsActive(): Promise<void> {
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await waitForNoActiveTextEditor();
   await closePreviewTabs(PREVIEW_PANEL_TITLE);
   await openBasicSample();
   await vscode.commands.executeCommand("workbench.action.closeAllEditors");
@@ -194,6 +317,19 @@ async function waitForNoActiveTextEditor(): Promise<void> {
   }
 
   assert.fail("Expected no active text editor.");
+}
+
+async function waitForNoVisibleTextEditors(): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (vscode.window.visibleTextEditors.length === 0) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail("Expected no visible text editors.");
 }
 
 async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
@@ -264,7 +400,9 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
   await vscode.commands.executeCommand("md-hinagata.openPreview");
   await waitForPreviewTab(PREVIEW_PANEL_TITLE);
   await openBasicSample();
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /mh-heading--h1/,
+  });
   assert.match(generatedHtml, /mh-heading--h1/);
   assert.match(generatedHtml, /mh-codeblock/);
 }
@@ -300,17 +438,39 @@ async function assertLargePreviewUpdatePerformance(): Promise<void> {
   );
 
   await vscode.window.showTextDocument(document);
-  const generatedHtml = await copyActiveMarkdownGeneratedHtml();
+  const generatedHtml = await copyActiveMarkdownGeneratedHtml({
+    expectedPattern: /Section 400/,
+  });
   assert.match(generatedHtml, /Large benchmark document/);
   assert.match(generatedHtml, /Section 400/);
 }
 
-async function copyActiveMarkdownGeneratedHtml(): Promise<string> {
-  const copied = await vscode.commands.executeCommand<boolean>(
-    "md-hinagata.copyGeneratedHtml",
-  );
-  assert.equal(copied, true, "copyGeneratedHtml should report success.");
-  return vscode.env.clipboard.readText();
+async function copyActiveMarkdownGeneratedHtml(options: {
+  expectedPattern: RegExp;
+}): Promise<string> {
+  const deadline = Date.now() + 5_000;
+  let lastGeneratedHtml = "";
+  let lastCopied: boolean | undefined;
+
+  while (Date.now() < deadline) {
+    lastCopied = await vscode.commands.executeCommand<boolean>(
+      "md-hinagata.copyGeneratedHtml",
+    );
+    lastGeneratedHtml = await vscode.env.clipboard.readText();
+
+    if (
+      lastCopied === true &&
+      options.expectedPattern.test(lastGeneratedHtml)
+    ) {
+      return lastGeneratedHtml;
+    }
+
+    await delay(100);
+  }
+
+  assert.equal(lastCopied, true, "copyGeneratedHtml should report success.");
+  assert.match(lastGeneratedHtml, options.expectedPattern);
+  return lastGeneratedHtml;
 }
 
 async function showPlainTextDocumentBeside(fileName: string): Promise<void> {
@@ -326,6 +486,15 @@ async function showPlainTextDocumentBeside(fileName: string): Promise<void> {
     preview: false,
     viewColumn: vscode.ViewColumn.Beside,
   });
+}
+
+async function showMarkdownDocument(
+  uri: vscode.Uri,
+): Promise<vscode.TextDocument> {
+  const document = await vscode.workspace.openTextDocument(uri);
+  assert.equal(document.languageId, "markdown");
+  await vscode.window.showTextDocument(document, { preview: false });
+  return document;
 }
 
 async function waitForSingleVisibleMarkdownEditor(
@@ -400,6 +569,32 @@ function delay(delayMs: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, delayMs);
   });
+}
+
+function isWithinDirectory(parent: string, child: string): boolean {
+  const relativePath = path.relative(path.resolve(parent), path.resolve(child));
+  return relativePath === "" || !relativePath.startsWith("..");
+}
+
+function createThemeSwitchMarkdown({
+  themeId,
+  title,
+}: {
+  themeId: string;
+  title: string;
+}): string {
+  return [
+    "---",
+    "hinagata:",
+    `  theme: ${themeId}`,
+    "  output: fragment",
+    "---",
+    "",
+    `# ${title}`,
+    "",
+    "This fixture verifies that packaged smoke tests follow the active Markdown file.",
+    "",
+  ].join("\n");
 }
 
 function createLargeMarkdown(sectionCount: number): string {
