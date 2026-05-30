@@ -61,6 +61,16 @@ describe("extension manifest", () => {
     expect(rootPackage.scripts.bench).toBe(
       "pnpm --filter ./apps/vscode-extension run bench",
     );
+    expect(manifest.scripts["test:coverage"]).toBe("vitest run --coverage");
+    expect(rootPackage.scripts["test:coverage"]).toBe(
+      "pnpm run test:coverage:rust && pnpm run test:coverage:vitest",
+    );
+    expect(rootPackage.scripts["test:coverage:rust"]).toBe(
+      "cargo llvm-cov --workspace --summary-only",
+    );
+    expect(rootPackage.scripts["test:coverage:vitest"]).toBe(
+      "pnpm --filter md-hinagata-vscode-extension run test:coverage",
+    );
     expect(manifest.scripts["build:release"]).toBe(
       "node --experimental-strip-types ./esbuild.config.ts --release",
     );
