@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
+import { getFileUriDirectory } from "../utils/uri.js";
 import {
   type FrontmatterCompletion,
   getFrontmatterCompletions,
@@ -45,6 +46,7 @@ function createFrontmatterCompletionItemProvider(
       ) {
         const themes = await dependencies.themeResolver.listSelectableThemes({
           isWorkspaceTrusted: dependencies.workspaceTrustService.isTrusted,
+          documentDirectory: getFileUriDirectory(document.uri?.toString()),
         });
         if (token.isCancellationRequested) {
           return [];
