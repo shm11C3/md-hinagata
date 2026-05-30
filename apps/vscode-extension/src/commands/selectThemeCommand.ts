@@ -34,6 +34,7 @@ export interface ThemeSelectionNotifier {
 
 export interface SelectThemeOptions {
   document: ThemeSelectionDocument;
+  documentDirectory?: string;
   documentStateService: DocumentStateService;
   picker: ThemePicker;
   refreshActiveDocument(): Promise<unknown>;
@@ -48,6 +49,7 @@ export async function selectTheme(
 ): Promise<string | undefined> {
   const selectionOptions: ThemeSelectionOptions = {
     isWorkspaceTrusted: options.workspaceTrustService.isTrusted,
+    documentDirectory: options.documentDirectory,
   };
   const requestedThemeId = normalizeThemeId(options.themeId);
   const nextThemeId =

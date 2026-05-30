@@ -21,6 +21,14 @@ export interface ThemeResolverWorkspaceFolder {
 
 export interface ThemeSelectionOptions {
   isWorkspaceTrusted: boolean;
+  /**
+   * Absolute path of the directory that contains the active Markdown document.
+   * When provided (and the workspace is trusted), theme discovery also walks up
+   * from this directory looking for `.md-hinagata/themes`, so a document in a
+   * nested folder resolves its own workspace themes even when the opened
+   * workspace root is an ancestor.
+   */
+  documentDirectory?: string;
 }
 
 export interface ThemeResolutionOptions extends ThemeSelectionOptions {
@@ -113,16 +121,14 @@ export class ThemeResolver {
     const themes: SelectableTheme[] = [];
     const seenThemeIds = new Set<string>();
 
-    if (options.isWorkspaceTrusted) {
-      for (const workspaceFolder of this.getWorkspaceFolders(options)) {
-        await this.collectThemeDirectories(
-          path.join(workspaceFolder.uri.fsPath, WORKSPACE_THEME_DIRECTORY),
-          "workspace",
-          themes,
-          seenThemeIds,
-          options,
-        );
-      }
+    for (const workspaceThemeRoot of this.getWorkspaceThemeRoots(options)) {
+      await this.collectThemeDirectories(
+        workspaceThemeRoot,
+        "workspace",
+        themes,
+        seenThemeIds,
+        options,
+      );
     }
 
     for (const bundledThemeRoot of this.#bundledThemeRoots) {
@@ -149,26 +155,19 @@ export class ThemeResolver {
       };
     }
 
-    if (options.isWorkspaceTrusted) {
-      for (const workspaceFolder of this.getWorkspaceFolders(options)) {
-        const workspaceThemeRoot = path.join(
-          workspaceFolder.uri.fsPath,
-          WORKSPACE_THEME_DIRECTORY,
-          themeId,
-        );
-        const workspaceTheme = await this.loadThemeFromRoot(
-          workspaceThemeRoot,
-          "workspace",
-          themeId,
-          false,
-        );
-        diagnostics.push(...workspaceTheme.diagnostics);
-        if (workspaceTheme.theme !== undefined) {
-          return {
-            diagnostics,
-            theme: workspaceTheme.theme,
-          };
-        }
+    for (const workspaceThemeRoot of this.getWorkspaceThemeRoots(options)) {
+      const workspaceTheme = await this.loadThemeFromRoot(
+        path.join(workspaceThemeRoot, themeId),
+        "workspace",
+        themeId,
+        false,
+      );
+      diagnostics.push(...workspaceTheme.diagnostics);
+      if (workspaceTheme.theme !== undefined) {
+        return {
+          diagnostics,
+          theme: workspaceTheme.theme,
+        };
       }
     }
 
@@ -217,6 +216,37 @@ export class ThemeResolver {
     }
 
     return this.#workspaceFolders ?? [];
+  }
+
+  private getWorkspaceThemeRoots(options: ThemeResolutionOptions): string[] {
+    if (!options.isWorkspaceTrusted) {
+      return [];
+    }
+
+    const workspaceFolders = this.getWorkspaceFolders(options);
+    const themeRoots: string[] = [];
+
+    const documentDirectory = normalizeDirectory(options.documentDirectory);
+    if (documentDirectory !== undefined) {
+      const boundary = findContainingFolder(
+        workspaceFolders,
+        documentDirectory,
+      );
+      for (const directory of ancestorDirectories(
+        documentDirectory,
+        boundary,
+      )) {
+        themeRoots.push(path.join(directory, WORKSPACE_THEME_DIRECTORY));
+      }
+    }
+
+    for (const workspaceFolder of workspaceFolders) {
+      themeRoots.push(
+        path.join(workspaceFolder.uri.fsPath, WORKSPACE_THEME_DIRECTORY),
+      );
+    }
+
+    return uniquePaths(themeRoots);
   }
 
   private async collectThemeDirectories(
@@ -648,6 +678,72 @@ function uniquePaths(paths: readonly string[]): string[] {
   }
 
   return [...unique];
+}
+
+function normalizeDirectory(directory: string | undefined): string | undefined {
+  if (directory === undefined || directory.length === 0) {
+    return undefined;
+  }
+
+  return path.resolve(directory);
+}
+
+/**
+ * Returns the deepest workspace folder that contains `directory`, used as the
+ * upper boundary for the ancestor walk so theme discovery never climbs above
+ * the opened workspace root. Returns `undefined` when the document lives
+ * outside every workspace folder (for example a single opened file).
+ */
+function findContainingFolder(
+  workspaceFolders: readonly ThemeResolverWorkspaceFolder[],
+  directory: string,
+): string | undefined {
+  let containingFolder: string | undefined;
+  for (const workspaceFolder of workspaceFolders) {
+    const folderPath = path.resolve(workspaceFolder.uri.fsPath);
+    if (
+      directory === folderPath ||
+      directory.startsWith(`${folderPath}${path.sep}`)
+    ) {
+      if (
+        containingFolder === undefined ||
+        folderPath.length > containingFolder.length
+      ) {
+        containingFolder = folderPath;
+      }
+    }
+  }
+
+  return containingFolder;
+}
+
+/**
+ * Lists `startDirectory` and each ancestor up to (and including) `boundary`,
+ * nearest first. Without a boundary the walk stops at the filesystem root, so
+ * documents opened without a workspace folder still discover the nearest
+ * `.md-hinagata/themes`.
+ */
+function ancestorDirectories(
+  startDirectory: string,
+  boundary: string | undefined,
+): string[] {
+  const directories: string[] = [];
+  let current = startDirectory;
+  while (true) {
+    directories.push(current);
+    if (boundary !== undefined && current === boundary) {
+      break;
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) {
+      break;
+    }
+
+    current = parent;
+  }
+
+  return directories;
 }
 
 function isRepositoryExtensionPackageRoot(extensionRootPath: string): boolean {

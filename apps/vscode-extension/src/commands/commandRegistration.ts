@@ -7,6 +7,7 @@ import {
 import type { DocumentTransformService } from "../services/documentTransformService.js";
 import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
+import { getFileUriDirectory } from "../utils/uri.js";
 import {
   hasCurrentMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
@@ -143,6 +144,7 @@ export function registerCommandsWithApi(
               return vscodeApi.workspace.applyEdit(edit);
             },
           },
+          documentDirectory: getFileUriDirectory(document.uri.toString()),
           documentStateService: dependencies.documentStateService,
           notifier: vscodeApi.window,
           picker: {
