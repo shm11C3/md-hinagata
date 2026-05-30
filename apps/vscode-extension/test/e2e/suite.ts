@@ -20,6 +20,7 @@ export async function run(): Promise<void> {
   await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
+  await assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive();
   await assertCommandsUseLastMarkdownWhenNoEditorIsActive();
   await assertLargePreviewUpdatePerformance();
   await assertCreateThemeFromDefaultCommandRuns();
@@ -85,6 +86,35 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   assert.match(generatedHtml, /\.basic-heading/);
 }
 
+async function assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
+  const sampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "sample.md"),
+  );
+  await showPlainTextDocumentBeside("visible-markdown-notes.txt");
+  assert.equal(
+    vscode.window.activeTextEditor?.document.languageId,
+    "plaintext",
+  );
+  await waitForSingleVisibleMarkdownEditor(sampleUri.fsPath);
+
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+
+  const selectedTheme = await vscode.commands.executeCommand<string>(
+    "md-hinagata.selectTheme",
+    "default",
+  );
+  assert.equal(selectedTheme, "default");
+
+  const sampleDocument = await vscode.workspace.openTextDocument(sampleUri);
+  assert.match(sampleDocument.getText(), /theme: default/);
+}
+
 async function assertCommandsUseLastMarkdownWhenNoEditorIsActive(): Promise<void> {
   await closePreviewTabs(PREVIEW_PANEL_TITLE);
   await openBasicSample();
@@ -119,7 +149,17 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
   assert.ok(workspaceFolder, "E2E test workspace should be open.");
 
   const createdThemeId = "e2e-theme";
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
   await openBasicSample();
+  const sampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "sample.md"),
+  );
+  await showPlainTextDocumentBeside("create-theme-notes.txt");
+  assert.equal(
+    vscode.window.activeTextEditor?.document.languageId,
+    "plaintext",
+  );
+  await waitForSingleVisibleMarkdownEditor(sampleUri.fsPath);
   await vscode.commands.executeCommand("md-hinagata.createThemeFromDefault", {
     themeId: createdThemeId,
     workspaceFolderUri: workspaceFolder.uri.toString(),
@@ -165,9 +205,6 @@ async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
     );
   }
 
-  const sampleUri = vscode.Uri.file(
-    path.join(workspaceFolder.uri.fsPath, "sample.md"),
-  );
   const sampleDocument = await vscode.workspace.openTextDocument(sampleUri);
   assert.match(sampleDocument.getText(), /theme: e2e-theme/);
 
@@ -222,6 +259,43 @@ async function copyActiveMarkdownGeneratedHtml(): Promise<string> {
   );
   assert.equal(copied, true, "copyGeneratedHtml should report success.");
   return vscode.env.clipboard.readText();
+}
+
+async function showPlainTextDocumentBeside(fileName: string): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  const notesUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, fileName),
+  );
+  await writeFile(notesUri.fsPath, "plain text notes\n", "utf8");
+  const notesDocument = await vscode.workspace.openTextDocument(notesUri);
+  await vscode.window.showTextDocument(notesDocument, {
+    preview: false,
+    viewColumn: vscode.ViewColumn.Beside,
+  });
+}
+
+async function waitForSingleVisibleMarkdownEditor(
+  fsPath: string,
+): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    const markdownUris = new Set(
+      vscode.window.visibleTextEditors
+        .filter((editor) => editor.document.languageId === "markdown")
+        .map((editor) => editor.document.uri.fsPath),
+    );
+    if (markdownUris.size === 1 && markdownUris.has(fsPath)) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail(
+    `Markdown editor '${fsPath}' was not the only visible Markdown editor.`,
+  );
 }
 
 async function closePreviewTabs(title: string): Promise<void> {
