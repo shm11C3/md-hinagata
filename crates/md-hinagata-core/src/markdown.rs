@@ -168,7 +168,64 @@ fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String 
         NodeValue::Emph => format!("<em>{}</em>", inline_html(node, options)),
         NodeValue::Strong => format!("<strong>{}</strong>", inline_html(node, options)),
         NodeValue::HtmlInline(html) => raw_or_escaped_html(html, options),
+        NodeValue::Link(link) => format!(
+            "<a href=\"{}\"{}>{}</a>",
+            sanitized_url(&link.url),
+            title_attr(&link.title),
+            inline_html(node, options)
+        ),
+        NodeValue::Image(image) => format!(
+            "<img src=\"{}\" alt=\"{}\"{} />",
+            sanitized_url(&image.url),
+            escape_html(&text_content(node)),
+            title_attr(&image.title)
+        ),
         _ => inline_html(node, options),
+    }
+}
+
+/// Escape a link/image URL for an HTML attribute, neutralizing dangerous
+/// schemes to an empty string. This mirrors comrak's default sanitization
+/// (used by the block fallback path) so the inline path stays consistent:
+/// `javascript:`, `vbscript:`, and `file:` are stripped, and `data:` is
+/// allowed only for the image MIME types comrak permits.
+fn sanitized_url(url: &str) -> String {
+    if is_safe_url(url) {
+        escape_html(url)
+    } else {
+        String::new()
+    }
+}
+
+fn is_safe_url(url: &str) -> bool {
+    let lower = url.trim_start().to_ascii_lowercase();
+
+    if ["javascript:", "vbscript:", "file:"]
+        .iter()
+        .any(|scheme| lower.starts_with(scheme))
+    {
+        return false;
+    }
+
+    if lower.starts_with("data:") {
+        return [
+            "data:image/png",
+            "data:image/gif",
+            "data:image/jpeg",
+            "data:image/webp",
+        ]
+        .iter()
+        .any(|prefix| lower.starts_with(prefix));
+    }
+
+    true
+}
+
+fn title_attr(title: &str) -> String {
+    if title.is_empty() {
+        String::new()
+    } else {
+        format!(" title=\"{}\"", escape_html(title))
     }
 }
 
