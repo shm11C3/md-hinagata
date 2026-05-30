@@ -8,12 +8,10 @@ import type { DocumentTransformService } from "../services/documentTransformServ
 import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
-  getOptionalActiveMarkdownDocument,
-  getVisibleMarkdownDocument,
   hasCurrentMarkdownDocument,
-  hasStoredMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
   openCurrentMarkdownDocument,
+  prepareCurrentMarkdownDocument,
 } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
@@ -212,31 +210,4 @@ export function registerCommands(
       },
     ),
   );
-}
-
-function prepareCurrentMarkdownDocument(
-  window: Pick<typeof vscode.window, "activeTextEditor" | "visibleTextEditors">,
-  documentStateService: DocumentStateService,
-): boolean {
-  const activeDocument = getOptionalActiveMarkdownDocument(window);
-  if (activeDocument !== undefined) {
-    documentStateService.setActiveDocument(
-      createActiveDocumentSnapshot(activeDocument),
-    );
-    return true;
-  }
-
-  if (hasStoredMarkdownDocument(documentStateService)) {
-    return true;
-  }
-
-  const visibleDocument = getVisibleMarkdownDocument(window);
-  if (visibleDocument === undefined) {
-    return false;
-  }
-
-  documentStateService.setActiveDocument(
-    createActiveDocumentSnapshot(visibleDocument),
-  );
-  return true;
 }
