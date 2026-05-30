@@ -4,6 +4,10 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 
 ## 0.2.3
 
+### Fixed
+
+- Keep md-hinagata commands usable when a Markdown editor is visible but no longer active. ([#148](https://github.com/shm11C3/md-hinagata/pull/148))
+
 ### Maintenance
 
 - Shrink wasm bundle with size profile and wasm-opt. ([#143](https://github.com/shm11C3/md-hinagata/pull/143))
