@@ -6,7 +6,7 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 
 ### Fixed
 
-- Keep md-hinagata commands usable when a Markdown editor is visible but no longer active. ([#148](https://github.com/shm11C3/md-hinagata/pull/148))
+- Fix md-hinagata commands so visible Markdown documents remain usable when editor focus moves elsewhere. ([#148](https://github.com/shm11C3/md-hinagata/pull/148))
 
 ### Maintenance
 
