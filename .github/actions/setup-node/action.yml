@@ -20,7 +20,11 @@ runs:
       with:
         # Node 22.6.0 introduced --experimental-strip-types; Rolldown native bindings need >=22.12.0.
         node-version: ${{ inputs.node-version }}
-        cache: pnpm
+        # Only cache the pnpm store when we actually install. Jobs that skip
+        # install never populate the store, so the post-run cache save fails
+        # with "Path(s) ... do(es) not exist" whenever the lockfile hash
+        # changes the cache key.
+        cache: ${{ inputs.install-deps == 'true' && 'pnpm' || '' }}
 
     - name: Install dependencies
       if: inputs.install-deps == 'true'
