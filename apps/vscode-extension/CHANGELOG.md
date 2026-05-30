@@ -2,6 +2,24 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.1
+
+### Fixed
+
+- Use default theme for Markdown without hinagata.theme (#111). ([#132](https://github.com/shm11C3/md-hinagata/pull/132))
+- Render href/src for inline links and images. ([#140](https://github.com/shm11C3/md-hinagata/pull/140))
+
+### Documentation
+
+- Add VS Code Marketplace badge to READMEs. ([#131](https://github.com/shm11C3/md-hinagata/pull/131))
+- Fix Marketplace 404 on extension README example links. ([#133](https://github.com/shm11C3/md-hinagata/pull/133))
+- Add ADR 0004 for inline element templating. ([#138](https://github.com/shm11C3/md-hinagata/pull/138))
+
+### Maintenance
+
+- Stop extension changelog failing once on PR open. ([#139](https://github.com/shm11C3/md-hinagata/pull/139))
+- Restore pull-requests:write for the changelog label job. ([#141](https://github.com/shm11C3/md-hinagata/pull/141))
+
 ## 0.2.0
 
 ### Maintenance
