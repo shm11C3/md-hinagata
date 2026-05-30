@@ -1,3 +1,4 @@
+import { getFileUriDirectory } from "../utils/uri.js";
 import type { DiagnosticMessage } from "./diagnosticsService.js";
 import type {
   DocumentState,
@@ -19,7 +20,7 @@ const TRANSFORM_OPTIONS = {
 export interface DocumentTransformThemeResolver {
   resolveTheme(
     themeId: string,
-    options: { isWorkspaceTrusted: boolean },
+    options: { isWorkspaceTrusted: boolean; documentDirectory?: string },
   ): Promise<ThemeResolution>;
 }
 
@@ -52,6 +53,10 @@ export class DocumentTransformService {
       uri: state.uri,
     };
     const refreshSequence = ++this.#refreshSequence;
+    // Theme discovery walks up from the document's directory, so a document in
+    // a nested folder resolves its own workspace themes even when the opened
+    // workspace root is an ancestor (#160).
+    const documentDirectory = getFileUriDirectory(source.uri);
     // A document without `hinagata.theme` must always resolve to the bundled
     // default theme. Deriving this from `state.currentTheme` would leak the
     // previously active document's theme into theme-less documents (#111).
@@ -61,7 +66,11 @@ export class DocumentTransformService {
       DEFAULT_THEME_ID,
     ]);
     const resolutions = new Map<string, ThemeResolution>();
-    await this.resolveThemeCandidates(candidateThemeIds, resolutions);
+    await this.resolveThemeCandidates(
+      candidateThemeIds,
+      resolutions,
+      documentDirectory,
+    );
 
     let result = await this.transformWithThemeCandidates(
       source.markdown,
@@ -79,7 +88,11 @@ export class DocumentTransformService {
         frontmatterThemeId,
         ...candidateThemeIds,
       ]);
-      await this.resolveThemeCandidates([frontmatterThemeId], resolutions);
+      await this.resolveThemeCandidates(
+        [frontmatterThemeId],
+        resolutions,
+        documentDirectory,
+      );
       result = await this.transformWithThemeCandidates(
         source.markdown,
         defaultThemeId,
@@ -111,6 +124,7 @@ export class DocumentTransformService {
   private async resolveThemeCandidates(
     themeIds: readonly string[],
     resolutions: Map<string, ThemeResolution>,
+    documentDirectory: string | undefined,
   ): Promise<void> {
     for (const themeId of themeIds) {
       if (resolutions.has(themeId)) {
@@ -121,6 +135,7 @@ export class DocumentTransformService {
         themeId,
         await this.themeResolver.resolveTheme(themeId, {
           isWorkspaceTrusted: this.workspaceTrustService.isTrusted,
+          documentDirectory,
         }),
       );
     }

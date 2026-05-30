@@ -393,6 +393,149 @@ describe("ThemeResolver", () => {
       },
     ]);
   });
+
+  it("discovers themes relative to the document directory under the workspace root", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: { h1: "<h1>bundled {{text}}</h1>" },
+    });
+    const documentDirectory = path.join(workspaceRoot, "docs", "guide");
+    await writeTheme(
+      path.join(documentDirectory, ".md-hinagata", "themes", "nested"),
+      { id: "nested", templates: { h1: "<h1>nested {{text}}</h1>" } },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      { workspaceFolders: [{ uri: { fsPath: workspaceRoot } }] },
+    );
+
+    const result = await resolver.resolveTheme("nested", {
+      isWorkspaceTrusted: true,
+      documentDirectory,
+    });
+
+    expect(result.theme?.source).toBe("workspace");
+    expect(result.theme?.themePackage.templates.h1).toBe(
+      "<h1>nested {{text}}</h1>",
+    );
+  });
+
+  it("prefers the nearest document-relative theme over the workspace root theme", async () => {
+    await writeTheme(
+      path.join(workspaceRoot, ".md-hinagata", "themes", "shared"),
+      { id: "shared", templates: { h1: "<h1>root {{text}}</h1>" } },
+    );
+    const documentDirectory = path.join(workspaceRoot, "docs", "guide");
+    await writeTheme(
+      path.join(documentDirectory, ".md-hinagata", "themes", "shared"),
+      { id: "shared", templates: { h1: "<h1>nested {{text}}</h1>" } },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      { workspaceFolders: [{ uri: { fsPath: workspaceRoot } }] },
+    );
+
+    const result = await resolver.resolveTheme("shared", {
+      isWorkspaceTrusted: true,
+      documentDirectory,
+    });
+
+    expect(result.theme?.themePackage.templates.h1).toBe(
+      "<h1>nested {{text}}</h1>",
+    );
+  });
+
+  it("does not discover document-relative themes in untrusted workspaces", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: { h1: "<h1>bundled {{text}}</h1>" },
+    });
+    const documentDirectory = path.join(workspaceRoot, "docs", "guide");
+    await writeTheme(
+      path.join(documentDirectory, ".md-hinagata", "themes", "nested"),
+      { id: "nested", templates: { h1: "<h1>nested {{text}}</h1>" } },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      { workspaceFolders: [{ uri: { fsPath: workspaceRoot } }] },
+    );
+
+    const result = await resolver.resolveTheme("nested", {
+      isWorkspaceTrusted: false,
+      documentDirectory,
+    });
+
+    expect(result.theme).toBeUndefined();
+  });
+
+  it("discovers document-relative themes when the document is outside every workspace folder", async () => {
+    const documentDirectory = path.join(workspaceRoot, "standalone");
+    await writeTheme(
+      path.join(documentDirectory, ".md-hinagata", "themes", "solo"),
+      { id: "solo", templates: { h1: "<h1>solo {{text}}</h1>" } },
+    );
+    const resolver = new ThemeResolver({ fsPath: extensionRoot });
+
+    const result = await resolver.resolveTheme("solo", {
+      isWorkspaceTrusted: true,
+      documentDirectory,
+    });
+
+    expect(result.theme?.source).toBe("workspace");
+    expect(result.theme?.themePackage.templates.h1).toBe(
+      "<h1>solo {{text}}</h1>",
+    );
+  });
+
+  it("lists document-relative themes before the workspace root themes", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: { h1: "<h1>bundled {{text}}</h1>" },
+    });
+    await writeTheme(
+      path.join(workspaceRoot, ".md-hinagata", "themes", "root-theme"),
+      { id: "root-theme", templates: { h1: "<h1>root {{text}}</h1>" } },
+    );
+    const documentDirectory = path.join(workspaceRoot, "docs", "guide");
+    await writeTheme(
+      path.join(documentDirectory, ".md-hinagata", "themes", "nested"),
+      { id: "nested", templates: { h1: "<h1>nested {{text}}</h1>" } },
+    );
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      { workspaceFolders: [{ uri: { fsPath: workspaceRoot } }] },
+    );
+
+    const themes = await resolver.listSelectableThemes({
+      isWorkspaceTrusted: true,
+      documentDirectory,
+    });
+
+    const ids = themes.map((theme) => theme.id);
+    expect(ids).toContain("nested");
+    expect(ids).toContain("root-theme");
+    expect(ids).toContain("default");
+    expect(ids.indexOf("nested")).toBeLessThan(ids.indexOf("root-theme"));
+  });
+
+  it("does not climb above the containing workspace folder", async () => {
+    await writeTheme(path.join(bundledThemeRoot, "default"), {
+      templates: { h1: "<h1>bundled {{text}}</h1>" },
+    });
+    await writeTheme(
+      path.join(testRoot, ".md-hinagata", "themes", "ancestor"),
+      { id: "ancestor", templates: { h1: "<h1>ancestor {{text}}</h1>" } },
+    );
+    const documentDirectory = path.join(workspaceRoot, "docs", "guide");
+    const resolver = new ThemeResolver(
+      { fsPath: extensionRoot },
+      { workspaceFolders: [{ uri: { fsPath: workspaceRoot } }] },
+    );
+
+    const result = await resolver.resolveTheme("ancestor", {
+      isWorkspaceTrusted: true,
+      documentDirectory,
+    });
+
+    expect(result.theme).toBeUndefined();
+  });
 });
 
 async function writeTheme(
