@@ -2,11 +2,21 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.3
+
+### Fixed
+
+- Extend the stored-state fallback from #144 so md-hinagata commands resolve the visible Markdown document when editor focus moves elsewhere. ([#148](https://github.com/shm11C3/md-hinagata/pull/148))
+
+### Maintenance
+
+- Shrink wasm bundle with size profile and wasm-opt. ([#143](https://github.com/shm11C3/md-hinagata/pull/143))
+
 ## 0.2.2
 
 ### Fixed
 
-- Keep markdown commands usable without editor focus. ([#144](https://github.com/shm11C3/md-hinagata/pull/144))
+- Keep Markdown commands usable without editor focus. ([#144](https://github.com/shm11C3/md-hinagata/pull/144))
 
 ## 0.2.1
 
