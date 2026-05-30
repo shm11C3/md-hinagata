@@ -2,6 +2,12 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.2
+
+### Fixed
+
+- Keep markdown commands usable without editor focus. ([#144](https://github.com/shm11C3/md-hinagata/pull/144))
+
 ## 0.2.1
 
 ### Fixed
