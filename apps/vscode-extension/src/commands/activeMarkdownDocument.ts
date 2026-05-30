@@ -92,8 +92,8 @@ export function hasCurrentMarkdownDocument(
 ): boolean {
   return (
     getOptionalActiveMarkdownDocument(window) !== undefined ||
-    hasStoredMarkdownDocument(stateService) ||
-    getVisibleMarkdownDocument(window) !== undefined
+    getVisibleMarkdownDocument(window) !== undefined ||
+    hasStoredMarkdownDocument(stateService)
   );
 }
 
@@ -112,13 +112,18 @@ export async function openCurrentMarkdownDocument<
     return activeDocument;
   }
 
+  const visibleDocument = getVisibleMarkdownDocument(window);
+  if (visibleDocument !== undefined) {
+    return visibleDocument;
+  }
+
   const state = stateService.getState();
   if (isStoredMarkdownState(state) && state.uri !== undefined) {
     let storedDocument: TDocument;
     try {
       storedDocument = await opener.openTextDocument(state.uri);
     } catch {
-      return getVisibleMarkdownDocument(window);
+      return undefined;
     }
 
     if (storedDocument.languageId === "markdown") {
@@ -126,13 +131,60 @@ export async function openCurrentMarkdownDocument<
     }
   }
 
-  return getVisibleMarkdownDocument(window);
+  return undefined;
 }
 
 export function hasStoredMarkdownDocument(
   stateService: CurrentMarkdownStateService,
 ): boolean {
   return isStoredMarkdownState(stateService.getState());
+}
+
+export function prepareCurrentMarkdownDocument<
+  TDocument extends TextDocumentLike = TextDocumentLike,
+>(
+  window: Pick<
+    ActiveWindowLike<TDocument>,
+    "activeTextEditor" | "visibleTextEditors"
+  >,
+  stateService: {
+    getState(): CurrentMarkdownState;
+    setActiveDocument(document: {
+      languageId: string;
+      markdown: string;
+      uri: string;
+    }): unknown;
+  },
+): boolean {
+  const activeDocument = getOptionalActiveMarkdownDocument(window);
+  if (activeDocument !== undefined) {
+    stateService.setActiveDocument(createDocumentSnapshot(activeDocument));
+    return true;
+  }
+
+  const visibleDocument = getVisibleMarkdownDocument(window);
+  if (visibleDocument !== undefined) {
+    stateService.setActiveDocument(createDocumentSnapshot(visibleDocument));
+    return true;
+  }
+
+  if (hasStoredMarkdownDocument(stateService)) {
+    return true;
+  }
+
+  return false;
+}
+
+function createDocumentSnapshot(document: TextDocumentLike): {
+  languageId: string;
+  markdown: string;
+  uri: string;
+} {
+  return {
+    languageId: document.languageId,
+    markdown: document.getText(),
+    uri: document.uri.toString(),
+  };
 }
 
 function isStoredMarkdownState(state: CurrentMarkdownState): boolean {

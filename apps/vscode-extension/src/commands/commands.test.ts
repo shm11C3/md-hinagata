@@ -19,6 +19,7 @@ import {
   hasCurrentMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
   openCurrentMarkdownDocument,
+  prepareCurrentMarkdownDocument,
 } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
@@ -306,7 +307,7 @@ describe("extension commands", () => {
     ).resolves.toBe(visibleDocument);
   });
 
-  it("prefers stored Markdown state over a visible Markdown fallback", async () => {
+  it("uses the single visible Markdown document before stored state", async () => {
     const documentStateService = new DocumentStateService();
     const storedDocument = {
       getText: () => "# Stored",
@@ -347,7 +348,136 @@ describe("extension commands", () => {
           openTextDocument: async () => storedDocument,
         },
       ),
+    ).resolves.toBe(visibleDocument);
+  });
+
+  it("uses stored Markdown state when visible Markdown documents are ambiguous", async () => {
+    const documentStateService = new DocumentStateService();
+    const storedDocument = {
+      getText: () => "# Stored",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///stored.md",
+      },
+    };
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Stored",
+      uri: "file:///stored.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [
+            {
+              document: {
+                getText: () => "# Visible 1",
+                languageId: "markdown",
+                uri: {
+                  toString: () => "file:///visible-1.md",
+                },
+              },
+            },
+            {
+              document: {
+                getText: () => "# Visible 2",
+                languageId: "markdown",
+                uri: {
+                  toString: () => "file:///visible-2.md",
+                },
+              },
+            },
+          ],
+        },
+        documentStateService,
+        {
+          openTextDocument: async () => storedDocument,
+        },
+      ),
     ).resolves.toBe(storedDocument);
+  });
+
+  it("refreshes stored state from a single visible Markdown document", () => {
+    const documentStateService = new DocumentStateService();
+    const visibleDocument = {
+      getText: () => "---\nhinagata:\n  theme: basic\n---\n# Visible",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///visible.md",
+      },
+    };
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
+      uri: "file:///stored.md",
+    });
+
+    expect(
+      prepareCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [{ document: visibleDocument }],
+        },
+        documentStateService,
+      ),
+    ).toBe(true);
+
+    expect(documentStateService.getState()).toMatchObject({
+      markdown: visibleDocument.getText(),
+      status: "active",
+      uri: "file:///visible.md",
+    });
+  });
+
+  it("keeps stored state as a fallback when no Markdown editor is visible", () => {
+    const documentStateService = new DocumentStateService();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
+      uri: "file:///stored.md",
+    });
+
+    expect(
+      prepareCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [],
+        },
+        documentStateService,
+      ),
+    ).toBe(true);
+
+    expect(documentStateService.getState()).toMatchObject({
+      markdown: "---\nhinagata:\n  theme: default\n---\n# Stored",
+      status: "active",
+      uri: "file:///stored.md",
+    });
   });
 
   it("copies the latest generated html including theme css", async () => {

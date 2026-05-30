@@ -20,6 +20,7 @@ export async function run(): Promise<void> {
   await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
+  await assertCommandsRefreshVisibleMarkdownWhenVisibleFileChangesWithoutFocus();
   await assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive();
   await assertCommandsUseLastMarkdownWhenNoEditorIsActive();
   await assertLargePreviewUpdatePerformance();
@@ -113,6 +114,57 @@ async function assertCommandsUseVisibleMarkdownWhenAnotherEditorIsActive(): Prom
 
   const sampleDocument = await vscode.workspace.openTextDocument(sampleUri);
   assert.match(sampleDocument.getText(), /theme: default/);
+}
+
+async function assertCommandsRefreshVisibleMarkdownWhenVisibleFileChangesWithoutFocus(): Promise<void> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  assert.ok(workspaceFolder, "E2E test workspace should be open.");
+
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await openBasicSample();
+  const sampleUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "sample.md"),
+  );
+  await showPlainTextDocumentBeside("switch-theme-notes.txt");
+  assert.equal(
+    vscode.window.activeTextEditor?.document.languageId,
+    "plaintext",
+  );
+  await waitForSingleVisibleMarkdownEditor(sampleUri.fsPath);
+
+  const knowledgeBaseUri = vscode.Uri.file(
+    path.join(workspaceFolder.uri.fsPath, "knowledge-base.md"),
+  );
+  const knowledgeBaseDocument =
+    await vscode.workspace.openTextDocument(knowledgeBaseUri);
+  await vscode.window.showTextDocument(knowledgeBaseDocument, {
+    preserveFocus: true,
+    preview: false,
+    viewColumn: vscode.ViewColumn.One,
+  });
+  assert.equal(
+    vscode.window.activeTextEditor?.document.languageId,
+    "plaintext",
+  );
+  await waitForSingleVisibleMarkdownEditor(knowledgeBaseUri.fsPath);
+
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+
+  const selectedTheme = await vscode.commands.executeCommand<string>(
+    "md-hinagata.selectTheme",
+    "default",
+  );
+  assert.equal(selectedTheme, "default");
+
+  const updatedKnowledgeBaseDocument =
+    await vscode.workspace.openTextDocument(knowledgeBaseUri);
+  assert.match(updatedKnowledgeBaseDocument.getText(), /theme: default/);
+
+  const sampleDocument = await vscode.workspace.openTextDocument(sampleUri);
+  assert.match(sampleDocument.getText(), /theme: basic/);
+
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
 }
 
 async function assertCommandsUseLastMarkdownWhenNoEditorIsActive(): Promise<void> {
