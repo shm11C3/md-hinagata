@@ -10,3 +10,12 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/shm11C3/md-hinagata"
+
+# Size-first release profile. The wasm binary is the single largest item in the
+# VSIX, so optimize for size over speed and drop everything we do not ship.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
