@@ -2,6 +2,12 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.3
+
+### Maintenance
+
+- Shrink wasm bundle with size profile and wasm-opt. ([#143](https://github.com/shm11C3/md-hinagata/pull/143))
+
 ## 0.2.2
 
 ### Fixed
