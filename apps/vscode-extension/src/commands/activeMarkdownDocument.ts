@@ -16,6 +16,7 @@ export interface ActiveWindowLike<
   TDocument extends TextDocumentLike = TextDocumentLike,
 > {
   activeTextEditor: ActiveTextEditorLike<TDocument> | undefined;
+  visibleTextEditors?: readonly ActiveTextEditorLike<TDocument>[];
   showInformationMessage(message: string): unknown;
 }
 
@@ -63,20 +64,46 @@ export function getOptionalActiveMarkdownDocument<
   return document;
 }
 
+export function getVisibleMarkdownDocument<
+  TDocument extends TextDocumentLike = TextDocumentLike,
+>(
+  window: Pick<ActiveWindowLike<TDocument>, "visibleTextEditors">,
+): TDocument | undefined {
+  const markdownDocumentsByUri = new Map<string, TDocument>();
+  for (const editor of window.visibleTextEditors ?? []) {
+    const document = editor.document;
+    if (document.languageId !== "markdown") {
+      continue;
+    }
+
+    markdownDocumentsByUri.set(document.uri.toString(), document);
+  }
+
+  if (markdownDocumentsByUri.size !== 1) {
+    return undefined;
+  }
+
+  return [...markdownDocumentsByUri.values()][0];
+}
+
 export function hasCurrentMarkdownDocument(
-  window: Pick<ActiveWindowLike, "activeTextEditor">,
+  window: Pick<ActiveWindowLike, "activeTextEditor" | "visibleTextEditors">,
   stateService: CurrentMarkdownStateService,
 ): boolean {
   return (
     getOptionalActiveMarkdownDocument(window) !== undefined ||
-    hasStoredMarkdownDocument(stateService)
+    hasStoredMarkdownDocument(stateService) ||
+    getVisibleMarkdownDocument(window) !== undefined
   );
 }
 
 export async function openCurrentMarkdownDocument<
   TDocument extends TextDocumentLike = TextDocumentLike,
 >(
-  window: Pick<ActiveWindowLike<TDocument>, "activeTextEditor">,
+  window: Pick<
+    ActiveWindowLike<TDocument>,
+    "activeTextEditor" | "visibleTextEditors"
+  >,
   stateService: CurrentMarkdownStateService,
   opener: MarkdownDocumentOpener<TDocument>,
 ): Promise<TDocument | undefined> {
@@ -86,24 +113,29 @@ export async function openCurrentMarkdownDocument<
   }
 
   const state = stateService.getState();
-  if (!hasStoredMarkdownDocument(stateService) || state.uri === undefined) {
-    return undefined;
+  if (isStoredMarkdownState(state) && state.uri !== undefined) {
+    let storedDocument: TDocument;
+    try {
+      storedDocument = await opener.openTextDocument(state.uri);
+    } catch {
+      return getVisibleMarkdownDocument(window);
+    }
+
+    if (storedDocument.languageId === "markdown") {
+      return storedDocument;
+    }
   }
 
-  let storedDocument: TDocument;
-  try {
-    storedDocument = await opener.openTextDocument(state.uri);
-  } catch {
-    return undefined;
-  }
-
-  return storedDocument.languageId === "markdown" ? storedDocument : undefined;
+  return getVisibleMarkdownDocument(window);
 }
 
-function hasStoredMarkdownDocument(
+export function hasStoredMarkdownDocument(
   stateService: CurrentMarkdownStateService,
 ): boolean {
-  const state = stateService.getState();
+  return isStoredMarkdownState(stateService.getState());
+}
+
+function isStoredMarkdownState(state: CurrentMarkdownState): boolean {
   return (
     state.status === "active" &&
     state.uri !== undefined &&

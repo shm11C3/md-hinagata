@@ -9,7 +9,9 @@ import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
   getOptionalActiveMarkdownDocument,
+  getVisibleMarkdownDocument,
   hasCurrentMarkdownDocument,
+  hasStoredMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
   openCurrentMarkdownDocument,
 } from "./activeMarkdownDocument.js";
@@ -33,13 +35,8 @@ export function registerCommands(
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMAND_IDS.openPreview, () => {
-      const document = getOptionalActiveMarkdownDocument(vscode.window);
-      if (document !== undefined) {
-        dependencies.documentStateService.setActiveDocument(
-          createActiveDocumentSnapshot(document),
-        );
-      } else if (
-        !hasCurrentMarkdownDocument(
+      if (
+        !prepareCurrentMarkdownDocument(
           vscode.window,
           dependencies.documentStateService,
         )
@@ -52,29 +49,30 @@ export function registerCommands(
       return dependencies.documentTransformService.refreshActiveDocument();
     }),
     vscode.commands.registerCommand(COMMAND_IDS.copyGeneratedHtml, () => {
-      const document = getOptionalActiveMarkdownDocument(vscode.window);
-      if (document === undefined) {
-        if (
-          !hasCurrentMarkdownDocument(
-            vscode.window,
-            dependencies.documentStateService,
-          )
-        ) {
-          vscode.window.showInformationMessage(MARKDOWN_REQUIRED_MESSAGE);
-          return undefined;
-        }
+      if (
+        !hasCurrentMarkdownDocument(
+          vscode.window,
+          dependencies.documentStateService,
+        )
+      ) {
+        vscode.window.showInformationMessage(MARKDOWN_REQUIRED_MESSAGE);
+        return undefined;
       }
+
+      prepareCurrentMarkdownDocument(
+        vscode.window,
+        dependencies.documentStateService,
+      );
 
       return copyGeneratedHtml({
         clipboard: vscode.env.clipboard,
         documentStateService: dependencies.documentStateService,
         notifier: vscode.window,
         refreshActiveDocument: () => {
-          if (document !== undefined) {
-            dependencies.documentStateService.setActiveDocument(
-              createActiveDocumentSnapshot(document),
-            );
-          }
+          prepareCurrentMarkdownDocument(
+            vscode.window,
+            dependencies.documentStateService,
+          );
           return dependencies.documentTransformService.refreshActiveDocument();
         },
       });
@@ -149,8 +147,15 @@ export function registerCommands(
     ),
     vscode.commands.registerCommand(
       COMMAND_IDS.createThemeFromDefault,
-      (args: unknown) => {
-        const document = getOptionalActiveMarkdownDocument(vscode.window);
+      async (args: unknown) => {
+        const document = await openCurrentMarkdownDocument(
+          vscode.window,
+          dependencies.documentStateService,
+          {
+            openTextDocument: async (uri) =>
+              vscode.workspace.openTextDocument(vscode.Uri.parse(uri)),
+          },
+        );
 
         return createThemeFromDefault({
           args,
@@ -207,4 +212,31 @@ export function registerCommands(
       },
     ),
   );
+}
+
+function prepareCurrentMarkdownDocument(
+  window: Pick<typeof vscode.window, "activeTextEditor" | "visibleTextEditors">,
+  documentStateService: DocumentStateService,
+): boolean {
+  const activeDocument = getOptionalActiveMarkdownDocument(window);
+  if (activeDocument !== undefined) {
+    documentStateService.setActiveDocument(
+      createActiveDocumentSnapshot(activeDocument),
+    );
+    return true;
+  }
+
+  if (hasStoredMarkdownDocument(documentStateService)) {
+    return true;
+  }
+
+  const visibleDocument = getVisibleMarkdownDocument(window);
+  if (visibleDocument === undefined) {
+    return false;
+  }
+
+  documentStateService.setActiveDocument(
+    createActiveDocumentSnapshot(visibleDocument),
+  );
+  return true;
 }

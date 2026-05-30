@@ -15,6 +15,7 @@ import { DocumentStateService } from "../services/documentStateService.js";
 import { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
   getActiveMarkdownDocument,
+  getVisibleMarkdownDocument,
   hasCurrentMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
   openCurrentMarkdownDocument,
@@ -140,6 +141,60 @@ describe("extension commands", () => {
     ).toBe(true);
   });
 
+  it("uses a single visible Markdown document when focus is on another editor", () => {
+    const markdownDocument = {
+      getText: () => "# Title",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///article.md",
+      },
+    };
+
+    expect(
+      getVisibleMarkdownDocument({
+        visibleTextEditors: [
+          {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          { document: markdownDocument },
+        ],
+      }),
+    ).toBe(markdownDocument);
+  });
+
+  it("does not guess when multiple Markdown documents are visible", () => {
+    expect(
+      getVisibleMarkdownDocument({
+        visibleTextEditors: [
+          {
+            document: {
+              getText: () => "# One",
+              languageId: "markdown",
+              uri: {
+                toString: () => "file:///one.md",
+              },
+            },
+          },
+          {
+            document: {
+              getText: () => "# Two",
+              languageId: "markdown",
+              uri: {
+                toString: () => "file:///two.md",
+              },
+            },
+          },
+        ],
+      }),
+    ).toBeUndefined();
+  });
+
   it("opens the stored Markdown document when no Markdown editor is active", async () => {
     const documentStateService = new DocumentStateService();
     const document = {
@@ -215,6 +270,84 @@ describe("extension commands", () => {
         },
       ),
     ).resolves.toBeUndefined();
+  });
+
+  it("opens the visible Markdown document when stored state is unavailable", async () => {
+    const documentStateService = new DocumentStateService();
+    const visibleDocument = {
+      getText: () => "# Visible",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///visible.md",
+      },
+    };
+
+    await expect(
+      openCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [{ document: visibleDocument }],
+        },
+        documentStateService,
+        {
+          openTextDocument: async () => {
+            throw new Error("should not reopen without stored state");
+          },
+        },
+      ),
+    ).resolves.toBe(visibleDocument);
+  });
+
+  it("prefers stored Markdown state over a visible Markdown fallback", async () => {
+    const documentStateService = new DocumentStateService();
+    const storedDocument = {
+      getText: () => "# Stored",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///stored.md",
+      },
+    };
+    const visibleDocument = {
+      getText: () => "# Visible",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///visible.md",
+      },
+    };
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Stored",
+      uri: "file:///stored.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        {
+          activeTextEditor: {
+            document: {
+              getText: () => "plain text",
+              languageId: "plaintext",
+              uri: {
+                toString: () => "file:///notes.txt",
+              },
+            },
+          },
+          visibleTextEditors: [{ document: visibleDocument }],
+        },
+        documentStateService,
+        {
+          openTextDocument: async () => storedDocument,
+        },
+      ),
+    ).resolves.toBe(storedDocument);
   });
 
   it("copies the latest generated html including theme css", async () => {
