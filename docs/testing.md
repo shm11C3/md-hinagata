@@ -176,6 +176,17 @@ workspace, opens `sample.md`, verifies the contributed commands, and runs the
 Preview, Copy HTML, and Create Theme from Default commands without packaging a
 VSIX.
 
+To collect local test coverage:
+
+```bash
+pnpm run test:coverage
+```
+
+Rust coverage uses `cargo llvm-cov --workspace --summary-only`, so it requires
+`cargo-llvm-cov` to be installed locally. Vitest coverage uses the V8 coverage
+provider for the VS Code extension source files under `src/**/*.ts`; benchmark
+files are excluded from coverage totals.
+
 ## 5. Benchmarks
 
 Use benchmarks when changing refresh, theme resolution, transform, or packaging

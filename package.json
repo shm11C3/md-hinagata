@@ -15,6 +15,9 @@
     "lint": "biome check . && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
     "prepare:vscode-extension-package": "node scripts/prepare-vscode-extension-package.mjs",
     "test": "pnpm run test:github-scripts && pnpm --filter md-hinagata-vscode-extension run test && cargo test --workspace",
+    "test:coverage": "pnpm run test:coverage:rust && pnpm run test:coverage:vitest",
+    "test:coverage:rust": "cargo llvm-cov --workspace --summary-only",
+    "test:coverage:vitest": "pnpm --filter md-hinagata-vscode-extension run test:coverage",
     "test:github-scripts": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --experimental-strip-types .github/scripts/*.test.ts scripts/*.test.ts",
     "test:e2e": "pnpm run build:wasm && pnpm --filter md-hinagata-vscode-extension run test:e2e"
   },
