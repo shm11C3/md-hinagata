@@ -15,7 +15,9 @@ import { DocumentStateService } from "../services/documentStateService.js";
 import { WorkspaceTrustService } from "../services/workspaceTrustService.js";
 import {
   getActiveMarkdownDocument,
+  hasCurrentMarkdownDocument,
   MARKDOWN_REQUIRED_MESSAGE,
+  openCurrentMarkdownDocument,
 } from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
@@ -112,6 +114,107 @@ describe("extension commands", () => {
       }),
     ).toBeUndefined();
     expect(messages).toEqual([MARKDOWN_REQUIRED_MESSAGE]);
+  });
+
+  it("recognizes stored Markdown state when editor focus moves away", () => {
+    const documentStateService = new DocumentStateService();
+
+    expect(
+      hasCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+      ),
+    ).toBe(false);
+
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    expect(
+      hasCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+      ),
+    ).toBe(true);
+  });
+
+  it("opens the stored Markdown document when no Markdown editor is active", async () => {
+    const documentStateService = new DocumentStateService();
+    const document = {
+      getText: () => "# Title",
+      languageId: "markdown",
+      uri: {
+        toString: () => "file:///article.md",
+      },
+    };
+    const openedUris: string[] = [];
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+        {
+          openTextDocument: async (uri) => {
+            openedUris.push(uri);
+            return document;
+          },
+        },
+      ),
+    ).resolves.toBe(document);
+    expect(openedUris).toEqual(["file:///article.md"]);
+  });
+
+  it("does not reuse stored state when the reopened document is not Markdown", async () => {
+    const documentStateService = new DocumentStateService();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///article.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+        {
+          openTextDocument: async () => ({
+            getText: () => "plain text",
+            languageId: "plaintext",
+            uri: {
+              toString: () => "file:///article.md",
+            },
+          }),
+        },
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it("does not throw when the stored Markdown document cannot be reopened", async () => {
+    const documentStateService = new DocumentStateService();
+    documentStateService.setActiveDocument({
+      languageId: "markdown",
+      markdown: "# Title",
+      uri: "file:///missing.md",
+    });
+
+    await expect(
+      openCurrentMarkdownDocument(
+        { activeTextEditor: undefined },
+        documentStateService,
+        {
+          openTextDocument: async () => {
+            throw new Error("missing document");
+          },
+        },
+      ),
+    ).resolves.toBeUndefined();
   });
 
   it("copies the latest generated html including theme css", async () => {

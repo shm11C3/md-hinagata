@@ -7,7 +7,12 @@ import {
 import type { DocumentTransformService } from "../services/documentTransformService.js";
 import type { ThemeResolver } from "../services/themeResolver.js";
 import type { WorkspaceTrustService } from "../services/workspaceTrustService.js";
-import { getActiveMarkdownDocument } from "./activeMarkdownDocument.js";
+import {
+  getOptionalActiveMarkdownDocument,
+  hasCurrentMarkdownDocument,
+  MARKDOWN_REQUIRED_MESSAGE,
+  openCurrentMarkdownDocument,
+} from "./activeMarkdownDocument.js";
 import { COMMAND_IDS } from "./commandIds.js";
 import { copyGeneratedHtml } from "./copyGeneratedHtmlCommand.js";
 import { createThemeFromDefault } from "./createThemeFromDefaultCommand.js";
@@ -28,21 +33,36 @@ export function registerCommands(
 ): void {
   context.subscriptions.push(
     vscode.commands.registerCommand(COMMAND_IDS.openPreview, () => {
-      const document = getActiveMarkdownDocument(vscode.window);
-      if (document === undefined) {
+      const document = getOptionalActiveMarkdownDocument(vscode.window);
+      if (document !== undefined) {
+        dependencies.documentStateService.setActiveDocument(
+          createActiveDocumentSnapshot(document),
+        );
+      } else if (
+        !hasCurrentMarkdownDocument(
+          vscode.window,
+          dependencies.documentStateService,
+        )
+      ) {
+        vscode.window.showInformationMessage(MARKDOWN_REQUIRED_MESSAGE);
         return undefined;
       }
 
-      dependencies.documentStateService.setActiveDocument(
-        createActiveDocumentSnapshot(document),
-      );
       dependencies.previewPanel.show();
       return dependencies.documentTransformService.refreshActiveDocument();
     }),
     vscode.commands.registerCommand(COMMAND_IDS.copyGeneratedHtml, () => {
-      const document = getActiveMarkdownDocument(vscode.window);
+      const document = getOptionalActiveMarkdownDocument(vscode.window);
       if (document === undefined) {
-        return undefined;
+        if (
+          !hasCurrentMarkdownDocument(
+            vscode.window,
+            dependencies.documentStateService,
+          )
+        ) {
+          vscode.window.showInformationMessage(MARKDOWN_REQUIRED_MESSAGE);
+          return undefined;
+        }
       }
 
       return copyGeneratedHtml({
@@ -50,9 +70,11 @@ export function registerCommands(
         documentStateService: dependencies.documentStateService,
         notifier: vscode.window,
         refreshActiveDocument: () => {
-          dependencies.documentStateService.setActiveDocument(
-            createActiveDocumentSnapshot(document),
-          );
+          if (document !== undefined) {
+            dependencies.documentStateService.setActiveDocument(
+              createActiveDocumentSnapshot(document),
+            );
+          }
           return dependencies.documentTransformService.refreshActiveDocument();
         },
       });
@@ -78,10 +100,16 @@ export function registerCommands(
     vscode.commands.registerCommand(
       COMMAND_IDS.selectTheme,
       async (themeId: unknown) => {
-        const document = getActiveMarkdownDocument(vscode.window) as
-          | vscode.TextDocument
-          | undefined;
+        const document = await openCurrentMarkdownDocument(
+          vscode.window,
+          dependencies.documentStateService,
+          {
+            openTextDocument: async (uri) =>
+              vscode.workspace.openTextDocument(vscode.Uri.parse(uri)),
+          },
+        );
         if (document === undefined) {
+          vscode.window.showInformationMessage(MARKDOWN_REQUIRED_MESSAGE);
           return undefined;
         }
 
@@ -179,15 +207,4 @@ export function registerCommands(
       },
     ),
   );
-}
-
-function getOptionalActiveMarkdownDocument(
-  window: Pick<typeof vscode.window, "activeTextEditor">,
-): vscode.TextDocument | undefined {
-  const document = window.activeTextEditor?.document;
-  if (document?.languageId !== "markdown") {
-    return undefined;
-  }
-
-  return document;
 }

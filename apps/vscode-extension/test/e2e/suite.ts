@@ -20,6 +20,7 @@ export async function run(): Promise<void> {
   await openBasicSample();
   await assertCommandsRegistered();
   await assertPreviewAndCopyCommandsRun();
+  await assertCommandsUseLastMarkdownWhenNoEditorIsActive();
   await assertLargePreviewUpdatePerformance();
   await assertCreateThemeFromDefaultCommandRuns();
 }
@@ -82,6 +83,35 @@ async function assertPreviewAndCopyCommandsRun(): Promise<void> {
   );
   assert.match(generatedHtml, /<style>/);
   assert.match(generatedHtml, /\.basic-heading/);
+}
+
+async function assertCommandsUseLastMarkdownWhenNoEditorIsActive(): Promise<void> {
+  await closePreviewTabs(PREVIEW_PANEL_TITLE);
+  await openBasicSample();
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await waitForNoActiveTextEditor();
+
+  await vscode.commands.executeCommand("md-hinagata.openPreview");
+  await waitForPreviewTab(PREVIEW_PANEL_TITLE);
+
+  const selectedTheme = await vscode.commands.executeCommand<string>(
+    "md-hinagata.selectTheme",
+    "basic",
+  );
+  assert.equal(selectedTheme, "basic");
+}
+
+async function waitForNoActiveTextEditor(): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (vscode.window.activeTextEditor === undefined) {
+      return;
+    }
+
+    await delay(25);
+  }
+
+  assert.fail("Expected no active text editor.");
 }
 
 async function assertCreateThemeFromDefaultCommandRuns(): Promise<void> {
