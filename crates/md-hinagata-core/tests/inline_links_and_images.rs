@@ -75,6 +75,54 @@ fn image_src_escapes_ampersand() {
 }
 
 #[test]
+fn link_with_javascript_scheme_is_neutralized_to_empty_href() {
+    // Matches comrak's default sanitization (used by the block fallback path):
+    // dangerous schemes are stripped to an empty href rather than emitted.
+    assert_eq!(
+        render("[click](javascript:alert(1))"),
+        r#"<a href="">click</a>"#,
+    );
+}
+
+#[test]
+fn image_with_javascript_scheme_is_neutralized_to_empty_src() {
+    assert_eq!(
+        render("![x](javascript:alert(1))"),
+        r#"<img src="" alt="x" />"#,
+    );
+}
+
+#[test]
+fn vbscript_and_file_schemes_are_neutralized() {
+    assert_eq!(render("[x](vbscript:msgbox)"), r#"<a href="">x</a>"#);
+    assert_eq!(render("[x](file:///etc/passwd)"), r#"<a href="">x</a>"#);
+}
+
+#[test]
+fn data_image_urls_are_allowed_but_other_data_urls_are_blocked() {
+    // comrak permits data: only for these image MIME types.
+    assert_eq!(
+        render("![x](data:image/png;base64,AAAA)"),
+        r#"<img src="data:image/png;base64,AAAA" alt="x" />"#,
+    );
+    assert_eq!(
+        render("[x](data:text/html,<script>alert(1)</script>)"),
+        r#"<a href="">x</a>"#,
+    );
+}
+
+#[test]
+fn safe_schemes_and_relative_urls_are_preserved() {
+    assert_eq!(
+        render("[x](mailto:a@b.com)"),
+        r#"<a href="mailto:a@b.com">x</a>"#
+    );
+    assert_eq!(render("[x](/rel/path)"), r#"<a href="/rel/path">x</a>"#);
+    assert_eq!(render("[x](#frag)"), r##"<a href="#frag">x</a>"##);
+    assert_eq!(render("[x](HTTP://OK)"), r#"<a href="HTTP://OK">x</a>"#);
+}
+
+#[test]
 fn link_title_escapes_quotes() {
     assert_eq!(
         render(r#"[t](https://example.com "a \"quoted\" title")"#),
