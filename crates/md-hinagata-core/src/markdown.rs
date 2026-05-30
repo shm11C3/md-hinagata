@@ -168,7 +168,27 @@ fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String 
         NodeValue::Emph => format!("<em>{}</em>", inline_html(node, options)),
         NodeValue::Strong => format!("<strong>{}</strong>", inline_html(node, options)),
         NodeValue::HtmlInline(html) => raw_or_escaped_html(html, options),
+        NodeValue::Link(link) => format!(
+            "<a href=\"{}\"{}>{}</a>",
+            escape_html(&link.url),
+            title_attr(&link.title),
+            inline_html(node, options)
+        ),
+        NodeValue::Image(image) => format!(
+            "<img src=\"{}\" alt=\"{}\"{} />",
+            escape_html(&image.url),
+            escape_html(&text_content(node)),
+            title_attr(&image.title)
+        ),
         _ => inline_html(node, options),
+    }
+}
+
+fn title_attr(title: &str) -> String {
+    if title.is_empty() {
+        String::new()
+    } else {
+        format!(" title=\"{}\"", escape_html(title))
     }
 }
 
