@@ -121,7 +121,7 @@ ThemeManagerView
 4. theme package を選択する
 5. Markdown 本文を parse する
 6. Markdown node ごとに template context を作る
-7. Handlebars template を render する
+7. Template Interpolation で template を render する
 8. HTML fragment を組み立てる
 9. 必要なら sanitize する
 10. TransformResponse を返す
@@ -805,9 +805,9 @@ return response
 
 #### `template.rs`
 
-- Handlebars engine を初期化する。
-- theme templates を register する。
-- template context を render する。
+- md-hinagata Template Interpolation を実装する。
+- `{{name}}` と許可済み `{{{name}}}` を template context から render する。
+- 非対応構文、未知の変数、許可されていない raw 挿入を render error として扱う。
 
 #### `renderer.rs`
 
@@ -1005,6 +1005,10 @@ li
 
 ### 7.4 Template variables
 
+template file は theme 互換性のため `.hbs` 拡張子を維持するが、対応構文は
+full Handlebars ではなく md-hinagata の Template Interpolation に限定する。
+詳細な構文と parser rules は `docs/template-interpolation.md` に記載する。
+
 #### heading
 
 対象。
@@ -1061,7 +1065,7 @@ Context。
 {
   "lang": "ts",
   "raw": "const message = \"hello\";",
-  "code": "const message = &quot;hello&quot;;"
+  "code": "const message = \"hello\";"
 }
 ```
 
@@ -1146,9 +1150,30 @@ Template 例。
 
 {{{inner_html}}}
   Markdown から生成済みの HTML
+
+\{{name}}
+  literal `{{name}}` text
 ```
 
-`{{{ }}}` を許可する変数は限定する。
+`{{{ }}}` を許可する変数は限定する。`0.1.0` では `inner_html` を許可し、
+syntax highlight などで追加する raw template value は明示的に許可リストへ追加する。
+codeblock の `raw` は compatibility のため `{{raw}}` による escaped insertion として残すが、
+新しい template 例では `{{code}}` を推奨する。`{{{raw}}}` は許可しない。
+
+`\{{` と `\{{{` は interpolation を開始せず、literal の `{{` と `{{{` として出力する。
+通常テキスト中の closing delimiter は、interpolation が開いていない限り特別扱いしない。
+
+delimiter 内の空白は許可する。`{{ text }}` と `{{{ inner_html }}}` は
+`{{text}}` と `{{{inner_html}}}` と同じ意味として扱う。
+template value name は `[A-Za-z_][A-Za-z0-9_]*` に限定する。
+
+helper、partial、`{{#if}}`、`{{#each}}` などの非対応構文、未知の変数、
+許可されていない `{{{ }}}` は `template-render-error` とし、対象要素は
+built-in fallback renderer で変換する。
+template 内の interpolation token が 1 つでも invalid な場合、その token だけを
+空文字や escaped text に置き換えず、対象要素全体を fallback する。
+`template-render-error` の diagnostic message には template key、短い理由、
+該当する value name または構文種別を含める。template 全文や Markdown 本文は含めない。
 
 `0.1.0` で raw HTML は default off。
 
@@ -1537,7 +1562,7 @@ Copy Generated HTML が正しい HTML をコピーする
 7. Rust core crate
 8. frontmatter parser
 9. theme model
-10. Handlebars template render
+10. Template Interpolation render
 11. Markdown renderer: h1 / h2 / h3 / p / codeblock
 12. Markdown renderer: blockquote / ul / ol / li
 13. WASM bridge
@@ -1617,7 +1642,6 @@ Copy Generated HTML が正しい HTML をコピーする
 `0.1.0` 実装中に決める。
 
 - Rust Markdown parser を `comrak` にするか、別の parser にするか。
-- Handlebars helper をどこまで許可するか。
 - `inner_html` の sanitize 境界をどこに置くか。
 - raw HTML を完全無効化するか、escape して表示するか。
 - workspace theme を untrusted workspace で完全禁止するか、警告付きで bundled fallback にするか。

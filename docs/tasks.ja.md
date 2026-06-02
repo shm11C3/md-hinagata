@@ -517,7 +517,7 @@ Acceptance criteria:
 
 ---
 
-#### MS-034: Handlebars template rendering を実装する
+#### MS-034: Template Interpolation rendering を実装する
 
 - Milestone: `0.1.0`
 - Priority: P0
@@ -531,6 +531,7 @@ Acceptance criteria:
 - [x] `{{{inner_html}}}` を HTML として挿入できる。
 - [x] render error を diagnostic として返せる。
 - [x] unknown variable の検出は 0.1.0 では warning 対応または future task として扱える。
+- [ ] ADR-0005 に従い、unknown variable を `template-render-error` として扱える。
 
 ---
 
@@ -1273,7 +1274,7 @@ Acceptance criteria:
 - [ ] `Validate Current Theme` command を追加する。
 - [ ] theme.json schema validation を本格実装する。
 - [ ] template variable validation を実装する。
-- [ ] unknown variable warning を出す。
+- [ ] unknown variable を `template-render-error` として出す。
 - [ ] unused required variable warning を検討する。
 - [ ] VS Code Problems 連携を実装する。
 
@@ -1370,7 +1371,7 @@ Acceptance criteria:
 9. MS-031 TransformRequest / TransformResponse
 10. MS-032 frontmatter parser
 11. MS-033 ThemePackage model
-12. MS-034 Handlebars rendering
+12. MS-034 Template Interpolation rendering
 13. MS-035 Markdown renderer
 14. MS-037 core snapshot test
 15. MS-040 WASM crate
@@ -1518,7 +1519,7 @@ spike
 #9  Define TransformRequest and TransformResponse
 #10 Implement frontmatter parser
 #11 Implement ThemePackage model
-#12 Implement Handlebars template rendering
+#12 Implement Template Interpolation rendering
 #13 Implement h1/h2/h3/p/codeblock renderer
 #14 Add core snapshot tests
 #15 Create md-hinagata-wasm crate

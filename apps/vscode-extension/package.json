@@ -1,7 +1,7 @@
 {
   "name": "md-hinagata-vscode-extension",
   "displayName": "md-hinagata: Markdown to HTML Templates",
-  "description": "Generate CMS-ready HTML fragments from Markdown using editable Handlebars themes.",
+  "description": "Generate CMS-ready HTML fragments from Markdown using editable .hbs theme templates.",
   "publisher": "Shm11C3",
   "version": "0.2.5",
   "private": true,
@@ -29,7 +29,6 @@
     "wiki",
     "frontmatter",
     "templates",
-    "handlebars",
     "theme",
     "static-site",
     "content-pipeline",

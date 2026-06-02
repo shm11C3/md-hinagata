@@ -12,6 +12,14 @@ _Avoid_: Skin, style-only theme
 A per-element pattern inside a **Theme** that shapes the HTML for one Markdown element type.
 _Avoid_: Snippet, partial
 
+**Template Interpolation**:
+The limited value-insertion surface a **Template** uses to place Markdown-derived values into shaped HTML.
+_Avoid_: Template programming, full Handlebars support, helpers, partials
+
+**Raw Template Value**:
+A Markdown-derived value that a **Template** may insert as already-shaped HTML through **Template Interpolation**.
+_Avoid_: Arbitrary raw variable, unsafe template output
+
 **Default Theme**:
 The baseline **Theme** available without user setup.
 _Avoid_: Starter kit, sample theme
@@ -85,3 +93,11 @@ Domain expert: "Yes. Theme creation should update the active theme selection whe
 Dev: "After that, editing `h2` changes only one template inside the workspace theme?"
 
 Domain expert: "Yes. The generated HTML changes because the active theme now uses that edited template."
+
+Dev: "Can a template contain loops or helper logic?"
+
+Domain expert: "No. Templates use template interpolation to place known values into HTML; they do not define template programs."
+
+Dev: "Can any template value be inserted as HTML?"
+
+Domain expert: "No. Only named raw template values can be inserted as HTML; other values are inserted as escaped text."
