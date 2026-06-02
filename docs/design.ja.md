@@ -857,6 +857,12 @@ hinagata:
 
 frontmatter schema は `schemas/frontmatter.schema.json` に置く。この schema は frontmatter YAML の中身だけを表し、Markdown 本文や `---` delimiter は含めない。
 
+Rust core の frontmatter parser は `hinagata` namespace の block mapping と対応 key だけを読み取る。`hinagata` 外の document metadata は変換対象外であり、Rust core はその YAML 妥当性を検証しない。`hinagata` block 内の未対応 key は将来の schema 拡張余地として無視する。対応 key の値は文字列 scalar だけを受け入れ、空値や nested value は invalid frontmatter として扱う。
+文字列 scalar は外側の single quote / double quote を外して読むが、YAML escape sequence の展開は行わない。line comment と trailing comment は許可し、quote 内の `#` は値として扱う。
+同じ対応 key が `hinagata` block 内で重複した場合は、silent override せず invalid frontmatter として扱う。`hinagata` namespace が複数回出た場合も invalid frontmatter として扱う。
+`hinagata` namespace がない frontmatter は md-hinagata choices がないものとして扱い、invalid frontmatter にはしない。`hinagata` block に未対応 key だけがある場合も、将来の schema 拡張余地として diagnostic なしで扱う。
+`hinagata` namespace は top-level key とし、対応 child key はそれより深い space indentation に置く。indentation に tab を使った frontmatter は invalid frontmatter として扱う。
+
 VS Code 拡張は Markdown 先頭の frontmatter 内だけで補完を出す。`hinagata:` は `theme` と `output` を含む snippet として挿入し、既存 `hinagata` block がある場合は重複させない。`hinagata.theme` の値候補は `ThemeResolver.listSelectableThemes()` から取得し、trusted workspace の境界は既存の theme 解決と同じにする。
 
 ### 6.3 theme 解決
