@@ -12,6 +12,10 @@ _Avoid_: Skin, style-only theme
 A per-element pattern inside a **Theme** that shapes the HTML for one Markdown element type.
 _Avoid_: Snippet, partial
 
+**Template File Format**:
+The first-class file format used to store editable **Templates** inside a **Theme**. It is distinct from **Template Interpolation**, which is the value-insertion surface used inside the file.
+_Avoid_: Extension-only rename, Handlebars format, generic template file
+
 **Template Interpolation**:
 The limited value-insertion surface a **Template** uses to place Markdown-derived values into shaped HTML.
 _Avoid_: Template programming, full Handlebars support, helpers, partials
@@ -97,6 +101,10 @@ Domain expert: "Yes. The generated HTML changes because the active theme now use
 Dev: "Can a template contain loops or helper logic?"
 
 Domain expert: "No. Templates use template interpolation to place known values into HTML; they do not define template programs."
+
+Dev: "Is the template file format just Handlebars with a different extension?"
+
+Domain expert: "No. The template file format stores editable templates, while template interpolation is the limited value-insertion surface inside those files."
 
 Dev: "Can any template value be inserted as HTML?"
 
