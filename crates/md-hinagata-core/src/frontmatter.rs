@@ -79,19 +79,19 @@ fn parse_hinagata_frontmatter(
             inside_hinagata = false;
             child_indent = None;
 
-            if let Some((key, value)) = split_mapping_entry(content) {
-                if key == "hinagata" {
-                    if parsed.is_some() {
-                        return Err("hinagata namespace appears more than once".to_owned());
-                    }
-
-                    if !value.is_empty() {
-                        return Err("hinagata must use block mapping syntax".to_owned());
-                    }
-
-                    parsed = Some(ParsedFrontmatter::default());
-                    inside_hinagata = true;
+            if let Some((key, value)) = split_mapping_entry(content)
+                && key == "hinagata"
+            {
+                if parsed.is_some() {
+                    return Err("hinagata namespace appears more than once".to_owned());
                 }
+
+                if !value.is_empty() {
+                    return Err("hinagata must use block mapping syntax".to_owned());
+                }
+
+                parsed = Some(ParsedFrontmatter::default());
+                inside_hinagata = true;
             }
 
             continue;
