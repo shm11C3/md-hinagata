@@ -93,9 +93,39 @@ fn image_with_javascript_scheme_is_neutralized_to_empty_src() {
 }
 
 #[test]
+fn link_with_browser_ignored_controls_in_javascript_scheme_is_neutralized() {
+    assert_eq!(
+        render("[click](<java\tscript:alert(1)>)"),
+        r#"<a href="">click</a>"#,
+    );
+    assert_eq!(
+        render("[click](<\u{0001}javascript:alert(1)>)"),
+        r#"<a href="">click</a>"#,
+    );
+}
+
+#[test]
+fn image_with_browser_ignored_controls_in_javascript_scheme_is_neutralized() {
+    assert_eq!(
+        render("![x](<java\tscript:alert(1)>)"),
+        r#"<img src="" alt="x" />"#,
+    );
+    assert_eq!(
+        render("![x](<\u{0001}javascript:alert(1)>)"),
+        r#"<img src="" alt="x" />"#,
+    );
+}
+
+#[test]
 fn vbscript_and_file_schemes_are_neutralized() {
     assert_eq!(render("[x](vbscript:msgbox)"), r#"<a href="">x</a>"#);
     assert_eq!(render("[x](file:///etc/passwd)"), r#"<a href="">x</a>"#);
+}
+
+#[test]
+fn unknown_schemes_are_neutralized() {
+    assert_eq!(render("[x](ftp://example.com)"), r#"<a href="">x</a>"#);
+    assert_eq!(render("[x](custom:payload)"), r#"<a href="">x</a>"#);
 }
 
 #[test]
@@ -120,6 +150,18 @@ fn safe_schemes_and_relative_urls_are_preserved() {
     assert_eq!(render("[x](/rel/path)"), r#"<a href="/rel/path">x</a>"#);
     assert_eq!(render("[x](#frag)"), r##"<a href="#frag">x</a>"##);
     assert_eq!(render("[x](HTTP://OK)"), r#"<a href="HTTP://OK">x</a>"#);
+    assert_eq!(
+        render("[x](tel:+1234567890)"),
+        r#"<a href="tel:+1234567890">x</a>"#
+    );
+}
+
+#[test]
+fn browser_ignored_url_controls_are_removed_from_emitted_safe_urls() {
+    assert_eq!(
+        render("[x](<\u{0001}h\tttps://example.com>)"),
+        r#"<a href="https://example.com">x</a>"#
+    );
 }
 
 #[test]

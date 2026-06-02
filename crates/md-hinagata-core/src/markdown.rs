@@ -184,41 +184,68 @@ fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String 
     }
 }
 
-/// Escape a link/image URL for an HTML attribute, neutralizing dangerous
-/// schemes to an empty string. This mirrors comrak's default sanitization
-/// (used by the block fallback path) so the inline path stays consistent:
-/// `javascript:`, `vbscript:`, and `file:` are stripped, and `data:` is
-/// allowed only for the image MIME types comrak permits.
+/// Escape a link/image URL for an HTML attribute, neutralizing unsafe schemes
+/// to an empty string. URL controls that browsers strip during scheme
+/// resolution are removed before both validation and emission.
 fn sanitized_url(url: &str) -> String {
-    if is_safe_url(url) {
-        escape_html(url)
+    let normalized_url = normalize_url_for_html_attribute(url);
+
+    if is_safe_url(&normalized_url) {
+        escape_html(&normalized_url)
     } else {
         String::new()
     }
 }
 
 fn is_safe_url(url: &str) -> bool {
-    let lower = url.trim_start().to_ascii_lowercase();
+    let lower = url.to_ascii_lowercase();
 
-    if ["javascript:", "vbscript:", "file:"]
-        .iter()
-        .any(|scheme| lower.starts_with(scheme))
-    {
-        return false;
-    }
-
-    if lower.starts_with("data:") {
-        return [
+    match scheme(&lower) {
+        Some("http" | "https" | "mailto" | "tel") => true,
+        Some("data") => [
             "data:image/png",
             "data:image/gif",
             "data:image/jpeg",
             "data:image/webp",
         ]
         .iter()
-        .any(|prefix| lower.starts_with(prefix));
+        .any(|prefix| lower.starts_with(prefix)),
+        Some(_) => false,
+        None => true,
+    }
+}
+
+fn normalize_url_for_html_attribute(url: &str) -> String {
+    url.chars()
+        .filter(|character| !matches!(character, '\t' | '\n' | '\r'))
+        .skip_while(|character| is_c0_control_or_space(*character))
+        .collect()
+}
+
+fn is_c0_control_or_space(character: char) -> bool {
+    character <= '\u{20}'
+}
+
+fn scheme(url: &str) -> Option<&str> {
+    let scheme_end = url.find(':')?;
+    let before_scheme_end = &url[..scheme_end];
+
+    if before_scheme_end.is_empty() {
+        return None;
     }
 
-    true
+    if before_scheme_end
+        .chars()
+        .all(|character| character.is_ascii_alphanumeric() || matches!(character, '+' | '-' | '.'))
+        && before_scheme_end
+            .chars()
+            .next()
+            .is_some_and(|character| character.is_ascii_alphabetic())
+    {
+        Some(before_scheme_end)
+    } else {
+        None
+    }
 }
 
 fn title_attr(title: &str) -> String {
