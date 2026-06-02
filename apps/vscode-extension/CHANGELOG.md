@@ -4,13 +4,13 @@ All notable changes to the md-hinagata VS Code extension are documented in this 
 
 ## 0.2.6
 
-### Security
+### Documentation
 
-- Harden Markdown link/image URL sanitization against a scheme-blocklist bypass that allowed `javascript:` URLs to survive into generated/exported HTML when control characters (tab, leading C0) were embedded in the scheme. URLs are now validated against an allowlist of safe schemes (`http`, `https`, `mailto`, `tel`, restricted `data:image/*`) plus relative and fragment URLs, and browser-ignored control characters are stripped before validation and emission. ([GHSA-r6wj-xr6v-238c](https://github.com/shm11C3/md-hinagata/security/advisories/GHSA-r6wj-xr6v-238c))
+- Record .hinagata template file format decision. ([#168](https://github.com/shm11C3/md-hinagata/pull/168))
 
-### Changed
+### Maintenance
 
-- Link and image URLs using schemes outside the safe allowlist (for example `ftp:`) are now neutralized rather than passed through.
+- Add Template Interpolation renderer. ([#162](https://github.com/shm11C3/md-hinagata/pull/162))
 
 ## 0.2.5
 
