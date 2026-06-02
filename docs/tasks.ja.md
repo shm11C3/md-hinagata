@@ -530,8 +530,7 @@ Acceptance criteria:
 - [x] `{{text}}` を HTML escaped text として扱える。
 - [x] `{{{inner_html}}}` を HTML として挿入できる。
 - [x] render error を diagnostic として返せる。
-- [x] unknown variable の検出は 0.1.0 では warning 対応または future task として扱える。
-- [ ] ADR-0005 に従い、unknown variable を `template-render-error` として扱える。
+- [x] ADR-0005 に従い、unknown variable を `template-render-error` として扱える。
 
 ---
 
@@ -1274,7 +1273,6 @@ Acceptance criteria:
 - [ ] `Validate Current Theme` command を追加する。
 - [ ] theme.json schema validation を本格実装する。
 - [ ] template variable validation を実装する。
-- [ ] unknown variable を `template-render-error` として出す。
 - [ ] unused required variable warning を検討する。
 - [ ] VS Code Problems 連携を実装する。
 
