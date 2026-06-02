@@ -49,8 +49,8 @@ The document-level metadata at the beginning of a Markdown document that holds m
 _Avoid_: Front-matter, YAML header
 
 **Frontmatter Schema**:
-The supported shape of md-hinagata-specific choices inside **Document Frontmatter**.
-_Avoid_: Theme schema, YAML header format
+The supported shape of md-hinagata-specific choices inside **Document Frontmatter**. It defines the block-mapping `hinagata` namespace and supported keys, not the full YAML grammar for unrelated document metadata.
+_Avoid_: Theme schema, YAML header format, general YAML parser contract
 
 **Generated HTML**:
 The HTML fragment produced from Markdown after a **Theme** has been applied.
