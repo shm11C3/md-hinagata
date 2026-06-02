@@ -2,6 +2,20 @@
 
 All notable changes to the md-hinagata VS Code extension are documented in this file.
 
+## 0.2.6
+
+### Fixed
+
+- Fix incomplete URL scheme blocklist allows javascript: link bypass (stored XSS) in generated/exported HTML ([GHSA-r6wj-xr6v-238c](https://github.com/shm11C3/md-hinagata/security/advisories/GHSA-r6wj-xr6v-238c))
+
+### Documentation
+
+- Record .hinagata template file format decision. ([#168](https://github.com/shm11C3/md-hinagata/pull/168))
+
+### Maintenance
+
+- Add Template Interpolation renderer. ([#162](https://github.com/shm11C3/md-hinagata/pull/162))
+
 ## 0.2.5
 
 ### Fixed
