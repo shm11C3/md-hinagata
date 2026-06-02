@@ -170,9 +170,18 @@ A `theme.json` file describes the theme:
 
 The current draft theme JSON Schema is tracked at [`schemas/theme.schema.json`](schemas/theme.schema.json).
 
-### Templates use Handlebars
+### Templates use Template Interpolation
 
-Templates use `.hbs` files. `hbs` means Handlebars.
+Templates keep the `.hbs` file extension for theme compatibility, but the
+supported syntax is md-hinagata Template Interpolation, not full Handlebars.
+Use `{{name}}` for escaped known values and allowlisted `{{{name}}}` for
+generated HTML such as `inner_html`. Helpers, partials, conditionals, loops,
+unknown variables, and non-allowlisted raw insertions are template render
+errors and fall back to built-in element rendering. See the detailed
+specification in [`docs/template-interpolation.md`](docs/template-interpolation.md).
+Existing custom `.hbs` themes that relied on Handlebars leniency should be
+updated because those unsupported constructs now fall back for the whole
+element.
 
 Example `templates/h2.hbs`:
 
@@ -185,10 +194,10 @@ Example `templates/h2.hbs`:
 Example `templates/codeblock.hbs`:
 
 ```hbs
-<pre class="code-block"><code class="language-{{lang}}">{{raw}}</code></pre>
+<pre class="code-block"><code class="language-{{lang}}">{{code}}</code></pre>
 ```
 
-Recommended convention:
+Supported interpolation examples:
 
 ```txt
 {{text}}
@@ -197,8 +206,8 @@ Recommended convention:
 {{{inner_html}}}
   HTML generated from Markdown children.
 
-{{raw}}
-  Escaped raw source text.
+{{code}}
+  Escaped code text.
 ```
 
 ## Current scope
@@ -209,7 +218,7 @@ Recommended convention:
 - Left sidebar Theme Manager.
 - Right-side themed preview Webview.
 - Rust transform core compiled to WASM.
-- Handlebars-based theme templates.
+- Editable `.hbs` theme templates using Template Interpolation.
 - Bundled `default` theme.
 - Workspace themes under `.md-hinagata/themes/{themeId}`.
 - Create Theme from Default command.

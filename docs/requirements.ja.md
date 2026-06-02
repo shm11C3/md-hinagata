@@ -174,7 +174,7 @@ Markdown 変更で preview が更新される
 - 組み込み `default` theme を持つ。
 - workspace theme を `.md-hinagata/themes/{themeId}` から読み込める。
 - theme は `theme.json`、`styles.css`、`templates/*.hbs` で構成する。
-- テンプレートは Handlebars 形式を使う。
+- テンプレートは `.hbs` 拡張子を維持し、md-hinagata の Template Interpolation を使う。
 
 #### Transform Core
 
@@ -374,7 +374,10 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 
 ### 6.4 Template file
 
-テンプレートには `.hbs` を使う。
+テンプレートには `.hbs` を使う。`.hbs` は theme 互換性のため維持する
+ファイル拡張子であり、full Handlebars 構文のサポートを意味しない。
+対応する構文は md-hinagata の Template Interpolation に限定する。
+詳細な構文と parser rules は `docs/template-interpolation.md` に記載する。
 
 例: `templates/h2.hbs`
 
@@ -387,7 +390,7 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 例: `templates/codeblock.hbs`
 
 ```hbs
-<pre class="code-block"><code class="language-{{lang}}">{{raw}}</code></pre>
+<pre class="code-block"><code class="language-{{lang}}">{{code}}</code></pre>
 ```
 
 ### 6.5 Template variable rules
@@ -401,8 +404,14 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 {{{inner_html}}}
   Markdown children から生成された HTML。
 
+\{{name}}
+  literal `{{name}}` text.
+
 {{raw}}
   HTML escaped raw text。
+
+{{code}}
+  HTML escaped code text。
 
 {{lang}}
   codeblock の言語名。
@@ -415,6 +424,14 @@ YAML が壊れている場合は、自動更新しない。warning を表示し�
 ```
 
 安全上の理由により、HTML として挿入できる変数は限定する。すべての値を `{{{ }}}` で出力する設計にはしない。
+`{{{inner_html}}}` のような許可済み raw template value だけを HTML として挿入できる。
+codeblock の `raw` は compatibility のため `{{raw}}` による escaped insertion として残すが、新しい template 例では `{{code}}` を推奨する。`{{{raw}}}` は許可しない。
+`\{{` と `\{{{` は interpolation を開始せず、literal の `{{` と `{{{` として出力する。通常テキスト中の closing delimiter は、interpolation が開いていない限り特別扱いしない。
+delimiter 内の空白は許可するため、`{{ text }}` と `{{{ inner_html }}}` は `{{text}}` と `{{{inner_html}}}` と同じ意味として扱う。
+template value name は `[A-Za-z_][A-Za-z0-9_]*` の単純な identifier に限定する。
+helper、partial、`{{#if}}`、`{{#each}}` などの非対応構文、未知の変数、許可されていない `{{{ }}}` は `template-render-error` として扱い、対象要素は built-in fallback renderer で変換する。
+template 内の interpolation token が 1 つでも invalid な場合、その token だけを空文字や escaped text に置き換えるのではなく、対象要素全体を built-in fallback renderer で変換する。
+`template-render-error` の diagnostic message には template key、短い理由、該当する value name または構文種別を含める。template 全文や Markdown 本文は含めない。
 
 ### 6.6 Template fallback
 
@@ -614,7 +631,7 @@ type Diagnostic = {
 
 ```txt
 Markdown parser: comrak
-Template engine: handlebars-rust
+Template engine: md-hinagata Template Interpolation renderer
 WASM bridge: wasm-bindgen
 ```
 

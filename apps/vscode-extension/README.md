@@ -123,13 +123,23 @@ A theme manifest looks like this:
 }
 ```
 
-Templates use Handlebars syntax:
+Templates keep the `.hbs` file extension for theme compatibility, but they use
+md-hinagata Template Interpolation rather than full Handlebars:
 
 ```hbs
 <h2 id="{{id}}" class="article-heading article-heading--level2">
   {{{inner_html}}}
 </h2>
 ```
+
+`{{name}}` inserts escaped known values. Allowlisted `{{{name}}}` inserts
+generated HTML such as `inner_html`. Helpers, partials, conditionals, loops,
+unknown variables, and non-allowlisted raw insertions fall back with a template
+render diagnostic. See the detailed specification in
+[`docs/template-interpolation.md`](https://github.com/shm11C3/md-hinagata/blob/main/docs/template-interpolation.md).
+Existing custom `.hbs` themes that relied on Handlebars leniency should be
+updated because those unsupported constructs now fall back for the whole
+element.
 
 ## Workspace Trust
 

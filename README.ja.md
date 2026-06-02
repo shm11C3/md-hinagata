@@ -161,9 +161,17 @@ hinagata:
 
 現在のドラフト版テーマJSON Schemaは [`schemas/theme.schema.json`](schemas/theme.schema.json) で管理します。
 
-### テンプレートにはHandlebarsを使用
+### テンプレートには Template Interpolation を使用
 
-テンプレートには `.hbs` ファイル（Handlebars）を使用します。
+テンプレートは theme 互換性のため `.hbs` 拡張子を維持しますが、対応構文は
+full Handlebars ではなく md-hinagata の Template Interpolation です。
+`{{name}}` は既知の値をエスケープして挿入し、`{{{name}}}` は `inner_html`
+など許可された生成済み HTML だけを挿入します。helper、partial、条件分岐、
+loop、未知の変数、許可されていない raw 挿入は template render error になり、
+built-in の要素レンダリングに fallback します。詳細は
+[`docs/template-interpolation.md`](docs/template-interpolation.md) に記載します。
+既存の custom `.hbs` theme が Handlebars の lenient な挙動に依存していた場合、
+それらの非対応構文は対象要素全体の fallback になるため更新が必要です。
 
 例： `templates/h2.hbs`
 
@@ -176,10 +184,10 @@ hinagata:
 例： `templates/codeblock.hbs`
 
 ```hbs
-<pre class="code-block"><code class="language-{{lang}}">{{raw}}</code></pre>
+<pre class="code-block"><code class="language-{{lang}}">{{code}}</code></pre>
 ```
 
-推奨される慣習：
+対応する interpolation の例：
 
 ```txt
 {{text}}
@@ -188,8 +196,8 @@ hinagata:
 {{{inner_html}}}
   Markdownの子要素から生成されたHTML。
 
-{{raw}}
-  エスケープされた生のソーステキスト。
+{{code}}
+  エスケープされたコードテキスト。
 ```
 
 ## 現在のスコープ
@@ -200,7 +208,7 @@ hinagata:
 - 左サイドバーのテーママネージャー。
 - 右サイドのテーマ適用済みプレビュー（Webview）。
 - WASMにコンパイルされたRust製変換コア。
-- Handlebarsベースのテーマテンプレート。
+- Template Interpolation を使う編集可能な `.hbs` テーマテンプレート。
 - 同梱の `default` テーマ。
 - `.md-hinagata/themes/{themeId}` 下のワークスペーステーマ。
 - `Create Theme from Default` コマンド。

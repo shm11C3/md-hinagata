@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 use md_hinagata_core::{
-    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, ThemeManifest, ThemePackage, ThemeSource,
-    TransformOptions, TransformRequest, UNKNOWN_THEME, transform,
+    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR, ThemeManifest,
+    ThemePackage, ThemeSource, TransformOptions, TransformRequest, UNKNOWN_THEME, transform,
 };
 
 #[test]
@@ -137,6 +137,167 @@ fn reports_missing_template_and_uses_builtin_fallback() {
 
     assert_eq!(response.html, "<p>Body text.</p>");
     assert_eq!(response.diagnostics[0].code, MISSING_TEMPLATE);
+}
+
+#[test]
+fn reports_template_render_error_for_unknown_value_and_uses_element_fallback() {
+    let request = TransformRequest {
+        markdown: "# Title".to_owned(),
+        themes: vec![theme_package("default", [("h1", "<h1>{{titel}}</h1>")])],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<h1 id=\"title\">Title</h1>");
+    assert_eq!(response.diagnostics[0].code, TEMPLATE_RENDER_ERROR);
+    assert_eq!(
+        response.diagnostics[0].message,
+        "Failed to render template 'h1': unknown template value 'titel'.",
+    );
+}
+
+#[test]
+fn reports_template_render_error_for_disallowed_raw_value_and_uses_element_fallback() {
+    let request = TransformRequest {
+        markdown: "Body text.".to_owned(),
+        themes: vec![theme_package("default", [("p", "<p>{{{ text }}}</p>")])],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<p>Body text.</p>");
+    assert_eq!(response.diagnostics[0].code, TEMPLATE_RENDER_ERROR);
+    assert_eq!(
+        response.diagnostics[0].message,
+        "Failed to render template 'p': raw insertion is not allowed for 'text'.",
+    );
+}
+
+#[test]
+fn renders_compat_raw_codeblock_value_as_escaped_insertion() {
+    let request = TransformRequest {
+        markdown: ["```", "<script>", "```"].join("\n"),
+        themes: vec![theme_package(
+            "default",
+            [("codeblock", "<pre><code>{{raw}}</code></pre>")],
+        )],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<pre><code>&lt;script&gt;</code></pre>");
+    assert!(response.diagnostics.is_empty());
+}
+
+#[test]
+fn renders_scalar_list_context_values() {
+    let request = TransformRequest {
+        markdown: "3. Third".to_owned(),
+        themes: vec![theme_package(
+            "default",
+            [
+                (
+                    "ol",
+                    "<ol data-start=\"{{start}}\" data-ordered=\"{{ordered}}\">{{{inner_html}}}</ol>",
+                ),
+                ("li", "<li>{{{inner_html}}}</li>"),
+            ],
+        )],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(
+        response.html,
+        "<ol data-start=\"3\" data-ordered=\"true\"><li>Third</li></ol>",
+    );
+    assert!(response.diagnostics.is_empty());
+}
+
+#[test]
+fn reports_template_render_error_for_raw_codeblock_value_and_uses_element_fallback() {
+    let request = TransformRequest {
+        markdown: ["```", "<script>", "```"].join("\n"),
+        themes: vec![theme_package(
+            "default",
+            [("codeblock", "<pre><code>{{{raw}}}</code></pre>")],
+        )],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<pre><code>&lt;script&gt;</code></pre>");
+    assert_eq!(response.diagnostics[0].code, TEMPLATE_RENDER_ERROR);
+    assert_eq!(
+        response.diagnostics[0].message,
+        "Failed to render template 'codeblock': raw insertion is not allowed for 'raw'.",
+    );
+}
+
+#[test]
+fn reports_template_render_error_for_unclosed_interpolation() {
+    let request = TransformRequest {
+        markdown: "Body text.".to_owned(),
+        themes: vec![theme_package("default", [("p", "<p>{{text</p>")])],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<p>Body text.</p>");
+    assert_eq!(response.diagnostics[0].code, TEMPLATE_RENDER_ERROR);
+    assert_eq!(
+        response.diagnostics[0].message,
+        "Failed to render template 'p': unclosed escaped interpolation",
+    );
+}
+
+#[test]
+fn reports_template_render_error_for_unsupported_template_construct() {
+    let request = TransformRequest {
+        markdown: "Body text.".to_owned(),
+        themes: vec![theme_package(
+            "default",
+            [("p", "<p>{{#if text}}{{text}}{{/if}}</p>")],
+        )],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<p>Body text.</p>");
+    assert_eq!(response.diagnostics[0].code, TEMPLATE_RENDER_ERROR);
+    assert_eq!(
+        response.diagnostics[0].message,
+        "Failed to render template 'p': unsupported template syntax '#if text'.",
+    );
+}
+
+#[test]
+fn renders_literal_interpolation_delimiters() {
+    let request = TransformRequest {
+        markdown: "Body text.".to_owned(),
+        themes: vec![theme_package("default", [("p", "<p>Use \\{{name}}</p>")])],
+        default_theme_id: Some("default".to_owned()),
+        options: TransformOptions::default(),
+    };
+
+    let response = transform(request).expect("transform should succeed");
+
+    assert_eq!(response.html, "<p>Use {{name}}</p>");
+    assert!(response.diagnostics.is_empty());
 }
 
 #[test]
