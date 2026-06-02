@@ -1,0 +1,4 @@
+interface:
+  display_name: "Claude Auto Review"
+  short_description: "Request read-only Claude CLI reviews"
+  default_prompt: "Use $claude-auto-review to ask Claude CLI for a read-only review of the current git diff."
