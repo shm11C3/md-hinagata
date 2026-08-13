@@ -28,6 +28,12 @@
           "description": "How theme CSS is represented in Generated HTML.",
           "default": "style-tag",
           "enum": ["style-tag", "inline", "separate", "none"]
+        },
+        "lineBreakMode": {
+          "type": "string",
+          "description": "How ordinary Markdown line endings inside paragraphs are represented in Generated HTML.",
+          "default": "markdown",
+          "enum": ["markdown", "br", "wbr"]
         }
       }
     }

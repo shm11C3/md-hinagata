@@ -4,6 +4,7 @@ import type { DiagnosticMessage } from "./diagnosticsService.js";
 import type { ThemeFileReference } from "./themeResolver.js";
 import type {
   CssOutputMode,
+  LineBreakMode,
   ParsedFrontmatter,
   TransformDiagnostic,
   TransformResponse,
@@ -38,6 +39,7 @@ export interface DocumentState {
   lastTransformedAt?: number;
   markdown?: string;
   resolvedCssMode?: CssOutputMode;
+  resolvedLineBreakMode?: LineBreakMode;
   resolvedThemeId?: string;
   status: DocumentStateStatus;
   uri?: string;
@@ -85,6 +87,7 @@ export class DocumentStateService {
       lastTransformedAt: undefined,
       markdown: document.markdown,
       resolvedCssMode: undefined,
+      resolvedLineBreakMode: undefined,
       resolvedThemeId: undefined,
       status: "active",
       uri: document.uri,
@@ -140,6 +143,7 @@ export class DocumentStateService {
       isStale: false,
       lastTransformedAt: options.transformedAt ?? Date.now(),
       resolvedCssMode: result.resolvedCssMode,
+      resolvedLineBreakMode: result.resolvedLineBreakMode,
       resolvedThemeId: result.resolvedThemeId,
     };
     this.notify();

@@ -102,6 +102,7 @@ previewDocumentStateService.applyTransformResult({
   diagnostics: [],
   html: largePreviewHtml,
   resolvedCssMode: "style-tag",
+  resolvedLineBreakMode: "markdown",
   resolvedThemeId: "default",
 });
 
@@ -189,6 +190,7 @@ describe("Preview Webview HTML regeneration benchmarks", () => {
         diagnostics: [],
         html: largePreviewHtml,
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "default",
       });
       consume(previewPanelFixture.webview.html.length);
@@ -251,6 +253,7 @@ function createBenchmarkTransformResponse(
     },
     html: "<h1>Benchmark</h1>",
     resolvedCssMode: "style-tag",
+    resolvedLineBreakMode: "markdown",
     resolvedThemeId,
   };
 }

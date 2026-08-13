@@ -57,6 +57,11 @@ describe("getFrontmatterCompletions", () => {
         kind: "property",
         label: "cssMode",
       },
+      {
+        insertText: "lineBreakMode: markdown",
+        kind: "property",
+        label: "lineBreakMode",
+      },
     ]);
   });
 
@@ -80,6 +85,11 @@ describe("getFrontmatterCompletions", () => {
         insertText: "cssMode: style-tag",
         kind: "property",
         label: "cssMode",
+      },
+      {
+        insertText: "lineBreakMode: markdown",
+        kind: "property",
+        label: "lineBreakMode",
       },
     ]);
   });
@@ -112,7 +122,20 @@ describe("getFrontmatterCompletions", () => {
     ]);
   });
 
-  it("suggests fixed values for output and cssMode", () => {
+  it("does not replace an empty theme value completion with missing keys", () => {
+    const markdown =
+      "---\nhinagata:\n  theme: \n  output: fragment\n---\n\n# Title\n";
+
+    expect(
+      getFrontmatterCompletions({
+        offset: markdown.indexOf("theme: ") + "theme: ".length,
+        source: markdown,
+        themes: [],
+      }),
+    ).toEqual([]);
+  });
+
+  it("suggests fixed values for output, cssMode, and lineBreakMode", () => {
     const outputMarkdown = "---\nhinagata:\n  output: \n---\n\n# Title\n";
     expect(
       getFrontmatterCompletions({
@@ -155,6 +178,34 @@ describe("getFrontmatterCompletions", () => {
         insertText: "none",
         kind: "value",
         label: "none",
+      },
+    ]);
+
+    const lineBreakModeMarkdown =
+      "---\nhinagata:\n  lineBreakMode: \n---\n\n# Title\n";
+    expect(
+      getFrontmatterCompletions({
+        offset:
+          lineBreakModeMarkdown.indexOf("lineBreakMode: ") +
+          "lineBreakMode: ".length,
+        source: lineBreakModeMarkdown,
+        themes: [],
+      }),
+    ).toEqual([
+      {
+        insertText: "markdown",
+        kind: "value",
+        label: "markdown",
+      },
+      {
+        insertText: "br",
+        kind: "value",
+        label: "br",
+      },
+      {
+        insertText: "wbr",
+        kind: "value",
+        label: "wbr",
       },
     ]);
   });

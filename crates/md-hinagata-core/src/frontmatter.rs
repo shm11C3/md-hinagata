@@ -11,6 +11,8 @@ pub struct ParsedFrontmatter {
     pub output: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub css_mode: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub line_break_mode: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -125,7 +127,7 @@ fn parse_hinagata_frontmatter(
             return Err("hinagata child keys must use consistent indentation".to_owned());
         }
 
-        if matches!(key, "theme" | "output" | "cssMode") {
+        if matches!(key, "theme" | "output" | "cssMode" | "lineBreakMode") {
             if value.is_empty() {
                 return Err(format!("hinagata.{key} must be a string scalar"));
             }
@@ -143,6 +145,11 @@ fn parse_hinagata_frontmatter(
                 "theme" => set_once(&mut frontmatter.theme, value, "hinagata.theme")?,
                 "output" => set_once(&mut frontmatter.output, value, "hinagata.output")?,
                 "cssMode" => set_once(&mut frontmatter.css_mode, value, "hinagata.cssMode")?,
+                "lineBreakMode" => set_once(
+                    &mut frontmatter.line_break_mode,
+                    value,
+                    "hinagata.lineBreakMode",
+                )?,
                 _ => unreachable!("supported key should be matched"),
             }
         }
@@ -268,13 +275,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_frontmatter_reads_css_mode() {
+    fn parse_frontmatter_reads_output_modes() {
         let markdown = [
             "---",
             "hinagata:",
             "  theme: default",
             "  output: fragment",
             "  cssMode: separate",
+            "  lineBreakMode: br",
             "---",
             "",
             "# Title",
@@ -287,6 +295,7 @@ mod tests {
         assert_eq!(frontmatter.theme.as_deref(), Some("default"));
         assert_eq!(frontmatter.output.as_deref(), Some("fragment"));
         assert_eq!(frontmatter.css_mode.as_deref(), Some("separate"));
+        assert_eq!(frontmatter.line_break_mode.as_deref(), Some("br"));
     }
 
     #[test]

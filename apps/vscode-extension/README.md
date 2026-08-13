@@ -37,7 +37,9 @@ Body text.
 
 Then run one of the md-hinagata commands from the Command Palette.
 
-In Markdown frontmatter, VS Code completion suggests the `hinagata` block, supported child keys, fixed `output` / `cssMode` values, and selectable theme IDs.
+In Markdown frontmatter, VS Code completion suggests the `hinagata` block,
+supported child keys, fixed `output` / `cssMode` / `lineBreakMode` values, and
+selectable theme IDs.
 
 ## Examples
 
@@ -62,6 +64,20 @@ Set `hinagata.cssMode` in document frontmatter to choose how theme CSS is repres
 | `inline`    | Generated HTML with supported CSS expanded into `style` attributes. |
 | `separate`  | Generated document HTML without an embedded `<style>` tag.          |
 | `none`      | Generated document HTML without theme CSS.                          |
+
+## Paragraph Line Break Mode
+
+Set `hinagata.lineBreakMode` to control ordinary Markdown line endings inside
+paragraphs:
+
+| Mode       | Generated paragraph HTML                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `markdown` | Keeps ordinary line endings as HTML source newlines; explicit Markdown hard breaks become `<br />`. Default. |
+| `br`       | Converts ordinary line endings to `<br />` too.                                                               |
+| `wbr`      | Converts ordinary line endings to `<wbr />` without whitespace; explicit hard breaks remain `<br />`.        |
+
+The transform does not use CSS `white-space` or Generated HTML formatting to
+implement these modes, so Preview and copied HTML share the same stable output.
 
 ## Commands
 

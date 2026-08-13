@@ -2,9 +2,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Diagnostic, DiagnosticSource, ParsedFrontmatter, Result, ThemePackage, UNSUPPORTED_CSS_MODE,
+    UNSUPPORTED_LINE_BREAK_MODE,
     frontmatter::parse_frontmatter,
     inline_css::inline_theme_css,
-    markdown::{MarkdownOptions, parse_markdown_with_options},
+    markdown::{LineBreakMode, MarkdownOptions, parse_markdown_with_options},
     renderer::render_blocks,
     theme::resolve_theme,
 };
@@ -38,6 +39,7 @@ pub struct TransformResponse {
     pub css: Option<String>,
     pub resolved_theme_id: String,
     pub resolved_css_mode: CssOutputMode,
+    pub resolved_line_break_mode: LineBreakMode,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub frontmatter: Option<ParsedFrontmatter>,
     pub diagnostics: Vec<Diagnostic>,
@@ -58,6 +60,8 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
     diagnostics.extend(parsed_markdown.diagnostics);
     let resolved_css_mode =
         resolve_css_output_mode(parsed_markdown.frontmatter.as_ref(), &mut diagnostics);
+    let resolved_line_break_mode =
+        resolve_line_break_mode(parsed_markdown.frontmatter.as_ref(), &mut diagnostics);
 
     let theme = resolve_theme(
         &request.themes,
@@ -73,6 +77,7 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
         &parsed_markdown.markdown,
         MarkdownOptions {
             allow_raw_html: request.options.allow_raw_html.unwrap_or(false),
+            line_break_mode: resolved_line_break_mode,
         },
     );
     let css = theme.and_then(|theme| theme.css.clone());
@@ -89,6 +94,7 @@ pub fn transform(request: TransformRequest) -> Result<TransformResponse> {
         css: output.css,
         resolved_theme_id,
         resolved_css_mode,
+        resolved_line_break_mode,
         frontmatter: parsed_markdown.frontmatter,
         diagnostics,
     })
@@ -125,6 +131,38 @@ fn unsupported_css_mode_diagnostic(value: &str) -> Diagnostic {
     Diagnostic::warning(
         UNSUPPORTED_CSS_MODE,
         format!("Unsupported hinagata.cssMode '{value}'; falling back to 'style-tag'."),
+    )
+    .with_source(DiagnosticSource::Frontmatter)
+}
+
+fn resolve_line_break_mode(
+    frontmatter: Option<&ParsedFrontmatter>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> LineBreakMode {
+    let Some(raw_line_break_mode) =
+        frontmatter.and_then(|frontmatter| frontmatter.line_break_mode.as_deref())
+    else {
+        return LineBreakMode::Markdown;
+    };
+    let line_break_mode = raw_line_break_mode.trim();
+
+    match line_break_mode {
+        "markdown" => LineBreakMode::Markdown,
+        "br" => LineBreakMode::Br,
+        "wbr" => LineBreakMode::Wbr,
+        unsupported_line_break_mode => {
+            diagnostics.push(unsupported_line_break_mode_diagnostic(
+                unsupported_line_break_mode,
+            ));
+            LineBreakMode::Markdown
+        }
+    }
+}
+
+fn unsupported_line_break_mode_diagnostic(value: &str) -> Diagnostic {
+    Diagnostic::warning(
+        UNSUPPORTED_LINE_BREAK_MODE,
+        format!("Unsupported hinagata.lineBreakMode '{value}'; falling back to 'markdown'."),
     )
     .with_source(DiagnosticSource::Frontmatter)
 }
@@ -233,10 +271,12 @@ mod tests {
             css: None,
             resolved_theme_id: "default".to_owned(),
             resolved_css_mode: CssOutputMode::StyleTag,
+            resolved_line_break_mode: LineBreakMode::Markdown,
             frontmatter: Some(ParsedFrontmatter {
                 theme: Some("default".to_owned()),
                 output: Some("fragment".to_owned()),
                 css_mode: Some("style-tag".to_owned()),
+                line_break_mode: Some("br".to_owned()),
             }),
             diagnostics: vec![Diagnostic::warning(
                 "missing-template",
@@ -248,8 +288,10 @@ mod tests {
 
         assert_eq!(serialized["resolvedThemeId"], "default");
         assert_eq!(serialized["resolvedCssMode"], "style-tag");
+        assert_eq!(serialized["resolvedLineBreakMode"], "markdown");
         assert_eq!(serialized["frontmatter"]["theme"], "default");
         assert_eq!(serialized["frontmatter"]["cssMode"], "style-tag");
+        assert_eq!(serialized["frontmatter"]["lineBreakMode"], "br");
         assert_eq!(serialized["diagnostics"][0]["severity"], "warning");
         assert_eq!(serialized["diagnostics"][0]["code"], "missing-template");
     }
@@ -271,6 +313,7 @@ mod tests {
 
         assert_eq!(response.resolved_theme_id, "default");
         assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(response.resolved_line_break_mode, LineBreakMode::Markdown);
         assert_eq!(
             response.html,
             [
@@ -303,6 +346,7 @@ mod tests {
         let response = transform(request).expect("transform should return a response");
 
         assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+        assert_eq!(response.resolved_line_break_mode, LineBreakMode::Markdown);
         assert_eq!(
             response.html,
             [
@@ -316,6 +360,103 @@ mod tests {
             .join("\n"),
         );
         assert_eq!(response.css.as_deref(), Some(".mh-document {}"));
+    }
+
+    #[test]
+    fn transform_line_break_mode_br_converts_paragraph_soft_breaks() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  lineBreakMode: br",
+                "---",
+                "",
+                "First line",
+                "second line",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p class=\"mh-paragraph\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_line_break_mode, LineBreakMode::Br);
+        assert_eq!(
+            response.html,
+            "<p class=\"mh-paragraph\">First line<br />\nsecond line</p>"
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_line_break_mode_wbr_uses_optional_break_without_whitespace() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  lineBreakMode: wbr",
+                "---",
+                "",
+                "First line",
+                "second line  ",
+                "third line",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_line_break_mode, LineBreakMode::Wbr);
+        assert_eq!(
+            response.html,
+            "<p>First line<wbr />second line<br />\nthird line</p>"
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
+    fn transform_warns_and_falls_back_for_invalid_line_break_mode() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  lineBreakMode: unsupported",
+                "---",
+                "",
+                "First line",
+                "second line",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "default",
+                None,
+                [("p", "<p>{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("default".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(response.resolved_line_break_mode, LineBreakMode::Markdown);
+        assert_eq!(response.html, "<p>First line\nsecond line</p>");
+        assert!(response.diagnostics.iter().any(|diagnostic| {
+            diagnostic.code == UNSUPPORTED_LINE_BREAK_MODE
+                && diagnostic.source == Some(DiagnosticSource::Frontmatter)
+        }));
     }
 
     #[test]
