@@ -428,6 +428,82 @@ mod tests {
     }
 
     #[test]
+    fn transform_line_break_mode_br_applies_to_blockquote_fallback() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  theme: partial",
+                "  lineBreakMode: br",
+                "---",
+                "",
+                "> First line",
+                "> second line",
+            ]
+            .join("\n"),
+            themes: vec![theme_package(
+                "partial",
+                None,
+                [("p", "<p class=\"themed\">{{{inner_html}}}</p>")],
+            )],
+            default_theme_id: Some("partial".to_owned()),
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            "<blockquote>\n<p>First line<br />\nsecond line</p>\n</blockquote>"
+        );
+        assert!(
+            response
+                .diagnostics
+                .iter()
+                .any(|diagnostic| diagnostic.code == MISSING_TEMPLATE)
+        );
+    }
+
+    #[test]
+    fn transform_line_break_mode_wbr_applies_to_loose_list_fallback_without_theme() {
+        let request = TransformRequest {
+            markdown: [
+                "---",
+                "hinagata:",
+                "  lineBreakMode: wbr",
+                "---",
+                "",
+                "- First line",
+                "  second line",
+                "",
+                "- Other item",
+            ]
+            .join("\n"),
+            themes: Vec::new(),
+            default_theme_id: None,
+            options: TransformOptions::default(),
+        };
+
+        let response = transform(request).expect("transform should return a response");
+
+        assert_eq!(
+            response.html,
+            [
+                "<ul>",
+                "<li>",
+                "<p>First line<wbr />second line</p>",
+                "</li>",
+                "<li>",
+                "<p>Other item</p>",
+                "</li>",
+                "</ul>",
+            ]
+            .join("\n")
+        );
+        assert!(response.diagnostics.is_empty());
+    }
+
+    #[test]
     fn transform_warns_and_falls_back_for_invalid_line_break_mode() {
         let request = TransformRequest {
             markdown: [

@@ -153,15 +153,90 @@ fn parse_list_item_child<'a>(
 }
 
 fn fallback_html<'a>(node: &'a AstNode<'a>, markdown_options: MarkdownOptions) -> String {
+    let rewritten_soft_breaks =
+        apply_line_break_mode_to_fallback(node, markdown_options.line_break_mode);
+
     let mut options = Options::default();
     options.render.escape = !markdown_options.allow_raw_html;
 
     let mut html = String::new();
-    if format_html(node, &options, &mut html).is_err() {
+    let format_result = format_html(node, &options, &mut html);
+    restore_fallback_soft_breaks(rewritten_soft_breaks);
+
+    if format_result.is_err() {
         return String::new();
     }
 
     html.trim_end().to_owned()
+}
+
+fn apply_line_break_mode_to_fallback<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+) -> Vec<&'a AstNode<'a>> {
+    if mode == LineBreakMode::Markdown {
+        return Vec::new();
+    }
+
+    let mut rewritten_soft_breaks = Vec::new();
+    rewrite_fallback_paragraph_soft_breaks(node, mode, &mut rewritten_soft_breaks);
+    rewritten_soft_breaks
+}
+
+fn rewrite_fallback_paragraph_soft_breaks<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+    rewritten_soft_breaks: &mut Vec<&'a AstNode<'a>>,
+) {
+    if matches!(node.data().value, NodeValue::Paragraph) {
+        if !is_tight_list_item_paragraph(node) {
+            replace_paragraph_soft_breaks(node, mode, rewritten_soft_breaks);
+        }
+        return;
+    }
+
+    for child in node.children() {
+        rewrite_fallback_paragraph_soft_breaks(child, mode, rewritten_soft_breaks);
+    }
+}
+
+fn replace_paragraph_soft_breaks<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+    rewritten_soft_breaks: &mut Vec<&'a AstNode<'a>>,
+) {
+    for child in node.children() {
+        if matches!(child.data().value, NodeValue::SoftBreak) {
+            child.data.borrow_mut().value = match mode {
+                LineBreakMode::Markdown => NodeValue::SoftBreak,
+                LineBreakMode::Br => NodeValue::LineBreak,
+                LineBreakMode::Wbr => NodeValue::Raw("<wbr />".to_owned()),
+            };
+            rewritten_soft_breaks.push(child);
+        } else {
+            replace_paragraph_soft_breaks(child, mode, rewritten_soft_breaks);
+        }
+    }
+}
+
+fn restore_fallback_soft_breaks(rewritten_soft_breaks: Vec<&AstNode<'_>>) {
+    for soft_break in rewritten_soft_breaks {
+        soft_break.data.borrow_mut().value = NodeValue::SoftBreak;
+    }
+}
+
+fn is_tight_list_item_paragraph<'a>(node: &'a AstNode<'a>) -> bool {
+    let Some(item) = node.parent() else {
+        return false;
+    };
+    if !matches!(item.data().value, NodeValue::Item(_)) {
+        return false;
+    }
+
+    let Some(list) = item.parent() else {
+        return false;
+    };
+    matches!(&list.data().value, NodeValue::List(list) if list.tight)
 }
 
 fn inline_html<'a>(
@@ -367,11 +442,16 @@ mod tests {
         ));
         assert!(matches!(
             &blocks[1],
-            MarkdownBlock::List { items, .. }
+            MarkdownBlock::List {
+                items,
+                fallback_html,
+                ..
+            }
                 if matches!(
                     &items[0].children[0],
                     MarkdownBlock::Html { html } if html == "item\ncontinuation"
                 )
+                && fallback_html == "<ul>\n<li>item\ncontinuation</li>\n</ul>"
         ));
     }
 
