@@ -4,6 +4,7 @@ import type * as vscode from "vscode";
 
 export type ThemeSource = "workspace" | "bundled";
 export type CssOutputMode = "none" | "separate" | "style-tag" | "inline";
+export type LineBreakMode = "markdown" | "br" | "wbr";
 export type DiagnosticSeverity = "error" | "warning" | "info";
 export type DiagnosticSource =
   | "frontmatter"
@@ -48,6 +49,7 @@ export interface ParsedFrontmatter {
   theme?: string;
   output?: string;
   cssMode?: string;
+  lineBreakMode?: string;
 }
 
 export interface TransformDiagnostic {
@@ -62,6 +64,7 @@ export interface TransformResponse {
   css?: string;
   resolvedThemeId: string;
   resolvedCssMode: CssOutputMode;
+  resolvedLineBreakMode: LineBreakMode;
   frontmatter?: ParsedFrontmatter;
   diagnostics: readonly TransformDiagnostic[];
 }
@@ -156,6 +159,7 @@ function createErrorResponse(
     ],
     html: "",
     resolvedCssMode: "style-tag",
+    resolvedLineBreakMode: "markdown",
     resolvedThemeId: request.defaultThemeId ?? "",
   };
 }

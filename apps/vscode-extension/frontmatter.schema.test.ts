@@ -51,5 +51,10 @@ describe("frontmatter schema", () => {
       enum: ["style-tag", "inline", "separate", "none"],
       type: "string",
     });
+    expect(hinagata?.properties?.lineBreakMode).toMatchObject({
+      default: "markdown",
+      enum: ["markdown", "br", "wbr"],
+      type: "string",
+    });
   });
 });

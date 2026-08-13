@@ -3,6 +3,7 @@ use comrak::{
     nodes::{AstNode, ListType, NodeValue},
     parse_document,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MarkdownBlock {
@@ -41,9 +42,19 @@ pub struct MarkdownListItem {
     pub fallback_html: String,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum LineBreakMode {
+    #[default]
+    Markdown,
+    Br,
+    Wbr,
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct MarkdownOptions {
     pub allow_raw_html: bool,
+    pub line_break_mode: LineBreakMode,
 }
 
 pub fn parse_markdown(markdown: &str) -> Vec<MarkdownBlock> {
@@ -66,13 +77,13 @@ fn parse_block<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> Option<Ma
             let text = text_content(node);
             Some(MarkdownBlock::Heading {
                 id: slugify(&text),
-                inner_html: inline_html(node, options),
+                inner_html: inline_html(node, options, LineBreakMode::Markdown),
                 level: heading.level,
                 text,
             })
         }
         NodeValue::Paragraph => Some(MarkdownBlock::Paragraph {
-            inner_html: inline_html(node, options),
+            inner_html: inline_html(node, options, options.line_break_mode),
             text: text_content(node),
         }),
         NodeValue::CodeBlock(code_block) => Some(MarkdownBlock::CodeBlock {
@@ -134,7 +145,7 @@ fn parse_list_item_child<'a>(
 ) -> Option<MarkdownBlock> {
     if tight && matches!(node.data().value, NodeValue::Paragraph) {
         return Some(MarkdownBlock::Html {
-            html: inline_html(node, options),
+            html: inline_html(node, options, LineBreakMode::Markdown),
         });
     }
 
@@ -142,37 +153,127 @@ fn parse_list_item_child<'a>(
 }
 
 fn fallback_html<'a>(node: &'a AstNode<'a>, markdown_options: MarkdownOptions) -> String {
+    let rewritten_soft_breaks =
+        apply_line_break_mode_to_fallback(node, markdown_options.line_break_mode);
+
     let mut options = Options::default();
     options.render.escape = !markdown_options.allow_raw_html;
 
     let mut html = String::new();
-    if format_html(node, &options, &mut html).is_err() {
+    let format_result = format_html(node, &options, &mut html);
+    restore_fallback_soft_breaks(rewritten_soft_breaks);
+
+    if format_result.is_err() {
         return String::new();
     }
 
     html.trim_end().to_owned()
 }
 
-fn inline_html<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String {
+fn apply_line_break_mode_to_fallback<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+) -> Vec<&'a AstNode<'a>> {
+    if mode == LineBreakMode::Markdown {
+        return Vec::new();
+    }
+
+    let mut rewritten_soft_breaks = Vec::new();
+    rewrite_fallback_paragraph_soft_breaks(node, mode, &mut rewritten_soft_breaks);
+    rewritten_soft_breaks
+}
+
+fn rewrite_fallback_paragraph_soft_breaks<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+    rewritten_soft_breaks: &mut Vec<&'a AstNode<'a>>,
+) {
+    if matches!(node.data().value, NodeValue::Paragraph) {
+        if !is_tight_list_item_paragraph(node) {
+            replace_paragraph_soft_breaks(node, mode, rewritten_soft_breaks);
+        }
+        return;
+    }
+
+    for child in node.children() {
+        rewrite_fallback_paragraph_soft_breaks(child, mode, rewritten_soft_breaks);
+    }
+}
+
+fn replace_paragraph_soft_breaks<'a>(
+    node: &'a AstNode<'a>,
+    mode: LineBreakMode,
+    rewritten_soft_breaks: &mut Vec<&'a AstNode<'a>>,
+) {
+    for child in node.children() {
+        if matches!(child.data().value, NodeValue::SoftBreak) {
+            child.data.borrow_mut().value = match mode {
+                LineBreakMode::Markdown => NodeValue::SoftBreak,
+                LineBreakMode::Br => NodeValue::LineBreak,
+                LineBreakMode::Wbr => NodeValue::Raw("<wbr />".to_owned()),
+            };
+            rewritten_soft_breaks.push(child);
+        } else {
+            replace_paragraph_soft_breaks(child, mode, rewritten_soft_breaks);
+        }
+    }
+}
+
+fn restore_fallback_soft_breaks(rewritten_soft_breaks: Vec<&AstNode<'_>>) {
+    for soft_break in rewritten_soft_breaks {
+        soft_break.data.borrow_mut().value = NodeValue::SoftBreak;
+    }
+}
+
+fn is_tight_list_item_paragraph<'a>(node: &'a AstNode<'a>) -> bool {
+    let Some(item) = node.parent() else {
+        return false;
+    };
+    if !matches!(item.data().value, NodeValue::Item(_)) {
+        return false;
+    }
+
+    let Some(list) = item.parent() else {
+        return false;
+    };
+    matches!(&list.data().value, NodeValue::List(list) if list.tight)
+}
+
+fn inline_html<'a>(
+    node: &'a AstNode<'a>,
+    options: MarkdownOptions,
+    line_break_mode: LineBreakMode,
+) -> String {
     node.children()
-        .map(|child| render_inline(child, options))
+        .map(|child| render_inline(child, options, line_break_mode))
         .collect()
 }
 
-fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String {
+fn render_inline<'a>(
+    node: &'a AstNode<'a>,
+    options: MarkdownOptions,
+    line_break_mode: LineBreakMode,
+) -> String {
     match &node.data().value {
         NodeValue::Text(text) => escape_html(text),
         NodeValue::Code(code) => format!("<code>{}</code>", escape_html(&code.literal)),
-        NodeValue::SoftBreak => "\n".to_owned(),
+        NodeValue::SoftBreak => match line_break_mode {
+            LineBreakMode::Markdown => "\n".to_owned(),
+            LineBreakMode::Br => "<br />\n".to_owned(),
+            LineBreakMode::Wbr => "<wbr />".to_owned(),
+        },
         NodeValue::LineBreak => "<br />\n".to_owned(),
-        NodeValue::Emph => format!("<em>{}</em>", inline_html(node, options)),
-        NodeValue::Strong => format!("<strong>{}</strong>", inline_html(node, options)),
+        NodeValue::Emph => format!("<em>{}</em>", inline_html(node, options, line_break_mode)),
+        NodeValue::Strong => format!(
+            "<strong>{}</strong>",
+            inline_html(node, options, line_break_mode)
+        ),
         NodeValue::HtmlInline(html) => raw_or_escaped_html(html, options),
         NodeValue::Link(link) => format!(
             "<a href=\"{}\"{}>{}</a>",
             sanitized_url(&link.url),
             title_attr(&link.title),
-            inline_html(node, options)
+            inline_html(node, options, line_break_mode)
         ),
         NodeValue::Image(image) => format!(
             "<img src=\"{}\" alt=\"{}\"{} />",
@@ -180,7 +281,7 @@ fn render_inline<'a>(node: &'a AstNode<'a>, options: MarkdownOptions) -> String 
             escape_html(&text_content(node)),
             title_attr(&image.title)
         ),
-        _ => inline_html(node, options),
+        _ => inline_html(node, options, line_break_mode),
     }
 }
 
@@ -315,5 +416,59 @@ fn slugify(value: &str) -> String {
         "section".to_owned()
     } else {
         slug
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn br_mode_converts_only_paragraph_soft_breaks() {
+        let blocks = parse_markdown_with_options(
+            ["First", "second", "", "- item", "  continuation"]
+                .join("\n")
+                .as_str(),
+            MarkdownOptions {
+                line_break_mode: LineBreakMode::Br,
+                ..MarkdownOptions::default()
+            },
+        );
+
+        assert!(matches!(
+            &blocks[0],
+            MarkdownBlock::Paragraph { inner_html, .. }
+                if inner_html == "First<br />\nsecond"
+        ));
+        assert!(matches!(
+            &blocks[1],
+            MarkdownBlock::List {
+                items,
+                fallback_html,
+                ..
+            }
+                if matches!(
+                    &items[0].children[0],
+                    MarkdownBlock::Html { html } if html == "item\ncontinuation"
+                )
+                && fallback_html == "<ul>\n<li>item\ncontinuation</li>\n</ul>"
+        ));
+    }
+
+    #[test]
+    fn wbr_mode_keeps_explicit_hard_breaks() {
+        let blocks = parse_markdown_with_options(
+            ["First  ", "second", "third"].join("\n").as_str(),
+            MarkdownOptions {
+                line_break_mode: LineBreakMode::Wbr,
+                ..MarkdownOptions::default()
+            },
+        );
+
+        assert!(matches!(
+            &blocks[0],
+            MarkdownBlock::Paragraph { inner_html, .. }
+                if inner_html == "First<br />\nsecond<wbr />third"
+        ));
     }
 }

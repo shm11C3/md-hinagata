@@ -110,6 +110,7 @@ describe("extension services", () => {
         },
         html: "<h1>First</h1>",
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "basic",
       },
       {
@@ -207,6 +208,7 @@ describe("extension services", () => {
         },
         html: "<h1>Title</h1>",
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "basic",
       },
       {
@@ -234,6 +236,7 @@ describe("extension services", () => {
       generatedHtml: "<h1>Title</h1>",
       isStale: false,
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       lastTransformedAt: 100,
       resolvedThemeId: "basic",
     });
@@ -290,6 +293,7 @@ describe("extension services", () => {
         diagnostics: [],
         html: "<h1>First</h1>",
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "default",
       },
       {
@@ -368,6 +372,7 @@ describe("extension services", () => {
                 },
                 html: "<p>Default</p>",
                 resolvedCssMode: "style-tag",
+                resolvedLineBreakMode: "markdown",
                 resolvedThemeId: "default",
               }
             : {
@@ -378,6 +383,7 @@ describe("extension services", () => {
                 },
                 html: "<p>Workspace</p>",
                 resolvedCssMode: "style-tag",
+                resolvedLineBreakMode: "markdown",
                 resolvedThemeId: "workspace",
               };
         },
@@ -473,6 +479,7 @@ describe("extension services", () => {
               frontmatterTheme === undefined ? {} : { theme: frontmatterTheme },
             html: `<p>${resolvedThemeId}</p>`,
             resolvedCssMode: "style-tag",
+            resolvedLineBreakMode: "markdown",
             resolvedThemeId,
           };
         },
@@ -570,6 +577,7 @@ describe("extension services", () => {
       diagnostics: [],
       html: "<h1>First</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 
@@ -592,6 +600,7 @@ describe("extension services", () => {
           diagnostics: [],
           html: `<p>${request.markdown}</p>`,
           resolvedCssMode: "style-tag",
+          resolvedLineBreakMode: "markdown",
           resolvedThemeId: request.defaultThemeId ?? "",
         }),
       };

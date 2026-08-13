@@ -100,6 +100,23 @@ The frontmatter value is the source of truth:
 | `separate` | Returns document HTML and keeps CSS separate for callers that need it. |
 | `none` | Returns document HTML without theme CSS. |
 
+### Paragraph line break modes
+
+`hinagata.lineBreakMode` controls ordinary Markdown line endings inside
+paragraphs. The default is `markdown`:
+
+| Mode | Paragraph output |
+|---|---|
+| `markdown` | Keeps ordinary line endings as HTML source newlines. Markdown hard breaks written with two trailing spaces or `\` become `<br />`. |
+| `br` | Converts ordinary line endings to `<br />` too, so every source line in a paragraph starts on a new rendered line. |
+| `wbr` | Converts ordinary line endings to `<wbr />` without adding whitespace, while explicit Markdown hard breaks remain `<br />`. |
+
+The transform core applies this behavior to paragraph AST nodes. It does not
+depend on a theme class such as `.mh-paragraph`, CSS `white-space`, or line
+breaks inserted while formatting Generated HTML. This keeps Preview, copied
+HTML, PDF conversion, and downstream paste targets independent of HTML source
+formatting.
+
 ## Core ideas
 
 ### Theme selection belongs to the document
@@ -227,6 +244,7 @@ Supported interpolation examples:
 - Copy Generated HTML command.
 - Basic diagnostics for unknown themes and missing templates.
 - CSS output modes through `hinagata.cssMode`.
+- Paragraph line break modes through `hinagata.lineBreakMode`.
 
 Markdown block support:
 

@@ -1,8 +1,9 @@
 use std::{collections::BTreeMap, fs, path::PathBuf};
 
 use md_hinagata_core::{
-    CssOutputMode, INVALID_FRONTMATTER, MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR, ThemeManifest,
-    ThemePackage, ThemeSource, TransformOptions, TransformRequest, UNKNOWN_THEME, transform,
+    CssOutputMode, INVALID_FRONTMATTER, LineBreakMode, MISSING_TEMPLATE, TEMPLATE_RENDER_ERROR,
+    ThemeManifest, ThemePackage, ThemeSource, TransformOptions, TransformRequest, UNKNOWN_THEME,
+    transform,
 };
 
 #[test]
@@ -21,6 +22,7 @@ fn transforms_basic_example_to_expected_html() {
 
     assert_eq!(response.resolved_theme_id, "basic");
     assert_eq!(response.resolved_css_mode, CssOutputMode::StyleTag);
+    assert_eq!(response.resolved_line_break_mode, LineBreakMode::Markdown);
     assert_eq!(
         response
             .frontmatter

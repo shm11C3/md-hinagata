@@ -62,6 +62,7 @@ describe("ThemeEditorViewProvider", () => {
         },
         html: "<h1>Title</h1>",
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "default",
       },
       {
@@ -101,6 +102,9 @@ describe("ThemeEditorViewProvider", () => {
     expect(view.webview.html).toContain("<dt>Output</dt><dd>fragment</dd>");
     expect(view.webview.html).toContain(
       "<dt>CSS Output Mode</dt><dd>style-tag</dd>",
+    );
+    expect(view.webview.html).toContain(
+      "<dt>Line Break Mode</dt><dd>markdown</dd>",
     );
     expect(view.webview.html).toContain(
       "<dt>Generated HTML</dt><dd>fragment with style tag</dd>",
@@ -150,6 +154,7 @@ describe("ThemeEditorViewProvider", () => {
         diagnostics: [],
         html: "<h1>Title</h1>",
         resolvedCssMode: "style-tag",
+        resolvedLineBreakMode: "markdown",
         resolvedThemeId: "default",
       },
       {
@@ -203,6 +208,7 @@ describe("ThemeEditorViewProvider", () => {
       },
       html: "<h1>Title</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 
@@ -215,7 +221,7 @@ describe("ThemeEditorViewProvider", () => {
     provider.dispose();
   });
 
-  it("renders invalid requested css output mode with resolved fallback", () => {
+  it("renders invalid requested output modes with resolved fallbacks", () => {
     const documentStateService = new DocumentStateService();
     const diagnosticsService = new DiagnosticsService();
     const provider = new ThemeEditorViewProvider(
@@ -234,7 +240,8 @@ describe("ThemeEditorViewProvider", () => {
     provider.resolveWebviewView(view);
     documentStateService.setActiveDocument({
       languageId: "markdown",
-      markdown: "---\nhinagata:\n  cssMode: unsupported\n---\n# Title",
+      markdown:
+        "---\nhinagata:\n  cssMode: unsupported\n  lineBreakMode: unsupported\n---\n# Title",
       uri: "file:///article.md",
     });
     documentStateService.applyTransformResult({
@@ -246,12 +253,21 @@ describe("ThemeEditorViewProvider", () => {
           severity: "warning",
           source: "frontmatter",
         },
+        {
+          code: "unsupported-line-break-mode",
+          message:
+            "Unsupported hinagata.lineBreakMode 'unsupported'; falling back to 'markdown'.",
+          severity: "warning",
+          source: "frontmatter",
+        },
       ],
       frontmatter: {
         cssMode: "unsupported",
+        lineBreakMode: "unsupported",
       },
       html: "<h1>Title</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 
@@ -259,11 +275,17 @@ describe("ThemeEditorViewProvider", () => {
       "<dt>CSS Output Mode</dt><dd>unsupported -&gt; style-tag</dd>",
     );
     expect(view.webview.html).toContain(
+      "<dt>Line Break Mode</dt><dd>unsupported -&gt; markdown</dd>",
+    );
+    expect(view.webview.html).toContain(
       "<dt>Generated HTML</dt><dd>fragment with style tag</dd>",
     );
     expect(view.webview.html).toContain("unsupported-css-mode");
     expect(view.webview.html).toContain(
       "Unsupported hinagata.cssMode &#39;unsupported&#39;; falling back to &#39;style-tag&#39;.",
+    );
+    expect(view.webview.html).toContain(
+      "Unsupported hinagata.lineBreakMode &#39;unsupported&#39;; falling back to &#39;markdown&#39;.",
     );
 
     provider.dispose();

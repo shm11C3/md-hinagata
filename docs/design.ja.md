@@ -443,6 +443,7 @@ type ThemeManagerState = {
     theme?: string;
     output?: string;
     cssMode?: string;
+    lineBreakMode?: string;
   };
   resolvedTheme?: {
     id: string;
@@ -451,6 +452,7 @@ type ThemeManagerState = {
     source: "workspace" | "bundled";
   };
   resolvedCssMode?: "none" | "separate" | "style-tag" | "inline";
+  resolvedLineBreakMode?: "markdown" | "br" | "wbr";
   templates: Array<{
     key: string;
     path: string;
@@ -623,6 +625,7 @@ type DocumentState = {
   frontmatter?: FrontmatterState;
   resolvedThemeId?: string;
   resolvedCssMode?: "none" | "separate" | "style-tag" | "inline";
+  resolvedLineBreakMode?: "markdown" | "br" | "wbr";
   generatedHtml?: string;
   css?: string;
   diagnostics: Diagnostic[];
@@ -693,6 +696,7 @@ type TransformResponse = {
   css?: string;
   resolvedThemeId: string;
   resolvedCssMode: "none" | "separate" | "style-tag" | "inline";
+  resolvedLineBreakMode: "markdown" | "br" | "wbr";
   frontmatter?: ParsedFrontmatter;
   diagnostics: Diagnostic[];
 };
@@ -713,6 +717,7 @@ pub struct TransformResponse {
     pub css: Option<String>,
     pub resolved_theme_id: String,
     pub resolved_css_mode: CssOutputMode,
+    pub resolved_line_break_mode: LineBreakMode,
     pub frontmatter: Option<ParsedFrontmatter>,
     pub diagnostics: Vec<Diagnostic>,
 }
@@ -788,6 +793,7 @@ return response
 - `hinagata.theme` を読む。
 - `hinagata.output` を読む。
 - `hinagata.cssMode` を読む。
+- `hinagata.lineBreakMode` を読む。
 - frontmatter を除いた Markdown body を返す。
 
 #### `markdown.rs`
@@ -853,6 +859,7 @@ hinagata:
   theme: string
   output: fragment
   cssMode: style-tag | inline | separate | none
+  lineBreakMode: markdown | br | wbr
 ```
 
 frontmatter schema は `schemas/frontmatter.schema.json` に置く。この schema は frontmatter YAML の中身だけを表し、Markdown 本文や `---` delimiter は含めない。
@@ -864,6 +871,7 @@ Rust core の frontmatter parser は `hinagata` namespace の block mapping と�
 `hinagata` namespace は top-level key とし、対応 child key はそれより深い space indentation に置く。indentation に tab を使った frontmatter は invalid frontmatter として扱う。
 
 VS Code 拡張は Markdown 先頭の frontmatter 内だけで補完を出す。`hinagata:` は `theme` と `output` を含む snippet として挿入し、既存 `hinagata` block がある場合は重複させない。`hinagata.theme` の値候補は `ThemeResolver.listSelectableThemes()` から取得し、trusted workspace の境界は既存の theme 解決と同じにする。
+`hinagata.lineBreakMode` の値候補は `markdown`、`br`、`wbr` とする。
 
 ### 6.3 theme 解決
 
@@ -1308,6 +1316,42 @@ Inline declaration conflicts follow a small CSS cascade model:
 4. !important declarations are stronger than normal declarations, but do not override existing style attribute declarations marked !important.
 ```
 
+### 8.6 paragraph line break mode
+
+`hinagata.lineBreakMode` は paragraph AST 内の `SoftBreak` を Generated HTML
+へどう出力するかを選ぶ。省略時は既存出力と互換な `markdown` とする。
+未対応または不正な値は `unsupported-line-break-mode` warning を返し、
+`markdown` に fallback する。
+
+```txt
+markdown
+  SoftBreak -> "\n"
+  LineBreak -> "<br />\n"
+
+br
+  SoftBreak -> "<br />\n"
+  LineBreak -> "<br />\n"
+
+wbr
+  SoftBreak -> "<wbr />"
+  LineBreak -> "<br />\n"
+```
+
+`LineBreak` は、行末の半角 space 2 個または backslash で author が明示した
+Markdown hard break であるため、すべての mode で `<br />` を維持する。
+`wbr` の `SoftBreak` は、source newline 由来の空白を残すと通常の空白による
+折り返しと同じになるため、追加の whitespace を出力しない。
+
+適用対象は paragraph block の `inner_html` とする。tight list item、table cell、
+code block、heading など paragraph 以外の内部改行には適用しない。theme が
+`{{text}}` だけを使う場合は plain text のままであり、`<br />` / `<wbr />` を
+受け取るには paragraph template が `{{{inner_html}}}` を出力する必要がある。
+
+CSS `white-space: pre-line` は使用しない。template の整形用 newline が text node
+として描画され、paragraph 開始直後の意図しない空行や HTML formatter 依存を
+生むためである。また `.mh-paragraph` など theme 固有 class を使った HTML
+post-processing も行わない。
+
 ---
 
 ## 9. Preview 設計
@@ -1452,6 +1496,7 @@ INVALID_THEME_MANIFEST
 MISSING_TEMPLATE
 TEMPLATE_RENDER_ERROR
 UNSUPPORTED_OUTPUT_MODE
+UNSUPPORTED_LINE_BREAK_MODE
 RAW_HTML_DISABLED
 ```
 
@@ -1514,6 +1559,7 @@ incremental transform
 
 ```txt
 frontmatter parse test
+paragraph line break mode test
 theme manifest parse test
 transform snapshot test
 missing template diagnostic test

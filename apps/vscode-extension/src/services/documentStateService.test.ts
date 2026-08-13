@@ -16,6 +16,7 @@ describe("DocumentStateService.applyTransformResult fallbacks", () => {
       diagnostics: [],
       html: "<h1>Title</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: undefined,
     } as never);
 
@@ -32,6 +33,7 @@ describe("DocumentStateService.applyTransformResult fallbacks", () => {
       diagnostics: [],
       html: "<h1>None</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 

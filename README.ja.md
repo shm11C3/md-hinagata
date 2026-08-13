@@ -91,6 +91,22 @@ Preview webviewは、`md-hinagata: Copy Generated HTML` がコピーする生成
 | `separate`  | document HTMLとCSSを分けて返します。                                          |
 | `none`      | テーマCSSなしのdocument HTMLを返します。                                      |
 
+### 段落の改行モード
+
+`hinagata.lineBreakMode` は、Markdown段落内の通常改行を生成HTMLでどう表すかを
+制御します。デフォルトは `markdown` です。
+
+| Mode       | 段落の出力                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `markdown` | 通常改行をHTMLソース内の改行として保持します。行末の半角スペース2個または `\` で書いたMarkdownの明示的改行は `<br />` になります。 |
+| `br`       | 通常改行も `<br />` に変換し、段落内の各ソース行を表示上も新しい行から開始します。                                               |
+| `wbr`      | 通常改行を空白なしの `<wbr />` に変換します。Markdownの明示的改行は `<br />` のままです。                                        |
+
+この処理はRust変換コアが段落ASTへ適用します。`.mh-paragraph` のようなテーマの
+class名、CSSの `white-space`、生成HTMLを整形するときに挿入される改行には依存しません。
+そのため、Preview、コピーしたHTML、PDF変換、他システムへの貼り付けで、HTMLソースの
+整形状態に左右されない出力になります。
+
 ## コア・アイディア
 
 ### テーマの選択はドキュメントに属する
@@ -217,6 +233,7 @@ built-in の要素レンダリングに fallback します。詳細は
 - 生成されたHTMLのコピーコマンド。
 - 未知のテーマや不足しているテンプレートに対する基本的な診断（Diagnostics）。
 - `hinagata.cssMode` によるCSS出力モード。
+- `hinagata.lineBreakMode` による段落の改行モード。
 
 サポートされるMarkdownブロック：
 

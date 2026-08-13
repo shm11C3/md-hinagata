@@ -261,6 +261,7 @@ Body text.
 | `hinagata.theme` | string | `default` | no | 使用する theme ID。 |
 | `hinagata.output` | string | `fragment` | no | 出力形式。`0.1.0` では実質 `fragment` のみ。 |
 | `hinagata.cssMode` | string | `style-tag` | no | CSS output mode。`0.2.0` では `none`、`separate`、`style-tag`、`inline` を扱う。 |
+| `hinagata.lineBreakMode` | string | `markdown` | no | 段落内の通常改行を `markdown`、`br`、`wbr` のどの形式で生成 HTML に表すか。 |
 
 frontmatter YAML の中身に対するドラフト schema は `schemas/frontmatter.schema.json` で管理する。Markdown 本文や `---` delimiter は schema の対象外とする。
 
@@ -268,6 +269,27 @@ VS Code 拡張は Markdown 先頭の frontmatter 内だけで `hinagata` key と
 
 `hinagata.cssMode` は document frontmatter を source of truth とする。`0.2.0` では VS Code setting や command argument による一時的な上書きは行わない。
 未対応または不正な `hinagata.cssMode` は warning diagnostic を返し、`style-tag` として扱う。
+
+`hinagata.lineBreakMode` も document frontmatter を source of truth とする。
+未対応または不正な値は warning diagnostic を返し、`markdown` として扱う。
+
+```txt
+markdown
+  段落内の通常改行は HTML source newline として保持する。
+  行末の半角 space 2 個または backslash による Markdown hard break は <br /> にする。
+
+br
+  段落内の通常改行も <br /> にする。
+  Markdown hard break も <br /> のままにする。
+
+wbr
+  段落内の通常改行を、空白を追加しない <wbr /> にする。
+  Markdown hard break は <br /> のままにする。
+```
+
+改行モードは paragraph AST の `SoftBreak` に適用し、theme class 名、CSS
+`white-space`、Generated HTML の整形用改行には依存させない。tight list item、
+table cell、code block など paragraph 以外の内部改行は対象外とする。
 
 ### 5.3 テーマ解決の優先順位
 
@@ -492,6 +514,7 @@ Current Document
   Theme: default
   Output: fragment
   CSS: style-tag
+  Line Breaks: markdown
 
 Theme Files
   theme.json
@@ -569,6 +592,7 @@ Rust core は以下を担当する。
 - Markdown 要素ごとの template 適用。
 - HTML fragment の生成。
 - CSS output mode の適用。
+- paragraph line break mode の適用。
 - diagnostics の生成。
 
 Rust core は以下を担当しない。
@@ -607,6 +631,7 @@ type ParsedFrontmatter = {
   theme?: string;
   output?: string;
   cssMode?: string;
+  lineBreakMode?: string;
 };
 
 type TransformResponse = {
@@ -614,6 +639,7 @@ type TransformResponse = {
   css?: string;
   resolvedThemeId: string;
   resolvedCssMode: "none" | "separate" | "style-tag" | "inline";
+  resolvedLineBreakMode: "markdown" | "br" | "wbr";
   frontmatter?: ParsedFrontmatter;
   diagnostics: Diagnostic[];
 };
@@ -804,6 +830,7 @@ project/
 | `missing-template` | warning | 必要な template がない。 |
 | `template-render-error` | error | template の render に失敗。 |
 | `raw-html-disabled` | warning | raw HTML が無効化されている。 |
+| `unsupported-line-break-mode` | warning | lineBreakMode が未対応のため `markdown` に fallback した。 |
 
 ### 11.2 表示場所
 

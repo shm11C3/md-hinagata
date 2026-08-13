@@ -129,13 +129,13 @@ fn theme_manifest_equality_is_structural() {
 
 #[test]
 fn frontmatter_parses_hinagata_namespace_with_body() {
-    let source =
-        "---\nhinagata:\n  theme: basic\n  output: fragment\n  cssMode: inline\n---\n# Body\n";
+    let source = "---\nhinagata:\n  theme: basic\n  output: fragment\n  cssMode: inline\n  lineBreakMode: br\n---\n# Body\n";
     let parsed = parse_frontmatter(source);
     let frontmatter = parsed.frontmatter.expect("frontmatter should be parsed");
     assert_eq!(frontmatter.theme.as_deref(), Some("basic"));
     assert_eq!(frontmatter.output.as_deref(), Some("fragment"));
     assert_eq!(frontmatter.css_mode.as_deref(), Some("inline"));
+    assert_eq!(frontmatter.line_break_mode.as_deref(), Some("br"));
     assert_eq!(parsed.markdown.trim(), "# Body");
     assert!(parsed.diagnostics.is_empty());
 }

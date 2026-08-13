@@ -94,6 +94,7 @@ describe("PreviewPanel", () => {
         "</main>",
       ].join("\n"),
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 
@@ -126,6 +127,7 @@ describe("PreviewPanel", () => {
       diagnostics: [],
       html: "",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 
@@ -163,6 +165,7 @@ describe("PreviewPanel", () => {
       },
       html: expectedHtml,
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "basic",
     });
 

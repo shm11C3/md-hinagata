@@ -19,6 +19,7 @@ describe("active editor state", () => {
       diagnostics: [],
       html: "<h1>Title</h1>",
       resolvedCssMode: "style-tag",
+      resolvedLineBreakMode: "markdown",
       resolvedThemeId: "default",
     });
 

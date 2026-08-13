@@ -33,6 +33,11 @@ const HINAGATA_CHILD_KEY_COMPLETIONS: readonly FrontmatterCompletion[] = [
     kind: "property",
     label: "cssMode",
   },
+  {
+    insertText: "lineBreakMode: markdown",
+    kind: "property",
+    label: "lineBreakMode",
+  },
 ];
 const OUTPUT_VALUE_COMPLETIONS: readonly FrontmatterCompletion[] = [
   {
@@ -61,6 +66,23 @@ const CSS_MODE_VALUE_COMPLETIONS: readonly FrontmatterCompletion[] = [
     insertText: "none",
     kind: "value",
     label: "none",
+  },
+];
+const LINE_BREAK_MODE_VALUE_COMPLETIONS: readonly FrontmatterCompletion[] = [
+  {
+    insertText: "markdown",
+    kind: "value",
+    label: "markdown",
+  },
+  {
+    insertText: "br",
+    kind: "value",
+    label: "br",
+  },
+  {
+    insertText: "wbr",
+    kind: "value",
+    label: "wbr",
   },
 ];
 
@@ -209,12 +231,9 @@ function getHinagataChildCompletions(
     return [];
   }
 
-  const valueCompletions = getHinagataValueCompletions(
-    lines[lineIndex]?.text ?? "",
-    themes,
-  );
-  if (valueCompletions.length > 0) {
-    return valueCompletions;
+  const currentLine = lines[lineIndex]?.text ?? "";
+  if (readHinagataValueKey(currentLine) !== undefined) {
+    return getHinagataValueCompletions(currentLine, themes);
   }
 
   const existingKeys = readHinagataChildKeys(lines, hinagataIndex);
@@ -227,13 +246,17 @@ function getHinagataValueCompletions(
   line: string,
   themes: readonly FrontmatterCompletionTheme[],
 ): FrontmatterCompletion[] {
-  const key = line.match(/^\s+(theme|output|cssMode)\s*:/)?.[1];
+  const key = readHinagataValueKey(line);
   if (key === "output") {
     return [...OUTPUT_VALUE_COMPLETIONS];
   }
 
   if (key === "cssMode") {
     return [...CSS_MODE_VALUE_COMPLETIONS];
+  }
+
+  if (key === "lineBreakMode") {
+    return [...LINE_BREAK_MODE_VALUE_COMPLETIONS];
   }
 
   if (key === "theme") {
@@ -246,6 +269,10 @@ function getHinagataValueCompletions(
   }
 
   return [];
+}
+
+function readHinagataValueKey(line: string): string | undefined {
+  return line.match(/^\s+(theme|output|cssMode|lineBreakMode)\s*:/)?.[1];
 }
 
 function isInsideHinagataBlock(

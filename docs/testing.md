@@ -76,6 +76,7 @@ If future tests need to launch the VS Code host, keep those separate from coloca
 - Frontmatter parsing.
 - Theme manifest parsing.
 - Markdown transforms.
+- Paragraph line break modes, including explicit hard-break preservation.
 - Fallback behavior.
 - Diagnostics.
 - Template render errors.
@@ -139,6 +140,23 @@ For `0.2.0` CSS output modes, verify each `hinagata.cssMode` value with Preview 
 - `separate`: Preview and Copy Generated HTML both use `TransformResponse.html` without Preview-only CSS injection.
 - `none`: Preview and Copy Generated HTML both use generated document HTML without theme CSS.
 - Invalid `hinagata.cssMode`: Theme Manager shows the requested value and resolved fallback, and diagnostics show the warning.
+
+For `hinagata.lineBreakMode`, verify paragraph output without adding CSS
+`white-space` rules:
+
+- `markdown`: ordinary paragraph line endings remain HTML source newlines and
+  explicit Markdown hard breaks remain `<br />`.
+- `br`: ordinary and explicit paragraph line endings are emitted as `<br />`;
+  a one-line paragraph does not gain an empty first line.
+- `wbr`: ordinary paragraph line endings are emitted as `<wbr />` without
+  whitespace, while explicit hard breaks remain `<br />`.
+- Invalid value: Theme Manager shows the requested value and `markdown`
+  fallback, and diagnostics show `unsupported-line-break-mode`.
+- Tight list items and other non-paragraph internal line endings are unchanged.
+
+Preview and Copy Generated HTML must consume the same transformed HTML for all
+three modes. Do not validate the feature through CSS `white-space: pre-line`,
+because template or formatter newlines are not document content.
 
 When a VS Code launch configuration for the basic example is present, use it for preview QA. The example workspace should make `.md-hinagata/themes/basic` available as a workspace theme, and opening the preview for `sample.md` should show generated content rather than the placeholder.
 

@@ -105,6 +105,7 @@ function renderCurrentDocument(
   const resolvedTheme = state.resolvedThemeId ?? "Not resolved";
   const output = state.frontmatter?.output ?? "fragment";
   const cssOutputMode = getCssOutputModeLabel(state);
+  const lineBreakMode = getLineBreakModeLabel(state);
   const generatedHtmlContract = getGeneratedHtmlContract(state);
   const fallbackHtml =
     requestedThemeId !== undefined &&
@@ -121,6 +122,7 @@ function renderCurrentDocument(
     renderDefinition("Resolved Theme", resolvedTheme),
     renderDefinition("Output", output),
     renderDefinition("CSS Output Mode", cssOutputMode),
+    renderDefinition("Line Break Mode", lineBreakMode),
     renderDefinition("Generated HTML", generatedHtmlContract),
     renderDefinition(
       "Workspace trust",
@@ -150,6 +152,19 @@ function getCssOutputModeLabel(state: DocumentState): string {
   return requestedCssMode !== undefined && requestedCssMode !== resolvedCssMode
     ? `${requestedCssMode} -> ${resolvedCssMode}`
     : resolvedCssMode;
+}
+
+function getLineBreakModeLabel(state: DocumentState): string {
+  const resolvedLineBreakMode = state.resolvedLineBreakMode;
+  if (resolvedLineBreakMode === undefined) {
+    return "Not resolved";
+  }
+
+  const requestedLineBreakMode = state.frontmatter?.lineBreakMode;
+  return requestedLineBreakMode !== undefined &&
+    requestedLineBreakMode !== resolvedLineBreakMode
+    ? `${requestedLineBreakMode} -> ${resolvedLineBreakMode}`
+    : resolvedLineBreakMode;
 }
 
 function getGeneratedHtmlContract(state: DocumentState): string {
